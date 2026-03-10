@@ -12,6 +12,19 @@ async function startServer() {
 
   app.use(express.json());
 
+  // CORS for WordPress embed
+  app.use((req, res, next) => {
+    const allowed = ["https://muns.club", "https://www.muns.club"];
+    const origin = req.headers.origin || "";
+    if (allowed.includes(origin) || process.env.NODE_ENV !== "production") {
+      res.setHeader("Access-Control-Allow-Origin", origin || "*");
+      res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+      res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+    }
+    if (req.method === "OPTIONS") return res.sendStatus(204);
+    next();
+  });
+
   // API endpoint for fetching and scraping news
   app.get("/api/fetch-news", async (req, res) => {
     const { url } = req.query;
