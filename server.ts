@@ -5,6 +5,15 @@ import axios from "axios";
 import * as cheerio from "cheerio";
 import { GoogleGenAI, Type } from "@google/genai";
 import { MUNS_SYSTEM_INSTRUCTION } from "./constants";
+import rateLimit from "express-rate-limit";
+
+const storyLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hora
+  max: 10, // máximo 10 generaciones por IP por hora
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Demasiadas historias generadas. Volvé en un rato." },
+});
 
 async function startServer() {
   const app = express();
@@ -108,7 +117,7 @@ async function startServer() {
   });
 
   // API endpoint for generating Mun story via Gemini
-  app.post("/api/generate-story", async (req, res) => {
+  app.post("/api/generate-story", storyLimiter, async (req, res) => {
     const { newsText } = req.body;
     if (!newsText) return res.status(400).json({ error: "newsText is required" });
 
