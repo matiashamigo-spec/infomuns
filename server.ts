@@ -184,7 +184,7 @@ async function startServer() {
     try {
       const ai = new GoogleGenAI({ apiKey });
       const response = await ai.models.generateContent({
-        model: "gemini-2.0-flash",
+        model: "gemini-2.5-flash",
         contents: `Crea una historia simbólica para niños basada en esta noticia: "${newsText}".
       REGLA DE ORO: Si hay una muerte o pérdida en la noticia, respeta la realidad del hecho. No digas que el personaje sigue ahí. Usa una metáfora de partida definitiva y honesta, pero con la suavidad de los Muns.
       Sigue la estructura Pixar (Emoción, Grieta, Elección con costo, Consecuencia parcial).`,
@@ -225,8 +225,8 @@ async function startServer() {
     if (!apiKey) return res.status(500).json({ error: "GEMINI_API_KEY not configured" });
 
     const GEMINI = "https://generativelanguage.googleapis.com/v1beta/models/";
-    const DETECT_MODEL = "gemini-2.0-flash";
-    const COMPOSE_MODEL = "gemini-2.0-flash-exp";
+    const DETECT_MODEL = "gemini-2.5-flash";
+    const COMPOSE_MODEL = "gemini-2.5-flash";
 
     try {
       // Paso 1: Detectar emoción
