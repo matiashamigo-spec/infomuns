@@ -1,6 +1,5 @@
 
 import express from "express";
-import { createServer as createViteServer } from "vite";
 import axios from "axios";
 import * as cheerio from "cheerio";
 import { GoogleGenAI, Type } from "@google/genai";
@@ -361,6 +360,7 @@ async function startServer() {
 
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
+    const { createServer: createViteServer } = await import("vite");
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
@@ -373,8 +373,8 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server running on http://0.0.0.0:${PORT}`);
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
   });
 }
 
