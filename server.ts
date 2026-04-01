@@ -309,9 +309,10 @@ async function startServer() {
         composeParts.push({ text: "DISEÑO ORIGINAL DE OPAQ — su cara es EXACTAMENTE así en el resultado. Prohibido cambiar su expresión facial bajo ninguna circunstancia." });
       }
 
+      const aspectRatio = getAspectRatio(width || 0, height || 0);
       const composeBody = {
         contents: [{ parts: composeParts }],
-        generationConfig: { responseModalities: ["IMAGE", "TEXT"] }
+        generationConfig: { imageConfig: { aspectRatio } }
       };
 
       const composeRes = await axios.post(`${GEMINI}${COMPOSE_MODEL}:generateContent?key=${apiKey}`, composeBody);
