@@ -82,6 +82,20 @@ async function startServer() {
     next();
   });
 
+  // API key endpoint — used by embedded tools on muns.club
+  app.get("/api/key", (req, res) => {
+    const key = process.env.GEMINI_API_KEY;
+    if (!key) return res.status(500).json({ error: "Not configured" });
+    res.json({ key });
+  });
+
+  // Legacy endpoint alias
+  app.get("/api/", (req, res) => {
+    const key = process.env.GEMINI_API_KEY;
+    if (!key) return res.status(500).json({ error: "Not configured" });
+    res.json({ key });
+  });
+
   // API endpoint for fetching and scraping news
   app.get("/api/fetch-news", async (req, res) => {
     const { url } = req.query;
