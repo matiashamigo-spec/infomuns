@@ -49,15 +49,6 @@ async function fetchCharacterImages() {
   }
 }
 
-function getAspectRatio(w: number, h: number): string {
-  if (!w || !h) return "1:1";
-  const ratio = w / h;
-  if (ratio > 1.5) return "16:9";
-  if (ratio > 1.1) return "4:3";
-  if (ratio < 0.6) return "9:16";
-  if (ratio < 0.9) return "3:4";
-  return "1:1";
-}
 
 async function startServer() {
   const app = express();
