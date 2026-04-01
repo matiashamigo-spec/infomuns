@@ -94,18 +94,6 @@ async function startServer() {
   app.get("/api/munsmood-init", sendKey);
   app.get("/api/scanmuns-init", sendKey);
 
-  // Temporal: listar modelos disponibles
-  app.get("/api/debug/models", async (req: any, res: any) => {
-    const key = process.env.GEMINI_API_KEY;
-    if (!key) return res.status(500).json({ error: "no key" });
-    const r = await axios.get(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}&pageSize=100`);
-    const image = (r.data.models || []).filter((m: any) =>
-      (m.supportedGenerationMethods || []).includes("generateContent") &&
-      (JSON.stringify(m).toLowerCase().includes("image") || JSON.stringify(m).toLowerCase().includes("vision"))
-    );
-    res.json({ all: (r.data.models || []).map((m: any) => m.name), image });
-  });
-
   // API endpoint for fetching and scraping news
   app.get("/api/fetch-news", async (req, res) => {
     const { url } = req.query;
@@ -376,9 +364,8 @@ async function startServer() {
       res.json({ composedImage });
 
     } catch (error: any) {
-      const detail = error.response?.data ? JSON.stringify(error.response.data) : error.message;
-      console.error("[MunsMood] error:", detail);
-      res.status(500).json({ error: error.message || "Error procesando la foto", detail });
+      console.error("[MunsMood] error:", error.response?.data || error.message);
+      res.status(500).json({ error: error.message || "Error procesando la foto" });
     }
   });
 
