@@ -226,7 +226,7 @@ async function startServer() {
 
     const GEMINI = "https://generativelanguage.googleapis.com/v1beta/models/";
     const DETECT_MODEL = "gemini-2.5-flash";
-    const COMPOSE_MODEL = "gemini-2.0-flash-preview-image-generation";
+    const COMPOSE_MODEL = "gemini-2.5-flash-preview-04-17";
 
     try {
       // Paso 1: Detectar emoción
