@@ -364,8 +364,9 @@ async function startServer() {
       res.json({ composedImage });
 
     } catch (error: any) {
-      console.error("[MunsMood] error:", error.message);
-      res.status(500).json({ error: error.message || "Error procesando la foto" });
+      const detail = error.response?.data ? JSON.stringify(error.response.data) : error.message;
+      console.error("[MunsMood] error:", detail);
+      res.status(500).json({ error: error.message || "Error procesando la foto", detail });
     }
   });
 
