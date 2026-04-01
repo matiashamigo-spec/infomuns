@@ -226,7 +226,7 @@ async function startServer() {
 
     const GEMINI = "https://generativelanguage.googleapis.com/v1beta/models/";
     const DETECT_MODEL = "gemini-2.0-flash";
-    const COMPOSE_MODEL = "gemini-2.5-flash-preview-04-17";
+    const COMPOSE_MODEL = "gemini-2.0-flash-exp";
 
     try {
       // Paso 1: Detectar emoción
@@ -309,10 +309,9 @@ async function startServer() {
         composeParts.push({ text: "DISEÑO ORIGINAL DE OPAQ — su cara es EXACTAMENTE así en el resultado. Prohibido cambiar su expresión facial bajo ninguna circunstancia." });
       }
 
-      const aspectRatio = getAspectRatio(width || 0, height || 0);
       const composeBody = {
         contents: [{ parts: composeParts }],
-        generationConfig: { imageConfig: { aspectRatio } }
+        generationConfig: { responseModalities: ["IMAGE", "TEXT"] }
       };
 
       const composeRes = await axios.post(`${GEMINI}${COMPOSE_MODEL}:generateContent?key=${apiKey}`, composeBody);
