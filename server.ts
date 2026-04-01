@@ -82,19 +82,17 @@ async function startServer() {
     next();
   });
 
-  // API key endpoint — used by embedded tools on muns.club
-  app.get("/api/key", (req, res) => {
+  // API key endpoints — used by embedded tools on muns.club
+  const sendKey = (req: any, res: any) => {
     const key = process.env.GEMINI_API_KEY;
     if (!key) return res.status(500).json({ error: "Not configured" });
-    res.json({ key });
-  });
-
-  // Legacy endpoint alias
-  app.get("/api/", (req, res) => {
-    const key = process.env.GEMINI_API_KEY;
-    if (!key) return res.status(500).json({ error: "Not configured" });
-    res.json({ key });
-  });
+    res.json({ key, apiKey: key });
+  };
+  app.get("/api/key", sendKey);
+  app.get("/api/", sendKey);
+  app.get("/api/taller-init", sendKey);
+  app.get("/api/munsmood-init", sendKey);
+  app.get("/api/scanmuns-init", sendKey);
 
   // API endpoint for fetching and scraping news
   app.get("/api/fetch-news", async (req, res) => {
