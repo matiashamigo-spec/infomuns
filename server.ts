@@ -257,7 +257,7 @@ async function startServer() {
 
       let specificAction = "";
       if (emotion === "TONGUE_OUT") {
-        specificAction = "La persona saca la lengua de forma juguetona. Mun y Opaq se ubican en zonas de fondo visible a los costados de la persona —nunca encima de su cuerpo— y hacen gestos divertidos desde ahí. Sus cuerpos están completamente en el fondo/espacio libre.";
+        specificAction = "La persona saca la lengua de forma juguetona. Mun y Opaq se ubican en zonas de fondo visible a los costados de la persona —nunca encima de su cuerpo— y hacen gestos divertidos desde ahí. Sus cuerpos están completamente en el fondo/espacio libre. CRÍTICO: Mun y Opaq deben aparecer con el MISMO tamaño entre sí — ninguno puede ser notablemente más grande ni más chico que el otro.";
       } else if (emotion === "MULTIPLE_PEOPLE") {
         specificAction = "Se observa un grupo de personas. Mun identifica el espacio vacío más natural de la foto: puede ser un hueco entre personas, el fondo visible junto a alguien del borde, o el espacio libre por encima del grupo. Se ubica ahí entero, sin superponerse sobre ningún cuerpo ni cara. Si toda la foto está ocupada por personas, Mun se asoma solo con la cabeza desde un borde o esquina. Las caras de TODAS las personas quedan 100% visibles.";
       } else if (emotion === "HUG_TWO") {
