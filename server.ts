@@ -256,28 +256,29 @@ async function startServer() {
 
       let specificAction = "";
       if (emotion === "TONGUE_OUT") {
-        specificAction = "Mun y Opaq estaban ahí cuando se sacó la foto. Uno a cada lado de la persona, abrazándola: sus cuerpos en contacto directo con la persona, un brazo de cada uno rodeando a la persona. Si hay piso visible, sus pies están en el mismo piso al mismo nivel que la persona. Si es plano medio, sus cuerpos están a la altura del torso/hombro de la persona, en contacto. Ambos hacen gestos divertidos. Mismo tamaño entre sí.";
+        specificAction = "Mun y Opaq están abrazando a la persona, uno de cada lado. El cuerpo de cada uno está pegado al costado de la persona, con un brazo rodeando su cintura o hombro. Sus rostros miran hacia adelante con gestos divertidos. Mismo tamaño entre sí.";
       } else if (emotion === "MULTIPLE_PEOPLE") {
-        specificAction = "Mun estaba ahí cuando se sacó la foto, como parte natural del grupo. Está parado entre dos personas del grupo, en contacto físico con ambas — como un integrante más. Su escala, perspectiva e iluminación son coherentes con el grupo. Si hay piso visible, sus pies están al mismo nivel. Si es plano medio, su cuerpo está a la altura de los torsos/hombros de las personas que lo rodean, tocándolas. Se ve como alguien que siempre estuvo en esa foto.";
+        specificAction = "Mun está parado entre dos personas del grupo, en contacto físico con ambas, como si fuera un integrante más de la foto. Su escala e iluminación son coherentes con el grupo. Sus pies al mismo nivel que los de las personas si hay piso visible.";
       } else if (emotion === "HUG_TWO") {
-        specificAction = "La persona tiene los brazos abiertos. Mun estaba ahí y está respondiendo al abrazo: su cuerpo está entre los brazos de la persona, pegado a su torso, como si se metiera en el abrazo. Si hay piso, sus pies al mismo nivel.";
+        specificAction = "La persona tiene los brazos abiertos. Mun está dentro del abrazo, su cuerpo pegado al torso de la persona, respondiendo al gesto.";
       } else if (emotion === "SAD") {
-        specificAction = "Opaq estaba ahí cuando se sacó la foto y está abrazando a la persona en gesto de consuelo: su cuerpo pegado al costado de la persona, un brazo rodeando su hombro o cintura. Si hay piso, sus pies al mismo nivel. Si es plano medio, su cuerpo en contacto con la persona a la altura del torso/hombro.";
+        specificAction = "Opaq está abrazando a la persona desde un costado. Su cuerpo está pegado al costado de la persona, con un brazo rodeando su hombro o cintura, en gesto de consuelo.";
       } else {
-        specificAction = "Mun estaba ahí cuando se sacó la foto y está abrazando a la persona: su cuerpo pegado al costado de la persona, un brazo rodeando su hombro o cintura. Si hay piso visible, sus pies en el mismo piso al mismo nivel. Si es plano medio, su cuerpo en contacto con la persona a la altura del torso/hombro.";
+        specificAction = "Mun está abrazando a la persona desde un costado. Su cuerpo está pegado al costado de la persona, con un brazo rodeando su hombro o cintura.";
       }
 
+      const charName = cfg.useMun && cfg.useOpaq ? "Mun y Opaq" : cfg.useMun ? "Mun" : "Opaq";
+
       const prompt =
-        "SITUACIÓN: Tenés una foto real. En esa foto ya estaba presente un pequeño personaje animado llamado " + (cfg.useMun && cfg.useOpaq ? "Mun y Opaq" : cfg.useMun ? "Mun" : "Opaq") + ". Tu tarea es generar cómo se ve esa foto con el personaje integrado físicamente en la escena.\n\n" +
-        "ACCIÓN PRINCIPAL — PRIORIDAD MÁXIMA:\n" + specificAction + "\n\n" +
-        "INTEGRACIÓN FÍSICA: El personaje no es un sticker. Es una criatura que estuvo presente en ese momento: tiene la misma iluminación, la misma perspectiva, el mismo plano espacial que las personas. Su pose se adapta libremente a la escena — la imagen de referencia define solo su cara y proporciones, no la pose.\n\n" +
-        "REGLAS TÉCNICAS:\n" +
-        "- Caras de las personas: 100% visibles, sin tapar\n" +
-        "- Tamaño: siempre más pequeño que una persona humana (máximo = tamaño de una cabeza). Nunca igual ni más grande\n" +
-        "- Anatomía: exactamente 2 brazos y 2 piernas. Los brazos y piernas tienen longitud natural fija — NO se estiran. Si el personaje quiere alcanzar algo lejano, mueve todo el cuerpo, no estira el brazo. Cada brazo nace del hombro. El brazo de abrazo rodea hacia afuera, nunca cruza sobre la propia cabeza ni torso\n" +
-        "- Cara del personaje: exactamente igual a la imagen de referencia. Prohibido inventar una cara nueva, cambiar expresión, ojos o boca\n" +
-        "- Foto original: idéntica. Prohibido modificar ropa, fondo, colores o agregar cualquier contenido que no sea el personaje\n\n" +
-        "RESULTADO: La foto original con el personaje integrado físicamente según la acción indicada.";
+        `Agregá el personaje animado ${charName} a esta foto de acuerdo a la siguiente descripción:\n\n` +
+        `ESCENA: ${specificAction}\n\n` +
+        `FÍSICO DEL PERSONAJE (según imagen de referencia adjunta):\n` +
+        `- Su cara es exactamente igual a la referencia. No cambiar expresión, ojos ni boca.\n` +
+        `- Tamaño: más pequeño que una persona (máximo tamaño de una cabeza humana).\n` +
+        `- Exactamente 2 brazos y 2 piernas. Los brazos NO se estiran — tienen longitud natural fija.\n` +
+        `- El brazo que abraza rodea hacia afuera desde el hombro, nunca pasa por encima de su propia cabeza.\n\n` +
+        `INTEGRACIÓN: misma iluminación y perspectiva que la foto. No es un sticker — el personaje estuvo ahí cuando se sacó la foto.\n\n` +
+        `RESTRICCIONES: la cara de las personas siempre 100% visible. La foto original no se modifica.`;
 
       const opaqPrefix = cfg.useOpaq ? "REGLA #0 — ANATOMÍA DE OPAQ INNEGOCIABLE: Opaq tiene EXACTAMENTE 2 brazos y 2 piernas, ni uno más. Está terminantemente prohibido generarlo con 3 o 4 brazos. Contá los brazos antes de generar: si el resultado tiene más de 2, es un fallo total. Esta regla no admite excepciones.\n\n" : "";
       const composeParts: any[] = [
