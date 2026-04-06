@@ -307,18 +307,42 @@ async function startServer() {
         generationConfig: { responseModalities: ["IMAGE", "TEXT"] }
       };
 
-      const composeRes = await axios.post(`${GEMINI}${COMPOSE_MODEL}:generateContent?key=${apiKey}`, composeBody);
-      const candidates = composeRes.data?.candidates || [];
-      let imagePart: any = null;
-      for (const c of candidates) {
-        for (const p of (c.content?.parts || [])) {
-          if (p.inlineData) { imagePart = p; break; }
+      const extractImagePart = (res: any) => {
+        for (const c of (res.data?.candidates || [])) {
+          for (const p of (c.content?.parts || [])) {
+            if (p.inlineData) return p;
+          }
         }
-        if (imagePart) break;
+        return null;
+      };
+
+      const getPngAspectRatio = (b64: string): number | null => {
+        try {
+          const buf = Buffer.from(b64.slice(0, 48), 'base64');
+          if (buf[0] !== 0x89 || buf[1] !== 0x50) return null;
+          const w = buf.readUInt32BE(16);
+          const h = buf.readUInt32BE(20);
+          return h > 0 ? w / h : null;
+        } catch { return null; }
+      };
+
+      let composeRes = await axios.post(`${GEMINI}${COMPOSE_MODEL}:generateContent?key=${apiKey}`, composeBody);
+      let imagePart: any = extractImagePart(composeRes);
+
+      // Si el aspect ratio no coincide con el original, reintentamos una vez
+      if (imagePart?.inlineData && width && height) {
+        const origRatio = width / height;
+        const resultRatio = getPngAspectRatio(imagePart.inlineData.data);
+        if (resultRatio !== null && Math.abs(origRatio - resultRatio) / origRatio > 0.05) {
+          console.log(`[MunsMood] aspect ratio mismatch (orig: ${origRatio.toFixed(2)}, got: ${resultRatio.toFixed(2)}), retrying...`);
+          const retryRes = await axios.post(`${GEMINI}${COMPOSE_MODEL}:generateContent?key=${apiKey}`, composeBody);
+          const retryPart = extractImagePart(retryRes);
+          if (retryPart?.inlineData) imagePart = retryPart;
+        }
       }
 
       if (!imagePart?.inlineData) {
-        const reason = candidates[0]?.finishReason;
+        const reason = composeRes.data?.candidates?.[0]?.finishReason;
         throw new Error("No se recibió imagen del modelo" + (reason ? ` (motivo: ${reason})` : "") + ". Intentá con otra foto.");
       }
 
