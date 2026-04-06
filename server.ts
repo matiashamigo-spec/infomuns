@@ -49,6 +49,15 @@ async function fetchCharacterImages() {
   }
 }
 
+function getAspectRatio(w: number, h: number): string {
+  if (!w || !h) return "1:1";
+  const ratio = w / h;
+  if (ratio > 1.5) return "16:9";
+  if (ratio > 1.1) return "4:3";
+  if (ratio < 0.6) return "9:16";
+  if (ratio < 0.9) return "3:4";
+  return "1:1";
+}
 
 async function startServer() {
   const app = express();
@@ -84,6 +93,18 @@ async function startServer() {
   app.get("/api/taller-init", sendKey);
   app.get("/api/munsmood-init", sendKey);
   app.get("/api/scanmuns-init", sendKey);
+
+  // Temporal: listar modelos disponibles
+  app.get("/api/debug/models", async (req: any, res: any) => {
+    const key = process.env.GEMINI_API_KEY;
+    if (!key) return res.status(500).json({ error: "no key" });
+    const r = await axios.get(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}&pageSize=100`);
+    const image = (r.data.models || []).filter((m: any) =>
+      (m.supportedGenerationMethods || []).includes("generateContent") &&
+      (JSON.stringify(m).toLowerCase().includes("image") || JSON.stringify(m).toLowerCase().includes("vision"))
+    );
+    res.json({ all: (r.data.models || []).map((m: any) => m.name), image });
+  });
 
   // API endpoint for fetching and scraping news
   app.get("/api/fetch-news", async (req, res) => {
@@ -253,44 +274,51 @@ async function startServer() {
       };
 
       const cfg = EMOTION_ACTIONS[emotion] || EMOTION_ACTIONS.HAPPY_NEUTRAL;
+      const shouldHug = cfg.useMun && Math.random() < 0.3;
 
       let specificAction = "";
       if (emotion === "TONGUE_OUT") {
-        specificAction = "La persona saca la lengua. Mun está parado pegado al costado izquierdo de la persona abrazándola: su cuerpo toca la silueta de la persona, su brazo pasa por detrás de la espalda de la persona rodeándola. Opaq hace lo mismo desde el costado derecho. Sus cuerpos tocan a la persona, sus caras miran hacia adelante con gestos divertidos. Mismo tamaño entre sí. Si hay piso, sus pies al mismo nivel que los de la persona. Si es plano medio, están a la altura del hombro/torso.";
+        specificAction = "La persona realiza un gesto ameno sacando la lengua. Mun y Opaq se posicionan de forma juguetona junto a ella; uno puede estar asomándose y el otro intentando subirse 'a cocochito' (piggyback) o apoyándose en su hombro de forma cariñosa.";
       } else if (emotion === "MULTIPLE_PEOPLE") {
-        specificAction = "Hay varias personas. Mun aparece integrado entre ellas como si fuera un integrante más de la foto — parado entre dos personas que estén cerca, su cuerpo en el espacio entre ambas, rozando sus siluetas. Misma perspectiva, misma iluminación, mismo nivel de piso. Se ve como alguien que siempre estuvo en esa foto. Las caras de todas las personas 100% visibles.";
+        specificAction = "Se observa un grupo de personas. Mun se integra de forma natural, quizás apoyándose suavemente en el hombro de alguien o asomándose desde atrás con mucha confianza y afecto.";
       } else if (emotion === "HUG_TWO") {
-        specificAction = "La persona tiene los brazos abiertos ofreciendo un abrazo. Mun está parado dentro del espacio que forman los brazos, su cuerpo pegado al torso de la persona, respondiendo al abrazo. Si hay piso, sus pies al mismo nivel.";
+        specificAction = "La persona ofrece un abrazo. Mun responde de forma activa: puede estar abrazando a la persona, apoyando su cabeza en su hombro o intentando trepar suavemente para un abrazo más cercano.";
       } else if (emotion === "SAD") {
-        specificAction = "Se percibe tristeza. Opaq está parado pegado al costado de la persona abrazándola: su cuerpo toca la silueta de la persona, su brazo pasa por detrás de la espalda de la persona rodeándola en gesto de consuelo. Si hay piso, sus pies al mismo nivel que los de la persona. Si es plano medio, su cuerpo está a la altura del hombro o torso de la persona, en contacto.";
+        specificAction = "Se percibe tristeza. Opaq abraza a la persona con sus bracitos. El abrazo debe verse físico y real: Opaq rodea a la persona desde un costado o desde atrás, adaptando la posición de sus brazos a donde esté la persona en la foto. El rostro de la persona queda 100% visible. La cara de Opaq no cambia.";
       } else {
-        specificAction = "Mun está parado pegado al costado de la persona abrazándola: su cuerpo toca la silueta de la persona, su brazo pasa por detrás de la espalda de la persona rodeándola. Si hay piso visible, sus pies en el mismo piso al mismo nivel que los de la persona. Si es plano medio, su cuerpo está a la altura del hombro o torso de la persona, en contacto.";
+        specificAction = "Mun se ubica junto a la persona de forma muy natural, asomándose, apoyándose o incluso intentando subirse 'a cocochito' para salir en la foto de forma divertida.";
+      }
+
+      if (shouldHug) {
+        specificAction += " De manera excepcional, Mun está abrazando a la persona. Es ABSOLUTAMENTE CRÍTICO que los brazos de Mun nazcan de su propio cuerpo. Los brazos deben rodear a la persona manteniendo ESTRICTAMENTE sus proporciones; NO deben estirarse. El abrazo debe ser tierno y el rostro de la persona debe ser 100% visible.";
       }
 
       const prompt =
-        "IDENTIDAD DEL PERSONAJE: La cara de Mun y la cara de Opaq son EXACTAMENTE iguales a las imágenes de referencia adjuntas. No cambia su expresión, ojos, boca ni forma de la cara bajo ninguna circunstancia. La imagen de referencia define la cara y las proporciones del cuerpo (largo de brazos, piernas, torso) — NO la pose. La pose es libre y se adapta a la escena.\n\n" +
-        "ACCIÓN PRINCIPAL:\n" + specificAction + "\n\n" +
-        "INTEGRACIÓN FÍSICA: El resultado debe verse como una foto real donde el personaje animado estuvo presente en ese momento. Misma iluminación, misma perspectiva, mismo plano espacial que las personas. No es un sticker pegado encima.\n\n" +
-        "REGLAS:\n" +
-        "- Tamaño del personaje: siempre más pequeño que la persona (máximo = tamaño de una cabeza humana)\n" +
-        "- Anatomía: exactamente 2 brazos y 2 piernas. Los brazos NO se estiran más allá de su longitud natural. El brazo que abraza nace del hombro y rodea por detrás — nunca cruza por encima de la propia cabeza ni torso\n" +
-        "- Caras de las personas: 100% visibles, sin tapar\n" +
-        "- Foto original: idéntica. No modificar ropa, fondo, colores ni agregar contenido que no sea el personaje\n\n" +
-        "RESULTADO: La foto original con el personaje integrado físicamente según la acción indicada.";
+        "REGLA #1 — LA MÁS IMPORTANTE DE TODAS: La cara de Mun y la cara de Opaq son INTOCABLES. Sus facciones, ojos, boca, expresión y forma de la cara son EXACTAMENTE iguales a las imágenes de referencia entregadas. No se modifican bajo ninguna circunstancia, sin importar la emoción de la foto ni la acción que realicen. La cara de Mun es siempre la cara de Mun. La cara de Opaq es siempre la cara de Opaq. Nunca cambian.\n\n" +
+        "TAREA: Insertar un pequeño personaje animado dentro de esta fotografía real, como si estuviera físicamente presente en la escena junto a la persona.\n\n" +
+        "EL PERSONAJE ES UNA CRIATURA PEQUEÑA E INDEPENDIENTE. No es un filtro ni una máscara. No se superpone sobre la persona. Aparece en la foto como un ser diminuto parado al lado, detrás, o sobre el hombro — NUNCA encima de la cara ni cubriendo ninguna parte de su cuerpo.\n\n" +
+        "REGLA CRÍTICA — APLICA TANTO A MUN COMO A OPAQ: Las extremidades de Mun y de Opaq (brazos y piernas) NUNCA se alargan ni estiran. Su longitud es fija, exactamente igual a la imagen de referencia de cada uno. Si Mun o Opaq no llegan a tocar algo con sus brazos de tamaño natural, su cuerpo entero se acerca — jamás estiran los brazos. Un brazo estirado o alargado en cualquiera de los dos personajes es un error grave.\n\n" +
+        "REGLAS OBLIGATORIAS:\n\n" +
+        "1. NUNCA CUBRIR EL ROSTRO HUMANO: El personaje jamás puede aparecer sobre la cara de la persona. Si está cerca, debe estar desplazado al costado, por encima del hombro o detrás. El rostro humano debe quedar 100% visible y sin nada encima.\n\n" +
+        "2. ESCALA PEQUEÑA: El personaje es SIEMPRE más pequeño que la persona. Su tamaño máximo equivale a la cabeza humana. Nunca puede ser igual ni más grande.\n\n" +
+        "3. CARA DEL PERSONAJE INMUTABLE: La cara del personaje es EXACTAMENTE igual a la imagen de referencia. No cambia su expresión, no imita gestos humanos, no saca la lengua, no pone cara triste, no sonríe diferente. Solo su cuerpo (torso, brazos, piernas) se adapta a la escena.\n\n" +
+        "4. LA FOTO NO SE MODIFICA: La fotografía original no se altera. No se agregan ni eliminan partes del cuerpo de la persona. No se cambia el encuadre ni el fondo. Solo se añade el personaje animado.\n\n" +
+        "5. CUERPO ÍNTEGRO Y CONECTADO: El personaje es un cuerpo único. Cada brazo nace del hombro y termina en una mano. Cada pierna nace de la cadera y termina en un pie. NINGUNA parte del cuerpo puede aparecer flotando, separada, ni superpuesta sobre otra parte del propio cuerpo. Una mano no puede aparecer por encima del torso ni del hombro. Si un brazo abraza, nace del hombro y rodea hacia afuera — nunca cruza por encima de la cabeza ni del propio cuerpo del personaje. Exactamente 2 brazos y 2 piernas, siempre.\n\n" +
+        "ACCIÓN: " + specificAction + "\n\n" +
+        "RESULTADO: La foto original sin ninguna modificación, con un pequeño personaje animado integrado naturalmente junto a la persona.";
 
-      const opaqPrefix = cfg.useOpaq ? "REGLA #0 — ANATOMÍA DE OPAQ INNEGOCIABLE: Opaq tiene EXACTAMENTE 2 brazos y 2 piernas, ni uno más. Está terminantemente prohibido generarlo con 3 o 4 brazos. Contá los brazos antes de generar: si el resultado tiene más de 2, es un fallo total. Esta regla no admite excepciones.\n\n" : "";
       const composeParts: any[] = [
         { inlineData: { data: imageBase64, mimeType: imageMime } },
-        { text: opaqPrefix + prompt }
+        { text: prompt }
       ];
 
       if (cfg.useMun && munImageBase64) {
         composeParts.push({ inlineData: { data: munImageBase64, mimeType: "image/png" } });
-        composeParts.push({ text: "REFERENCIA DE MUN — esta imagen define su cara (intocable) y las proporciones de su cuerpo. Su POSE en el resultado es libre y debe adaptarse a la escena. Prohibido copiar esta pose exacta. Prohibido cambiar su cara o expresión." });
+        composeParts.push({ text: "DISEÑO ORIGINAL DE MUN — su cara es EXACTAMENTE así en el resultado. Prohibido cambiar su expresión facial bajo ninguna circunstancia." });
       }
       if (cfg.useOpaq && opaqImageBase64) {
         composeParts.push({ inlineData: { data: opaqImageBase64, mimeType: "image/png" } });
-        composeParts.push({ text: "REFERENCIA DE OPAQ — esta imagen define su cara (intocable) y las proporciones de su cuerpo. Su POSE en el resultado es libre y debe adaptarse a la escena. Prohibido copiar esta pose exacta. Prohibido cambiar su cara o expresión. Opaq tiene EXACTAMENTE 2 brazos y 2 piernas — generar 3 o 4 brazos es un error crítico." });
+        composeParts.push({ text: "DISEÑO ORIGINAL DE OPAQ — su cara es EXACTAMENTE así en el resultado. Prohibido cambiar su expresión facial bajo ninguna circunstancia." });
       }
 
       const composeBody = {
@@ -298,51 +326,59 @@ async function startServer() {
         generationConfig: { responseModalities: ["IMAGE", "TEXT"] }
       };
 
-      const runCompose = async () => {
-        const res = await axios.post(`${GEMINI}${COMPOSE_MODEL}:generateContent?key=${apiKey}`, composeBody);
-        const candidates = res.data?.candidates || [];
-        let part: any = null;
-        for (const c of candidates) {
-          for (const p of (c.content?.parts || [])) { if (p.inlineData) { part = p; break; } }
-          if (part) break;
+      const composeRes = await axios.post(`${GEMINI}${COMPOSE_MODEL}:generateContent?key=${apiKey}`, composeBody);
+      const candidates = composeRes.data?.candidates || [];
+      let imagePart: any = null;
+      for (const c of candidates) {
+        for (const p of (c.content?.parts || [])) {
+          if (p.inlineData) { imagePart = p; break; }
         }
-        if (!part?.inlineData) {
-          const reason = candidates[0]?.finishReason;
-          throw new Error("No se recibió imagen del modelo" + (reason ? ` (motivo: ${reason})` : "") + ". Intentá con otra foto.");
-        }
-        return part;
-      };
+        if (imagePart) break;
+      }
 
-      const validateImage = async (b64: string, mime: string): Promise<boolean> => {
-        try {
-          const vRes = await axios.post(`${GEMINI}${DETECT_MODEL}:generateContent?key=${apiKey}`, {
-            contents: [{ parts: [
-              { inlineData: { data: b64, mimeType: mime } },
-              { text: "Esta imagen tiene una foto real con uno o dos personajes animados pequeños insertados (se llaman Mun y Opaq). Analizá con atención y respondé SOLO con SI o NO a cada punto:\n1. ¿Algún personaje tiene más de 2 brazos o más de 2 piernas visibles?\n2. ¿Algún personaje cubre o se superpone sobre el rostro de alguna persona?\n3. ¿Algún personaje es igual o más grande que la persona en la foto?\n\nRespondé exactamente así:\n1: SI o NO\n2: SI o NO\n3: SI o NO" }
-            ]}],
-            generationConfig: { temperature: 0, maxOutputTokens: 30 }
-          });
-          const text = ((vRes.data?.candidates?.[0]?.content?.parts || []).map((p: any) => p.text || "").join("")).toUpperCase();
-          console.log(`[MunsMood] validation: ${text}`);
-          return !text.split("\n").some(l => /^\d:/.test(l.trim()) && l.includes("SI"));
-        } catch { return true; } // si falla la validación por red, dejamos pasar
-      };
-
-      // Paso 3: Compose + validar, con hasta 2 reintentos si falla
-      let imagePart = await runCompose();
-      for (let attempt = 1; attempt <= 2; attempt++) {
-        const ok = await validateImage(imagePart.inlineData.data, imagePart.inlineData.mimeType || "image/png");
-        if (ok) break;
-        console.log(`[MunsMood] validation failed (attempt ${attempt}), retrying compose...`);
-        imagePart = await runCompose();
+      if (!imagePart?.inlineData) {
+        const reason = candidates[0]?.finishReason;
+        throw new Error("No se recibió imagen del modelo" + (reason ? ` (motivo: ${reason})` : "") + ". Intentá con otra foto.");
       }
 
       const composedImage = `data:${imagePart.inlineData.mimeType || "image/png"};base64,${imagePart.inlineData.data}`;
+
+      // Paso 3: Validar resultado
+      const composedB64 = imagePart.inlineData.data;
+      const composedMime = imagePart.inlineData.mimeType || "image/png";
+      const validateBody = {
+        contents: [{
+          parts: [
+            { inlineData: { data: composedB64, mimeType: composedMime } },
+            { text: "Esta imagen tiene una foto real con uno o dos personajes animados pequeños insertados (se llaman Mun y Opaq). Analizá con atención y respondé SOLO con SI o NO a cada punto:\n1. ¿Algún personaje tiene más de 2 brazos o más de 2 piernas visibles?\n2. ¿Algún personaje cubre o se superpone sobre el rostro de alguna persona?\n3. ¿Algún personaje es igual o más grande que la persona en la foto?\n\nRespondé exactamente así:\n1: SI o NO\n2: SI o NO\n3: SI o NO" }
+          ]
+        }],
+        generationConfig: { temperature: 0, maxOutputTokens: 30 }
+      };
+
+      try {
+        const validateRes = await axios.post(`${GEMINI}${DETECT_MODEL}:generateContent?key=${apiKey}`, validateBody);
+        const validateText = ((validateRes.data?.candidates?.[0]?.content?.parts || [])
+          .map((p: any) => p.text || "").join("")).toUpperCase();
+        console.log(`[MunsMood] validation: ${validateText}`);
+        const lines = validateText.split("\n");
+        for (const line of lines) {
+          if (/^\d:/.test(line.trim()) && line.includes("SI")) {
+            throw new Error("vamos de nuevo que salió movida 📸");
+          }
+        }
+      } catch (e: any) {
+        if (e.message.includes("salió movida")) throw e;
+        // Si falla la validación por error de red, dejamos pasar
+        console.warn("[MunsMood] validation error (ignored):", e.message);
+      }
+
       res.json({ composedImage });
 
     } catch (error: any) {
-      console.error("[MunsMood] error:", error.response?.data || error.message);
-      res.status(500).json({ error: error.message || "Error procesando la foto" });
+      const detail = error.response?.data ? JSON.stringify(error.response.data) : error.message;
+      console.error("[MunsMood] error:", detail);
+      res.status(500).json({ error: error.message || "Error procesando la foto", detail });
     }
   });
 
