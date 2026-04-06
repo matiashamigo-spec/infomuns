@@ -253,23 +253,21 @@ async function startServer() {
       };
 
       const cfg = EMOTION_ACTIONS[emotion] || EMOTION_ACTIONS.HAPPY_NEUTRAL;
-      const shouldHug = cfg.useMun && Math.random() < 0.3;
+
+      // Regla de abrazo: para 1 persona siempre abrazan; para múltiples se meten entre dos
+      const hugRule = "CRÍTICO sobre el abrazo: el brazo del personaje nace de su hombro y rodea a la persona hacia afuera — nunca cruza por encima de su propia cabeza ni de su propio torso. El abrazo es tierno. El rostro de la persona queda 100% visible.";
 
       let specificAction = "";
       if (emotion === "TONGUE_OUT") {
-        specificAction = "La persona saca la lengua de forma juguetona. Mun y Opaq aparecen justo a los costados de la persona — sus cuerpos tocan o rozan la silueta de la persona, nunca en fondo lejano. Si hay piso visible, sus pies están al mismo nivel que los de la persona. Si no hay piso (plano medio), se apoyan en los hombros o brazos de la persona. Hacen gestos divertidos sin tapar ningún rostro. CRÍTICO: Mun y Opaq deben aparecer con el MISMO tamaño entre sí.";
+        specificAction = "La persona saca la lengua de forma juguetona. Mun y Opaq abrazan a la persona desde cada costado — uno a cada lado, con un brazo alrededor de la persona, sus cuerpos pegados a la silueta de la persona. Si hay piso visible, sus pies están al mismo nivel. Si es plano medio, están a la altura de los hombros o brazos, rodeándola. Hacen gestos divertidos sin tapar ningún rostro. CRÍTICO: Mun y Opaq deben aparecer con el MISMO tamaño entre sí. " + hugRule;
       } else if (emotion === "MULTIPLE_PEOPLE") {
-        specificAction = "Se observa un grupo de personas. Mun se ubica inmediatamente junto a alguien del grupo — su cuerpo toca o roza la silueta de esa persona. Si hay piso visible, sus pies están al mismo nivel. Si no hay piso, está sobre el hombro o brazo de alguien del grupo. Las caras de TODAS las personas quedan 100% visibles. Mun NO aparece en un fondo alejado.";
+        specificAction = "Se observa un grupo de personas. Mun se mete en el espacio libre entre DOS personas que estén próximas entre sí — su cuerpo toca o roza la silueta de ambas al mismo tiempo, como si formara parte natural del grupo. Si hay piso visible, sus pies están al mismo nivel que los de las personas. Si es plano medio, Mun está a la altura de los hombros de ambas, tocando a las dos. Las caras de TODAS las personas quedan 100% visibles. Mun NO aparece en fondo alejado ni junto a una sola persona del borde.";
       } else if (emotion === "HUG_TWO") {
-        specificAction = "La persona tiene los brazos abiertos ofreciendo un abrazo. Mun se coloca en el centro del espacio que forman los brazos abiertos, como si caminara hacia el abrazo. Su cuerpo está inmediatamente delante de la persona (los brazos la rodean), tocando o rozando su silueta. No está en el fondo lejano.";
+        specificAction = "La persona tiene los brazos abiertos ofreciendo un abrazo. Mun se mete dentro del espacio que forman los brazos, respondiendo al abrazo. El cuerpo de Mun está pegado al torso de la persona, entre sus brazos abiertos. Si hay piso visible, sus pies están al mismo nivel que los de la persona. " + hugRule;
       } else if (emotion === "SAD") {
-        specificAction = "Se percibe tristeza. Opaq está de pie justo al lado de la persona — su cuerpo toca o roza la silueta de la persona. Desde esa posición, extiende sus brazos hacia la persona en gesto de abrazo contenido. Si hay piso visible, sus pies están al mismo nivel que los de la persona. Si no hay piso (plano medio), Opaq está apoyado en el hombro o brazo de la persona. El rostro de la persona queda 100% visible.";
+        specificAction = "Se percibe tristeza. Opaq abraza a la persona desde un costado en gesto de consuelo. El cuerpo de Opaq está pegado a la silueta de la persona, con un brazo rodeando su hombro o cintura. Si hay piso visible, sus pies están al mismo nivel que los de la persona. Si es plano medio, Opaq está a la altura del hombro o torso con el brazo rodeando a la persona. El rostro de la persona queda 100% visible. " + hugRule;
       } else {
-        specificAction = "Mun está de pie justo al lado de la persona — su cuerpo toca o roza la silueta de la persona. Si hay piso visible, los pies de Mun están en el mismo piso que la persona, al mismo nivel. Si no hay piso (plano medio o primer plano), Mun está sentado o apoyado en el hombro o brazo de la persona. Mun NO aparece en fondo lejano ni en ningún espacio vacío alejado de la persona.";
-      }
-
-      if (shouldHug) {
-        specificAction += " De manera excepcional, Mun está abrazando a la persona. Es ABSOLUTAMENTE CRÍTICO que los brazos de Mun nazcan de su propio cuerpo. Los brazos deben rodear a la persona manteniendo ESTRICTAMENTE sus proporciones; NO deben estirarse. El abrazo debe ser tierno y el rostro de la persona debe ser 100% visible.";
+        specificAction = "Mun abraza a la persona desde un costado. Su cuerpo está pegado a la silueta de la persona, con un brazo rodeando su hombro o cintura. Si hay piso visible, sus pies están en el mismo piso al mismo nivel. Si es plano medio, Mun está a la altura del hombro o torso con el brazo rodeando a la persona. Mun NO aparece en fondo lejano ni en espacio vacío alejado. " + hugRule;
       }
 
       const prompt =
