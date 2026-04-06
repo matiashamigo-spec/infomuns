@@ -287,10 +287,10 @@ async function startServer() {
         "ACCIÓN: " + specificAction + "\n\n" +
         "RESULTADO: La foto original IDÉNTICA, con un pequeño personaje animado integrado naturalmente en el espacio libre existente.";
 
-      const opaqNote = cfg.useOpaq ? "\n\nNOTA CRÍTICA SOBRE OPAQ: Opaq tiene EXACTAMENTE 2 brazos y 2 piernas — igual que en su imagen de referencia. Reproducir 3 o 4 brazos es un error gravísimo e inaceptable. Opaq debe integrarse dentro de la escena real de la foto, parado en el espacio libre disponible, como si físicamente estuviera ahí." : "";
+      const opaqPrefix = cfg.useOpaq ? "REGLA #0 — ANATOMÍA DE OPAQ INNEGOCIABLE: Opaq tiene EXACTAMENTE 2 brazos y 2 piernas, ni uno más. Está terminantemente prohibido generarlo con 3 o 4 brazos. Contá los brazos antes de generar: si el resultado tiene más de 2, es un fallo total. Esta regla no admite excepciones.\n\n" : "";
       const composeParts: any[] = [
         { inlineData: { data: imageBase64, mimeType: imageMime } },
-        { text: prompt + opaqNote }
+        { text: opaqPrefix + prompt }
       ];
 
       if (cfg.useMun && munImageBase64) {
@@ -337,11 +337,12 @@ async function startServer() {
         } catch { return true; } // si falla la validación por red, dejamos pasar
       };
 
-      // Paso 3: Compose + validar, con un reintento si falla
+      // Paso 3: Compose + validar, con hasta 2 reintentos si falla
       let imagePart = await runCompose();
-      const ok = await validateImage(imagePart.inlineData.data, imagePart.inlineData.mimeType || "image/png");
-      if (!ok) {
-        console.log("[MunsMood] validation failed, retrying compose...");
+      for (let attempt = 1; attempt <= 2; attempt++) {
+        const ok = await validateImage(imagePart.inlineData.data, imagePart.inlineData.mimeType || "image/png");
+        if (ok) break;
+        console.log(`[MunsMood] validation failed (attempt ${attempt}), retrying compose...`);
         imagePart = await runCompose();
       }
 
