@@ -282,7 +282,7 @@ async function startServer() {
         "2. ESCALA PEQUEÑA: El personaje es SIEMPRE más pequeño que la persona. Su tamaño máximo equivale a la cabeza humana. Nunca puede ser igual ni más grande.\n\n" +
         "3. CARA DEL PERSONAJE INMUTABLE: La cara del personaje es EXACTAMENTE igual a la imagen de referencia. No cambia su expresión, no imita gestos humanos, no saca la lengua, no pone cara triste, no sonríe diferente. Solo su cuerpo (torso, brazos, piernas) se adapta a la escena.\n\n" +
         "4. LA FOTO ORIGINAL ES INTOCABLE — PROHIBIDO INVENTAR CONTENIDO: Cada píxel de la foto original (personas, ropa, fondo, objetos, iluminación) debe quedar IDÉNTICO. Está estrictamente prohibido: extender ropa, alargar mangas, agregar fondo, rellenar zonas, modificar colores, añadir sombras propias del entorno, o generar cualquier contenido nuevo que no sea el personaje animado. Si el personaje tapa algo de la foto al insertarse, ese algo debe seguir viéndose exactamente igual alrededor del personaje.\n\n" +
-        "5. CUERPO ÍNTEGRO Y CONECTADO: El personaje es un cuerpo único. Cada brazo nace del hombro y termina en una mano. Cada pierna nace de la cadera y termina en un pie. NINGUNA parte del cuerpo puede aparecer flotando, separada, ni superpuesta sobre otra parte del propio cuerpo. Una mano no puede aparecer por encima del torso ni del hombro. Si un brazo abraza, nace del hombro y rodea hacia afuera — nunca cruza por encima de la cabeza ni del propio cuerpo del personaje. Exactamente 2 brazos y 2 piernas, siempre.\n\n" +
+        "5. CUERPO ÍNTEGRO Y CONECTADO — APLICA IGUAL A MUN Y A OPAQ: Cada personaje tiene exactamente 2 brazos y 2 piernas, ni uno más ni uno menos. Cada brazo nace del hombro y termina en una mano. Cada pierna nace de la cadera y termina en un pie. NINGUNA parte del cuerpo puede aparecer flotando, duplicada, separada ni superpuesta sobre otra parte del propio cuerpo. Una mano no puede aparecer por encima del torso ni del hombro. Si un brazo abraza, nace del hombro y rodea hacia afuera — nunca cruza por encima de la cabeza ni del propio cuerpo. Ver 3 o 4 brazos en cualquier personaje es un error gravísimo.\n\n" +
         "CONTEXTO DE LA ESCENA: Antes de ubicar al personaje, analizá la foto: ¿la persona está sentada, parada, acostada? ¿Hay objetos, muebles, pared, exterior? ¿Dónde está el espacio libre natural? El personaje debe integrarse respetando esa realidad — apoyado sobre la superficie donde está la persona, parado en el piso si la persona está parada, etc. No puede flotar en el aire ni aparecer en una posición físicamente imposible para el entorno de la foto.\n\n" +
         "ACCIÓN: " + specificAction + "\n\n" +
         "RESULTADO: La foto original IDÉNTICA, con un pequeño personaje animado integrado naturalmente en el espacio libre existente.";
@@ -306,53 +306,45 @@ async function startServer() {
         generationConfig: { responseModalities: ["IMAGE", "TEXT"] }
       };
 
-      const composeRes = await axios.post(`${GEMINI}${COMPOSE_MODEL}:generateContent?key=${apiKey}`, composeBody);
-      const candidates = composeRes.data?.candidates || [];
-      let imagePart: any = null;
-      for (const c of candidates) {
-        for (const p of (c.content?.parts || [])) {
-          if (p.inlineData) { imagePart = p; break; }
+      const runCompose = async () => {
+        const res = await axios.post(`${GEMINI}${COMPOSE_MODEL}:generateContent?key=${apiKey}`, composeBody);
+        const candidates = res.data?.candidates || [];
+        let part: any = null;
+        for (const c of candidates) {
+          for (const p of (c.content?.parts || [])) { if (p.inlineData) { part = p; break; } }
+          if (part) break;
         }
-        if (imagePart) break;
-      }
+        if (!part?.inlineData) {
+          const reason = candidates[0]?.finishReason;
+          throw new Error("No se recibió imagen del modelo" + (reason ? ` (motivo: ${reason})` : "") + ". Intentá con otra foto.");
+        }
+        return part;
+      };
 
-      if (!imagePart?.inlineData) {
-        const reason = candidates[0]?.finishReason;
-        throw new Error("No se recibió imagen del modelo" + (reason ? ` (motivo: ${reason})` : "") + ". Intentá con otra foto.");
+      const validateImage = async (b64: string, mime: string): Promise<boolean> => {
+        try {
+          const vRes = await axios.post(`${GEMINI}${DETECT_MODEL}:generateContent?key=${apiKey}`, {
+            contents: [{ parts: [
+              { inlineData: { data: b64, mimeType: mime } },
+              { text: "Esta imagen tiene una foto real con uno o dos personajes animados pequeños insertados (se llaman Mun y Opaq). Analizá con atención y respondé SOLO con SI o NO a cada punto:\n1. ¿Algún personaje tiene más de 2 brazos o más de 2 piernas visibles?\n2. ¿Algún personaje cubre o se superpone sobre el rostro de alguna persona?\n3. ¿Algún personaje es igual o más grande que la persona en la foto?\n\nRespondé exactamente así:\n1: SI o NO\n2: SI o NO\n3: SI o NO" }
+            ]}],
+            generationConfig: { temperature: 0, maxOutputTokens: 30 }
+          });
+          const text = ((vRes.data?.candidates?.[0]?.content?.parts || []).map((p: any) => p.text || "").join("")).toUpperCase();
+          console.log(`[MunsMood] validation: ${text}`);
+          return !text.split("\n").some(l => /^\d:/.test(l.trim()) && l.includes("SI"));
+        } catch { return true; } // si falla la validación por red, dejamos pasar
+      };
+
+      // Paso 3: Compose + validar, con un reintento si falla
+      let imagePart = await runCompose();
+      const ok = await validateImage(imagePart.inlineData.data, imagePart.inlineData.mimeType || "image/png");
+      if (!ok) {
+        console.log("[MunsMood] validation failed, retrying compose...");
+        imagePart = await runCompose();
       }
 
       const composedImage = `data:${imagePart.inlineData.mimeType || "image/png"};base64,${imagePart.inlineData.data}`;
-
-      // Paso 3: Validar resultado
-      const composedB64 = imagePart.inlineData.data;
-      const composedMime = imagePart.inlineData.mimeType || "image/png";
-      const validateBody = {
-        contents: [{
-          parts: [
-            { inlineData: { data: composedB64, mimeType: composedMime } },
-            { text: "Esta imagen tiene una foto real con uno o dos personajes animados pequeños insertados (se llaman Mun y Opaq). Analizá con atención y respondé SOLO con SI o NO a cada punto:\n1. ¿Algún personaje tiene más de 2 brazos o más de 2 piernas visibles?\n2. ¿Algún personaje cubre o se superpone sobre el rostro de alguna persona?\n3. ¿Algún personaje es igual o más grande que la persona en la foto?\n\nRespondé exactamente así:\n1: SI o NO\n2: SI o NO\n3: SI o NO" }
-          ]
-        }],
-        generationConfig: { temperature: 0, maxOutputTokens: 30 }
-      };
-
-      try {
-        const validateRes = await axios.post(`${GEMINI}${DETECT_MODEL}:generateContent?key=${apiKey}`, validateBody);
-        const validateText = ((validateRes.data?.candidates?.[0]?.content?.parts || [])
-          .map((p: any) => p.text || "").join("")).toUpperCase();
-        console.log(`[MunsMood] validation: ${validateText}`);
-        const lines = validateText.split("\n");
-        for (const line of lines) {
-          if (/^\d:/.test(line.trim()) && line.includes("SI")) {
-            throw new Error("vamos de nuevo que salió movida 📸");
-          }
-        }
-      } catch (e: any) {
-        if (e.message.includes("salió movida")) throw e;
-        // Si falla la validación por error de red, dejamos pasar
-        console.warn("[MunsMood] validation error (ignored):", e.message);
-      }
-
       res.json({ composedImage });
 
     } catch (error: any) {
