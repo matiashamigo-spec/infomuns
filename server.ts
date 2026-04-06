@@ -299,7 +299,7 @@ async function startServer() {
       }
       if (cfg.useOpaq && opaqImageBase64) {
         composeParts.push({ inlineData: { data: opaqImageBase64, mimeType: "image/png" } });
-        composeParts.push({ text: "DISEÑO ORIGINAL DE OPAQ — reproducir EXACTAMENTE este personaje: misma cara, mismo cuerpo, misma forma, EXACTAMENTE 2 brazos y 2 piernas como se ven en esta imagen de referencia. No agregar ni quitar extremidades. No cambiar su expresión facial. No modificar su silueta. Opaq tiene SOLO 2 brazos — generar 3 o 4 brazos es un error crítico." });
+        composeParts.push({ text: "DISEÑO ORIGINAL DE OPAQ — su cara es EXACTAMENTE así en el resultado: mismas facciones, mismos ojos, misma boca, misma expresión. Prohibido cambiar su expresión facial bajo ninguna circunstancia. Además: reproducir EXACTAMENTE 2 brazos y 2 piernas como se ven en esta imagen de referencia. No agregar ni quitar extremidades. Opaq tiene SOLO 2 brazos — generar 3 o 4 brazos es un error crítico." });
       }
 
       const composeBody = {
