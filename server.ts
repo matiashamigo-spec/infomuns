@@ -63,6 +63,9 @@ async function startServer() {
   const app = express();
   const PORT = process.env.PORT || 3000;
 
+  // Railway está detrás de un proxy — necesario para que req.ip sea la IP real del cliente
+  app.set("trust proxy", 1);
+
   app.use(express.json({ limit: "20mb" }));
 
   // CORS
