@@ -259,7 +259,7 @@ async function startServer() {
       if (emotion === "TONGUE_OUT") {
         specificAction = "La persona realiza un gesto ameno sacando la lengua. Mun y Opaq se posicionan de forma juguetona junto a ella; uno puede estar asomándose y el otro intentando subirse 'a cocochito' (piggyback) o apoyándose en su hombro de forma cariñosa.";
       } else if (emotion === "MULTIPLE_PEOPLE") {
-        specificAction = "Se observa un grupo de personas. Mun se integra de forma natural, quizás apoyándose suavemente en el hombro de alguien o asomándose desde atrás con mucha confianza y afecto.";
+        specificAction = "Se observa un grupo de personas. Mun busca el espacio libre disponible en la foto —un hueco entre personas, un hombro descubierto, un borde del grupo, o el fondo visible detrás de alguien— y se ubica ahí de forma natural y afectuosa. CRÍTICO: el cuerpo de Mun NO puede superponerse sobre el cuerpo, los hombros ni la cara de ninguna persona del grupo. Si no hay espacio libre visible entre las personas, Mun se asoma desde un costado o esquina del encuadre. Las caras de TODAS las personas deben quedar completamente visibles.";
       } else if (emotion === "HUG_TWO") {
         specificAction = "La persona ofrece un abrazo. Mun responde de forma activa: puede estar abrazando a la persona, apoyando su cabeza en su hombro o intentando trepar suavemente para un abrazo más cercano.";
       } else if (emotion === "SAD") {
@@ -278,7 +278,7 @@ async function startServer() {
         "EL PERSONAJE ES UNA CRIATURA PEQUEÑA E INDEPENDIENTE. No es un filtro ni una máscara. No se superpone sobre la persona. Aparece en la foto como un ser diminuto parado al lado, detrás, o sobre el hombro — NUNCA encima de la cara ni cubriendo ninguna parte de su cuerpo.\n\n" +
         "REGLA CRÍTICA — APLICA TANTO A MUN COMO A OPAQ: Las extremidades de Mun y de Opaq (brazos y piernas) NUNCA se alargan ni estiran. Su longitud es fija, exactamente igual a la imagen de referencia de cada uno. Si Mun o Opaq no llegan a tocar algo con sus brazos de tamaño natural, su cuerpo entero se acerca — jamás estiran los brazos. Un brazo estirado o alargado en cualquiera de los dos personajes es un error grave.\n\n" +
         "REGLAS OBLIGATORIAS:\n\n" +
-        "1. NUNCA CUBRIR EL ROSTRO HUMANO: El personaje jamás puede aparecer sobre la cara de la persona. Si está cerca, debe estar desplazado al costado, por encima del hombro o detrás. El rostro humano debe quedar 100% visible y sin nada encima.\n\n" +
+        "1. NUNCA CUBRIR NINGUNA CARA NI NINGÚN CUERPO: El personaje jamás puede superponerse sobre la cara o el cuerpo de NINGUNA persona de la foto, sin importar cuántas haya. Cada rostro humano debe quedar 100% visible. Si hay varias personas, el personaje se ubica en un espacio libre entre ellas, en un borde, o asomándose desde atrás sin tapar a nadie.\n\n" +
         "2. ESCALA PEQUEÑA: El personaje es SIEMPRE más pequeño que la persona. Su tamaño máximo equivale a la cabeza humana. Nunca puede ser igual ni más grande.\n\n" +
         "3. CARA DEL PERSONAJE INMUTABLE: La cara del personaje es EXACTAMENTE igual a la imagen de referencia. No cambia su expresión, no imita gestos humanos, no saca la lengua, no pone cara triste, no sonríe diferente. Solo su cuerpo (torso, brazos, piernas) se adapta a la escena.\n\n" +
         "4. LA FOTO NO SE MODIFICA: La fotografía original no se altera. No se agregan ni eliminan partes del cuerpo de la persona. No se cambia el encuadre ni el fondo. Solo se añade el personaje animado.\n\n" +
