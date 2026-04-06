@@ -256,29 +256,27 @@ async function startServer() {
 
       let specificAction = "";
       if (emotion === "TONGUE_OUT") {
-        specificAction = "Mun y Opaq están abrazando a la persona, uno de cada lado. El cuerpo de cada uno está pegado al costado de la persona, con un brazo rodeando su cintura o hombro. Sus rostros miran hacia adelante con gestos divertidos. Mismo tamaño entre sí.";
+        specificAction = "La persona saca la lengua. Mun está parado pegado al costado izquierdo de la persona abrazándola: su cuerpo toca la silueta de la persona, su brazo pasa por detrás de la espalda de la persona rodeándola. Opaq hace lo mismo desde el costado derecho. Sus cuerpos tocan a la persona, sus caras miran hacia adelante con gestos divertidos. Mismo tamaño entre sí. Si hay piso, sus pies al mismo nivel que los de la persona. Si es plano medio, están a la altura del hombro/torso.";
       } else if (emotion === "MULTIPLE_PEOPLE") {
-        specificAction = "Mun está parado entre dos personas del grupo, en contacto físico con ambas, como si fuera un integrante más de la foto. Su escala e iluminación son coherentes con el grupo. Sus pies al mismo nivel que los de las personas si hay piso visible.";
+        specificAction = "Hay varias personas. Mun aparece integrado entre ellas como si fuera un integrante más de la foto — parado entre dos personas que estén cerca, su cuerpo en el espacio entre ambas, rozando sus siluetas. Misma perspectiva, misma iluminación, mismo nivel de piso. Se ve como alguien que siempre estuvo en esa foto. Las caras de todas las personas 100% visibles.";
       } else if (emotion === "HUG_TWO") {
-        specificAction = "La persona tiene los brazos abiertos. Mun está dentro del abrazo, su cuerpo pegado al torso de la persona, respondiendo al gesto.";
+        specificAction = "La persona tiene los brazos abiertos ofreciendo un abrazo. Mun está parado dentro del espacio que forman los brazos, su cuerpo pegado al torso de la persona, respondiendo al abrazo. Si hay piso, sus pies al mismo nivel.";
       } else if (emotion === "SAD") {
-        specificAction = "Opaq está abrazando a la persona desde un costado. Su cuerpo está pegado al costado de la persona, con un brazo rodeando su hombro o cintura, en gesto de consuelo.";
+        specificAction = "Se percibe tristeza. Opaq está parado pegado al costado de la persona abrazándola: su cuerpo toca la silueta de la persona, su brazo pasa por detrás de la espalda de la persona rodeándola en gesto de consuelo. Si hay piso, sus pies al mismo nivel que los de la persona. Si es plano medio, su cuerpo está a la altura del hombro o torso de la persona, en contacto.";
       } else {
-        specificAction = "Mun está abrazando a la persona desde un costado. Su cuerpo está pegado al costado de la persona, con un brazo rodeando su hombro o cintura.";
+        specificAction = "Mun está parado pegado al costado de la persona abrazándola: su cuerpo toca la silueta de la persona, su brazo pasa por detrás de la espalda de la persona rodeándola. Si hay piso visible, sus pies en el mismo piso al mismo nivel que los de la persona. Si es plano medio, su cuerpo está a la altura del hombro o torso de la persona, en contacto.";
       }
 
-      const charName = cfg.useMun && cfg.useOpaq ? "Mun y Opaq" : cfg.useMun ? "Mun" : "Opaq";
-
       const prompt =
-        `Agregá el personaje animado ${charName} a esta foto de acuerdo a la siguiente descripción:\n\n` +
-        `ESCENA: ${specificAction}\n\n` +
-        `FÍSICO DEL PERSONAJE (según imagen de referencia adjunta):\n` +
-        `- Su cara es exactamente igual a la referencia. No cambiar expresión, ojos ni boca.\n` +
-        `- Tamaño: más pequeño que una persona (máximo tamaño de una cabeza humana).\n` +
-        `- Exactamente 2 brazos y 2 piernas. Los brazos NO se estiran — tienen longitud natural fija.\n` +
-        `- El brazo que abraza rodea hacia afuera desde el hombro, nunca pasa por encima de su propia cabeza.\n\n` +
-        `INTEGRACIÓN: misma iluminación y perspectiva que la foto. No es un sticker — el personaje estuvo ahí cuando se sacó la foto.\n\n` +
-        `RESTRICCIONES: la cara de las personas siempre 100% visible. La foto original no se modifica.`;
+        "IDENTIDAD DEL PERSONAJE: La cara de Mun y la cara de Opaq son EXACTAMENTE iguales a las imágenes de referencia adjuntas. No cambia su expresión, ojos, boca ni forma de la cara bajo ninguna circunstancia. La imagen de referencia define la cara y las proporciones del cuerpo (largo de brazos, piernas, torso) — NO la pose. La pose es libre y se adapta a la escena.\n\n" +
+        "ACCIÓN PRINCIPAL:\n" + specificAction + "\n\n" +
+        "INTEGRACIÓN FÍSICA: El resultado debe verse como una foto real donde el personaje animado estuvo presente en ese momento. Misma iluminación, misma perspectiva, mismo plano espacial que las personas. No es un sticker pegado encima.\n\n" +
+        "REGLAS:\n" +
+        "- Tamaño del personaje: siempre más pequeño que la persona (máximo = tamaño de una cabeza humana)\n" +
+        "- Anatomía: exactamente 2 brazos y 2 piernas. Los brazos NO se estiran más allá de su longitud natural. El brazo que abraza nace del hombro y rodea por detrás — nunca cruza por encima de la propia cabeza ni torso\n" +
+        "- Caras de las personas: 100% visibles, sin tapar\n" +
+        "- Foto original: idéntica. No modificar ropa, fondo, colores ni agregar contenido que no sea el personaje\n\n" +
+        "RESULTADO: La foto original con el personaje integrado físicamente según la acción indicada.";
 
       const opaqPrefix = cfg.useOpaq ? "REGLA #0 — ANATOMÍA DE OPAQ INNEGOCIABLE: Opaq tiene EXACTAMENTE 2 brazos y 2 piernas, ni uno más. Está terminantemente prohibido generarlo con 3 o 4 brazos. Contá los brazos antes de generar: si el resultado tiene más de 2, es un fallo total. Esta regla no admite excepciones.\n\n" : "";
       const composeParts: any[] = [
