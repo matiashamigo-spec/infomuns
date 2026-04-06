@@ -257,15 +257,15 @@ async function startServer() {
 
       let specificAction = "";
       if (emotion === "TONGUE_OUT") {
-        specificAction = "La persona realiza un gesto ameno sacando la lengua. Mun y Opaq se posicionan de forma juguetona junto a ella; uno puede estar asomándose y el otro intentando subirse 'a cocochito' (piggyback) o apoyándose en su hombro de forma cariñosa.";
+        specificAction = "La persona saca la lengua de forma juguetona. Mun y Opaq se ubican en zonas de fondo visible a los costados de la persona —nunca encima de su cuerpo— y hacen gestos divertidos desde ahí. Sus cuerpos están completamente en el fondo/espacio libre.";
       } else if (emotion === "MULTIPLE_PEOPLE") {
-        specificAction = "Se observa un grupo de personas. Mun busca el espacio libre disponible en la foto —un hueco entre personas, un hombro descubierto, un borde del grupo, o el fondo visible detrás de alguien— y se ubica ahí de forma natural y afectuosa. CRÍTICO: el cuerpo de Mun NO puede superponerse sobre el cuerpo, los hombros ni la cara de ninguna persona del grupo. Si no hay espacio libre visible entre las personas, Mun se asoma desde un costado o esquina del encuadre. Las caras de TODAS las personas deben quedar completamente visibles.";
+        specificAction = "Se observa un grupo de personas. Mun identifica el espacio vacío más natural de la foto: puede ser un hueco entre personas, el fondo visible junto a alguien del borde, o el espacio libre por encima del grupo. Se ubica ahí entero, sin superponerse sobre ningún cuerpo ni cara. Si toda la foto está ocupada por personas, Mun se asoma solo con la cabeza desde un borde o esquina. Las caras de TODAS las personas quedan 100% visibles.";
       } else if (emotion === "HUG_TWO") {
-        specificAction = "La persona ofrece un abrazo. Mun responde de forma activa: puede estar abrazando a la persona, apoyando su cabeza en su hombro o intentando trepar suavemente para un abrazo más cercano.";
+        specificAction = "La persona tiene los brazos abiertos ofreciendo un abrazo. Mun se coloca en el espacio vacío delante de la persona (en el área libre que forman los brazos abiertos) como si caminara hacia el abrazo. El cuerpo de Mun está en el espacio libre, no encima del cuerpo de la persona.";
       } else if (emotion === "SAD") {
-        specificAction = "Se percibe tristeza. Opaq abraza a la persona con sus bracitos. El abrazo debe verse físico y real: Opaq rodea a la persona desde un costado o desde atrás, adaptando la posición de sus brazos a donde esté la persona en la foto. El rostro de la persona queda 100% visible. La cara de Opaq no cambia.";
+        specificAction = "Se percibe tristeza. Opaq se coloca en el espacio vacío a un costado de la persona. Desde ahí, extiende sus brazos (sin alargarlos) hacia la persona en gesto de abrazo contenido. El CUERPO de Opaq permanece en el área libre, fuera del cuerpo de la persona. El rostro de la persona queda 100% visible. La cara de Opaq no cambia.";
       } else {
-        specificAction = "Mun se ubica junto a la persona de forma muy natural, asomándose, apoyándose o incluso intentando subirse 'a cocochito' para salir en la foto de forma divertida.";
+        specificAction = "Mun se ubica en el espacio vacío más natural junto a la persona: al costado donde haya fondo visible, cerca de su brazo o hombro pero sin superponerse. Puede inclinarse levemente hacia la persona como si quisiera asomarse a la foto, pero su cuerpo entero está en el fondo libre.";
       }
 
       if (shouldHug) {
@@ -275,7 +275,7 @@ async function startServer() {
       const prompt =
         "REGLA #1 — LA MÁS IMPORTANTE DE TODAS: La cara de Mun y la cara de Opaq son INTOCABLES. Sus facciones, ojos, boca, expresión y forma de la cara son EXACTAMENTE iguales a las imágenes de referencia entregadas. No se modifican bajo ninguna circunstancia, sin importar la emoción de la foto ni la acción que realicen. La cara de Mun es siempre la cara de Mun. La cara de Opaq es siempre la cara de Opaq. Nunca cambian.\n\n" +
         "TAREA: Insertar un pequeño personaje animado dentro de esta fotografía real, como si estuviera físicamente presente en la escena junto a la persona.\n\n" +
-        "EL PERSONAJE ES UNA CRIATURA PEQUEÑA E INDEPENDIENTE. No es un filtro ni una máscara. No se superpone sobre la persona. Aparece en la foto como un ser diminuto parado al lado, detrás, o sobre el hombro — NUNCA encima de la cara ni cubriendo ninguna parte de su cuerpo.\n\n" +
+        "EL PERSONAJE ES UNA CRIATURA PEQUEÑA E INDEPENDIENTE. No es un filtro ni una máscara. Su cuerpo SIEMPRE ocupa espacio vacío/fondo de la foto — nunca se superpone sobre el cuerpo, ropa ni cara de ninguna persona. Aparece parado en el fondo visible junto a la persona, nunca encima de ella.\n\n" +
         "REGLA CRÍTICA — APLICA TANTO A MUN COMO A OPAQ: Las extremidades de Mun y de Opaq (brazos y piernas) NUNCA se alargan ni estiran. Su longitud es fija, exactamente igual a la imagen de referencia de cada uno. Si Mun o Opaq no llegan a tocar algo con sus brazos de tamaño natural, su cuerpo entero se acerca — jamás estiran los brazos. Un brazo estirado o alargado en cualquiera de los dos personajes es un error grave.\n\n" +
         "REGLAS OBLIGATORIAS:\n\n" +
         "1. NUNCA CUBRIR NINGUNA CARA NI NINGÚN CUERPO: El personaje jamás puede superponerse sobre la cara o el cuerpo de NINGUNA persona de la foto, sin importar cuántas haya. Cada rostro humano debe quedar 100% visible. Si hay varias personas, el personaje se ubica en un espacio libre entre ellas, en un borde, o asomándose desde atrás sin tapar a nadie.\n\n" +
