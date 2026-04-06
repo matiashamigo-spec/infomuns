@@ -274,9 +274,10 @@ async function startServer() {
 
       const prompt =
         "REGLA #1 — LA MÁS IMPORTANTE DE TODAS: La cara de Mun y la cara de Opaq son INTOCABLES. Sus facciones, ojos, boca, expresión y forma de la cara son EXACTAMENTE iguales a las imágenes de referencia entregadas. No se modifican bajo ninguna circunstancia, sin importar la emoción de la foto ni la acción que realicen. La cara de Mun es siempre la cara de Mun. La cara de Opaq es siempre la cara de Opaq. Nunca cambian.\n\n" +
-        "OBJETIVO: El resultado debe verse como si el personaje animado REALMENTE ESTUVO AHÍ cuando se sacó la foto. No es un sticker, no es una superposición, no es la imagen de referencia pegada encima. Es una criatura pequeña que vivió ese momento junto a la persona: está parada sobre la misma superficie, con la misma iluminación, integrada en la profundidad de la escena. Su pose y posición se adaptan completamente al entorno real de la foto.\n\n" +
-        "EL PERSONAJE OCUPA ESPACIO VACÍO. Su cuerpo siempre está en el fondo o espacio libre visible de la foto — nunca encima del cuerpo, ropa ni cara de ninguna persona. Se integra en la escena desde atrás o al costado, nunca por delante de las personas.\n\n"
-        "REGLA CRÍTICA — APLICA TANTO A MUN COMO A OPAQ: Las extremidades de Mun y de Opaq (brazos y piernas) NUNCA se alargan ni estiran. Su longitud es fija, exactamente igual a la imagen de referencia de cada uno. Si Mun o Opaq no llegan a tocar algo con sus brazos de tamaño natural, su cuerpo entero se acerca — jamás estiran los brazos. Un brazo estirado o alargado en cualquiera de los dos personajes es un error grave.\n\n" +
+        "OBJETIVO: El resultado debe verse como si el personaje animado REALMENTE ESTUVO AHÍ cuando se sacó la foto. NO es un sticker, NO es la imagen de referencia pegada encima. Es una criatura pequeña que vivió ese momento: adaptó su pose al entorno, está parada sobre la misma superficie, con la misma iluminación y perspectiva de la escena.\n\n" +
+        "USO DE LA IMAGEN DE REFERENCIA: La imagen de referencia define SOLO DOS COSAS: (1) la cara exacta del personaje y (2) las proporciones de su cuerpo (tamaño relativo de brazos, piernas, torso). NO define la pose. El personaje puede estar de pie, sentado, inclinado, abrazando, asomándose — cualquier pose que sea natural para la escena. La imagen de referencia es un molde de identidad, no una pose a copiar.\n\n" +
+        "EL PERSONAJE OCUPA ESPACIO VACÍO. Su cuerpo siempre está en el fondo o espacio libre visible — nunca encima del cuerpo, ropa ni cara de ninguna persona.\n\n" +
+        "REGLA CRÍTICA — PROPORCIONES FIJAS, POSE LIBRE: Los brazos y piernas tienen una longitud proporcional fija (igual a la referencia). Pero la POSE es completamente libre: pueden estar doblados, extendidos hacia la persona, levantados, etc. Lo que NUNCA ocurre es que se estiren más allá de su longitud natural — si el personaje quiere alcanzar algo lejano, se acerca con todo el cuerpo.\n\n" +
         "REGLAS OBLIGATORIAS:\n\n" +
         "1. NUNCA CUBRIR NINGUNA CARA NI NINGÚN CUERPO: El personaje jamás puede superponerse sobre la cara o el cuerpo de NINGUNA persona de la foto, sin importar cuántas haya. Cada rostro humano debe quedar 100% visible. Si hay varias personas, el personaje se ubica en un espacio libre entre ellas, en un borde, o asomándose desde atrás sin tapar a nadie.\n\n" +
         "2. ESCALA PEQUEÑA: El personaje es SIEMPRE más pequeño que la persona. Su tamaño máximo equivale a la cabeza humana. Nunca puede ser igual ni más grande.\n\n" +
@@ -295,11 +296,11 @@ async function startServer() {
 
       if (cfg.useMun && munImageBase64) {
         composeParts.push({ inlineData: { data: munImageBase64, mimeType: "image/png" } });
-        composeParts.push({ text: "DISEÑO ORIGINAL DE MUN — su cara es EXACTAMENTE así en el resultado. Prohibido cambiar su expresión facial bajo ninguna circunstancia." });
+        composeParts.push({ text: "REFERENCIA DE MUN — esta imagen define su cara (intocable) y las proporciones de su cuerpo. Su POSE en el resultado es libre y debe adaptarse a la escena. Prohibido copiar esta pose exacta. Prohibido cambiar su cara o expresión." });
       }
       if (cfg.useOpaq && opaqImageBase64) {
         composeParts.push({ inlineData: { data: opaqImageBase64, mimeType: "image/png" } });
-        composeParts.push({ text: "DISEÑO ORIGINAL DE OPAQ — su cara es EXACTAMENTE así en el resultado: mismas facciones, mismos ojos, misma boca, misma expresión. Prohibido cambiar su expresión facial bajo ninguna circunstancia. Además: reproducir EXACTAMENTE 2 brazos y 2 piernas como se ven en esta imagen de referencia. No agregar ni quitar extremidades. Opaq tiene SOLO 2 brazos — generar 3 o 4 brazos es un error crítico." });
+        composeParts.push({ text: "REFERENCIA DE OPAQ — esta imagen define su cara (intocable) y las proporciones de su cuerpo. Su POSE en el resultado es libre y debe adaptarse a la escena. Prohibido copiar esta pose exacta. Prohibido cambiar su cara o expresión. Opaq tiene EXACTAMENTE 2 brazos y 2 piernas — generar 3 o 4 brazos es un error crítico." });
       }
 
       const composeBody = {
