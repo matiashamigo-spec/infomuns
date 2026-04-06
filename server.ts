@@ -287,9 +287,10 @@ async function startServer() {
         "ACCIÓN: " + specificAction + "\n\n" +
         "RESULTADO: La foto original IDÉNTICA, con un pequeño personaje animado integrado naturalmente en el espacio libre existente.";
 
+      const opaqNote = cfg.useOpaq ? "\n\nNOTA CRÍTICA SOBRE OPAQ: Opaq tiene EXACTAMENTE 2 brazos y 2 piernas — igual que en su imagen de referencia. Reproducir 3 o 4 brazos es un error gravísimo e inaceptable. Opaq debe integrarse dentro de la escena real de la foto, parado en el espacio libre disponible, como si físicamente estuviera ahí." : "";
       const composeParts: any[] = [
         { inlineData: { data: imageBase64, mimeType: imageMime } },
-        { text: prompt }
+        { text: prompt + opaqNote }
       ];
 
       if (cfg.useMun && munImageBase64) {
@@ -298,7 +299,7 @@ async function startServer() {
       }
       if (cfg.useOpaq && opaqImageBase64) {
         composeParts.push({ inlineData: { data: opaqImageBase64, mimeType: "image/png" } });
-        composeParts.push({ text: "DISEÑO ORIGINAL DE OPAQ — su cara es EXACTAMENTE así en el resultado. Prohibido cambiar su expresión facial bajo ninguna circunstancia." });
+        composeParts.push({ text: "DISEÑO ORIGINAL DE OPAQ — reproducir EXACTAMENTE este personaje: misma cara, mismo cuerpo, misma forma, EXACTAMENTE 2 brazos y 2 piernas como se ven en esta imagen de referencia. No agregar ni quitar extremidades. No cambiar su expresión facial. No modificar su silueta. Opaq tiene SOLO 2 brazos — generar 3 o 4 brazos es un error crítico." });
       }
 
       const composeBody = {
