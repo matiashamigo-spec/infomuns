@@ -96,6 +96,7 @@ async function startServer() {
   app.get("/api/taller-init", sendKey);
   app.get("/api/munsmood-init", sendKey);
   app.get("/api/scanmuns-init", sendKey);
+  app.get("/api/memomuns-init", sendKey);
 
   // Temporal: listar modelos disponibles
   app.get("/api/debug/models", async (req: any, res: any) => {
