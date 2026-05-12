@@ -118,16 +118,20 @@ export async function illustrateImage(
     const photoData = Buffer.from(photoResponse.data).toString("base64");
     const photoMime = (photoResponse.headers["content-type"] || "image/jpeg").split(";")[0];
 
-    const prompt = `Transform this news photograph into a children's book illustration.
+    const character = loadCharacter(tone);
+
+    const prompt = `The first image is a news photograph. The second image is the character reference.
+Transform the news photograph into a children's book illustration.
 ${BASE_RULES}
 - Render everything as hand-drawn illustration — people become friendly cartoon characters, backgrounds become painted scenes
 - Keep the scene recognizable, no photorealism
-${characterInstructionTextOnly(tone)}`;
+${characterInstructionWithRef(tone)}`;
 
     const body = {
       contents: [{
         parts: [
           { inlineData: { data: photoData, mimeType: photoMime } },
+          { inlineData: character },
           { text: prompt },
         ],
       }],
