@@ -24,14 +24,39 @@ function loadCharacter(tone: NewsTone): { data: string; mimeType: string } {
   return { data, mimeType: "image/png" };
 }
 
-function characterInstruction(tone: NewsTone): string {
+const CHARACTER_STRICT_RULES = `STRICT RULES for the character:
+- Include EXACTLY ONE character — never two, never three, always one only.
+- Place it in the bottom-right corner, occupying about 1/5 of the image height.
+- Body shape: crescent moon silhouette, rounded and soft, like a thick half-moon lying sideways.
+- The pose and arm position may vary naturally, but face, body shape, and colors must stay consistent.
+- The character must look clean, friendly, and coherent — never deformed, stretched, or blurry.`;
+
+// Used when a reference image IS included in the request
+function characterInstructionWithRef(tone: NewsTone): string {
   if (tone === "negative") {
-    return `The second image is the "Opaq" character. Include Opaq in the bottom-right corner of the illustration (about 1/5 of image height), matching their exact appearance: grey-blue crescent moon body, purple spots, frowning face with furrowed brows, arms hanging down. Watercolor style.`;
+    return `The last image is the reference for "Opaq". ${CHARACTER_STRICT_RULES}
+Reproduce EXACTLY from the reference: grey-blue crescent moon body, purple spots, frowning face with furrowed brows.`;
   }
   if (tone === "concerning") {
-    return `The second image is a "Mun" character feeling worried. Include this Mun in the bottom-right corner of the illustration (about 1/5 of image height), matching their exact appearance: cream crescent moon body, blue-grey spots, sad droopy eyes, arms hanging. Watercolor style.`;
+    return `The last image is the reference for a worried "Mun". ${CHARACTER_STRICT_RULES}
+Reproduce EXACTLY from the reference: cream crescent moon body, blue-grey spots, sad droopy eyes.`;
   }
-  return `The second image is a happy "Mun" character. Include this Mun in the bottom-right corner of the illustration (about 1/5 of image height), matching their exact appearance: cream crescent moon body, beige spots, happy squinting eyes, hands on hips. Watercolor style.`;
+  return `The last image is the reference for a happy "Mun". ${CHARACTER_STRICT_RULES}
+Reproduce EXACTLY from the reference: cream crescent moon body, beige spots, happy squinting eyes.`;
+}
+
+// Used when there is NO reference image — description only
+function characterInstructionTextOnly(tone: NewsTone): string {
+  if (tone === "negative") {
+    return `Add the "Opaq" character in the bottom-right corner. ${CHARACTER_STRICT_RULES}
+Opaq's exact appearance: grey-blue thick crescent moon body, small purple oval spots, round eyes with furrowed brows in a frown, short stubby arms hanging down.`;
+  }
+  if (tone === "concerning") {
+    return `Add a worried "Mun" character in the bottom-right corner. ${CHARACTER_STRICT_RULES}
+This Mun's exact appearance: cream/off-white thick crescent moon body, small blue-grey oval spots, large sad droopy eyes, short stubby arms hanging low.`;
+  }
+  return `Add a happy "Mun" character in the bottom-right corner. ${CHARACTER_STRICT_RULES}
+This Mun's exact appearance: cream/off-white thick crescent moon body, small beige oval spots, happy squinting eyes with a gentle smile, short stubby arms with hands on hips.`;
 }
 
 const BASE_RULES = `
@@ -54,7 +79,7 @@ export async function generateIllustrationFromText(
     const prompt = `Create a children's book illustration for a story titled "${title}".
 Story summary: ${story.substring(0, 300)}
 ${BASE_RULES}
-${characterInstruction(tone)}`;
+${characterInstructionWithRef(tone)}`;
 
     const body = {
       contents: [{
@@ -97,7 +122,7 @@ export async function illustrateImage(
 ${BASE_RULES}
 - Render everything as hand-drawn illustration — people become friendly cartoon characters, backgrounds become painted scenes
 - Keep the scene recognizable, no photorealism
-${characterInstruction(tone)}`;
+${characterInstructionTextOnly(tone)}`;
 
     const body = {
       contents: [{
