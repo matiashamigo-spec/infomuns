@@ -5,6 +5,13 @@ import * as cheerio from "cheerio";
 import { GoogleGenAI, Type } from "@google/genai";
 import { MUNS_SYSTEM_INSTRUCTION } from "./constants";
 import rateLimit from "express-rate-limit";
+import fs from "fs";
+import path from "path";
+import crypto from "crypto";
+import multer from "multer";
+import cron from "node-cron";
+import { createNoticiasRouter } from "./noticias/routes.js";
+import { runDailyPipeline } from "./noticias/pipeline.js";
 
 const storyLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
@@ -78,7 +85,7 @@ async function startServer() {
     const origin = req.headers.origin || "";
     if (allowed.includes(origin) || process.env.NODE_ENV !== "production") {
       res.setHeader("Access-Control-Allow-Origin", origin || "*");
-      res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+      res.setHeader("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
       res.setHeader("Access-Control-Allow-Headers", "Content-Type");
     }
     if (req.method === "OPTIONS") return res.sendStatus(204);
@@ -330,51 +337,70 @@ async function startServer() {
         generationConfig: { responseModalities: ["IMAGE", "TEXT"] }
       };
 
-      const composeRes = await axios.post(`${GEMINI}${COMPOSE_MODEL}:generateContent?key=${apiKey}`, composeBody);
-      const candidates = composeRes.data?.candidates || [];
-      let imagePart: any = null;
-      for (const c of candidates) {
-        for (const p of (c.content?.parts || [])) {
-          if (p.inlineData) { imagePart = p; break; }
-        }
-        if (imagePart) break;
-      }
+      const MAX_ATTEMPTS = 3;
+      let composedImage = '';
 
-      if (!imagePart?.inlineData) {
-        const reason = candidates[0]?.finishReason;
-        throw new Error("No se recibió imagen del modelo" + (reason ? ` (motivo: ${reason})` : "") + ". Intentá con otra foto.");
-      }
-
-      const composedImage = `data:${imagePart.inlineData.mimeType || "image/png"};base64,${imagePart.inlineData.data}`;
-
-      // Paso 3: Validar resultado
-      const composedB64 = imagePart.inlineData.data;
-      const composedMime = imagePart.inlineData.mimeType || "image/png";
-      const validateBody = {
-        contents: [{
-          parts: [
-            { inlineData: { data: composedB64, mimeType: composedMime } },
-            { text: "Esta imagen tiene una foto real con uno o dos personajes animados pequeños insertados (se llaman Mun y Opaq). Analizá con atención y respondé SOLO con SI o NO a cada punto:\n1. ¿Algún personaje tiene más de 2 brazos o más de 2 piernas visibles?\n2. ¿Algún personaje cubre o se superpone sobre el rostro de alguna persona?\n3. ¿Algún personaje es igual o más grande que la persona en la foto?\n\nRespondé exactamente así:\n1: SI o NO\n2: SI o NO\n3: SI o NO" }
-          ]
-        }],
-        generationConfig: { temperature: 0, maxOutputTokens: 30 }
-      };
-
-      try {
-        const validateRes = await axios.post(`${GEMINI}${DETECT_MODEL}:generateContent?key=${apiKey}`, validateBody);
-        const validateText = ((validateRes.data?.candidates?.[0]?.content?.parts || [])
-          .map((p: any) => p.text || "").join("")).toUpperCase();
-        console.log(`[MunsMood] validation: ${validateText}`);
-        const lines = validateText.split("\n");
-        for (const line of lines) {
-          if (/^\d:/.test(line.trim()) && line.includes("SI")) {
-            throw new Error("vamos de nuevo que salió movida 📸");
+      for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+        // Paso 2: Componer imagen
+        const composeRes = await axios.post(`${GEMINI}${COMPOSE_MODEL}:generateContent?key=${apiKey}`, composeBody);
+        const candidates = composeRes.data?.candidates || [];
+        let imagePart: any = null;
+        for (const c of candidates) {
+          for (const p of (c.content?.parts || [])) {
+            if (p.inlineData) { imagePart = p; break; }
           }
+          if (imagePart) break;
         }
-      } catch (e: any) {
-        if (e.message.includes("salió movida")) throw e;
-        // Si falla la validación por error de red, dejamos pasar
-        console.warn("[MunsMood] validation error (ignored):", e.message);
+
+        if (!imagePart?.inlineData) {
+          const reason = candidates[0]?.finishReason;
+          if (attempt === MAX_ATTEMPTS) throw new Error("No se recibió imagen del modelo" + (reason ? ` (motivo: ${reason})` : "") + ". Intentá con otra foto.");
+          console.log(`[MunsMood] intento ${attempt}: sin imagen, reintentando...`);
+          continue;
+        }
+
+        const composedB64 = imagePart.inlineData.data;
+        const composedMime = imagePart.inlineData.mimeType || "image/png";
+        composedImage = `data:${composedMime};base64,${composedB64}`;
+
+        // Paso 3: Validar resultado
+        const validateParts: any[] = [
+          { inlineData: { data: composedB64, mimeType: composedMime } }
+        ];
+        if (cfg.useMun && munImageBase64) {
+          validateParts.push({ text: "DISEÑO DE REFERENCIA DE MUN:" });
+          validateParts.push({ inlineData: { data: munImageBase64, mimeType: "image/png" } });
+        }
+        if (cfg.useOpaq && opaqImageBase64) {
+          validateParts.push({ text: "DISEÑO DE REFERENCIA DE OPAQ:" });
+          validateParts.push({ inlineData: { data: opaqImageBase64, mimeType: "image/png" } });
+        }
+        validateParts.push({ text: "El resultado tiene una foto real con uno o dos personajes animados pequeños insertados (Mun y/o Opaq). Analizá solo el/los personaje/s animado/s y respondé SOLO con SI o NO:\n1. ¿Algún personaje tiene más de 2 brazos o más de 2 piernas visibles?\n2. ¿Algún personaje cubre o se superpone sobre el rostro de alguna persona real?\n3. ¿Algún personaje es igual o más grande que la persona en la foto?\n4. ¿Algún personaje tiene partes del cuerpo flotando o desconectadas del torso?\n5. ¿El personaje en el resultado tiene diferencias visuales notables respecto a su diseño de referencia (colores distintos, accesorios añadidos, cara diferente)?\n\nRespondé exactamente así:\n1: SI o NO\n2: SI o NO\n3: SI o NO\n4: SI o NO\n5: SI o NO" });
+
+        const validateBody = {
+          contents: [{ parts: validateParts }],
+          generationConfig: { temperature: 0, maxOutputTokens: 50 }
+        };
+
+        let validationFailed = false;
+        try {
+          const validateRes = await axios.post(`${GEMINI}${DETECT_MODEL}:generateContent?key=${apiKey}`, validateBody);
+          const validateText = ((validateRes.data?.candidates?.[0]?.content?.parts || [])
+            .map((p: any) => p.text || "").join("")).toUpperCase();
+          console.log(`[MunsMood] intento ${attempt} validación: ${validateText}`);
+          for (const line of validateText.split("\n")) {
+            if (/^\d:/.test(line.trim()) && line.includes("SI")) {
+              validationFailed = true;
+              break;
+            }
+          }
+        } catch (e: any) {
+          console.warn(`[MunsMood] intento ${attempt} validación error (ignorado): ${e.message}`);
+        }
+
+        if (!validationFailed) break;
+        if (attempt === MAX_ATTEMPTS) throw new Error("No pudimos lograr un resultado de calidad con tu foto. Intentá con otra 📸");
+        console.log(`[MunsMood] intento ${attempt}: validación falló, reintentando composición...`);
       }
 
       res.json({ composedImage });
@@ -385,6 +411,144 @@ async function startServer() {
       res.status(500).json({ error: error.message || "Error procesando la foto", detail });
     }
   });
+
+  // ── ScanMuns ──────────────────────────────────────────────────────────────
+  const DATA_DIR = process.env.DATA_DIR || process.env.RAILWAY_VOLUME_MOUNT_PATH || path.join(process.cwd(), 'data');
+  const MINDS_DIR = path.join(DATA_DIR, 'minds');
+  const IMAGES_DIR = path.join(DATA_DIR, 'images');
+  const CARDS_FILE = path.join(DATA_DIR, 'cards.json');
+
+  for (const dir of [MINDS_DIR, IMAGES_DIR]) {
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  }
+  if (!fs.existsSync(CARDS_FILE)) fs.writeFileSync(CARDS_FILE, '[]');
+
+  interface Card {
+    id: string; slug: string; name: string;
+    overlayUrl: string;
+    overlayType: 'youtube' | 'tiktok' | 'drive' | 'image';
+    imageMime: string;
+    aspectRatio: string;
+    createdAt: string; updatedAt: string;
+  }
+
+  function readCards(): Card[] {
+    try { return JSON.parse(fs.readFileSync(CARDS_FILE, 'utf-8')); }
+    catch { return []; }
+  }
+
+  function saveCards(cards: Card[]) {
+    fs.writeFileSync(CARDS_FILE, JSON.stringify(cards, null, 2));
+  }
+
+  function detectOverlayType(url: string): Card['overlayType'] {
+    if (/youtube\.com|youtu\.be/.test(url)) return 'youtube';
+    if (/tiktok\.com/.test(url)) return 'tiktok';
+    if (/drive\.google\.com/.test(url)) return 'drive';
+    return 'image';
+  }
+
+  const scanmunsUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 30 * 1024 * 1024 } });
+  const BASE_URL = process.env.BASE_URL || 'https://infomuns-production.up.railway.app';
+
+  // CORS abierto para ScanMuns (datos públicos)
+  app.use(['/api/scanmuns', '/minds', '/images'], (req: any, res: any, next: any) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    if (req.method === 'OPTIONS') return res.sendStatus(204);
+    next();
+  });
+
+  // Servir combined.mind e imágenes originales
+  app.use('/minds', express.static(MINDS_DIR));
+  app.use('/images', express.static(IMAGES_DIR));
+
+  // Subir / reemplazar una card + nuevo combined.mind
+  app.post('/api/scanmuns/upload',
+    scanmunsUpload.fields([{ name: 'mindFile', maxCount: 1 }, { name: 'imageFile', maxCount: 1 }]),
+    (req: any, res: any) => {
+      const files = req.files as { [f: string]: Express.Multer.File[] };
+      const mindFile = files['mindFile']?.[0];
+      const imageFile = files['imageFile']?.[0];
+      const { slug, name, overlayUrl, aspectRatio } = req.body;
+
+      if (!slug || !name || !overlayUrl || !mindFile || !imageFile)
+        return res.status(400).json({ error: 'slug, name, overlayUrl, mindFile e imageFile son requeridos' });
+      if (!/^[a-z0-9-]+$/.test(slug))
+        return res.status(400).json({ error: 'El slug solo puede tener letras minúsculas, números y guiones' });
+
+      // Guardar combined.mind (siempre sobreescribe)
+      fs.writeFileSync(path.join(MINDS_DIR, 'combined.mind'), mindFile.buffer);
+      // Guardar imagen original de este card
+      fs.writeFileSync(path.join(IMAGES_DIR, slug), imageFile.buffer);
+
+      const cards = readCards();
+      const idx = cards.findIndex(c => c.slug === slug);
+      const now = new Date().toISOString();
+      const card: Card = {
+        id: idx >= 0 ? cards[idx].id : crypto.randomUUID(),
+        slug, name, overlayUrl,
+        overlayType: detectOverlayType(overlayUrl),
+        imageMime: imageFile.mimetype || 'image/jpeg',
+        aspectRatio: aspectRatio || '16:9',
+        createdAt: idx >= 0 ? cards[idx].createdAt : now,
+        updatedAt: now,
+      };
+      if (idx >= 0) cards[idx] = card; else cards.push(card);
+      saveCards(cards);
+      res.json({ success: true, card, combinedMindUrl: `${BASE_URL}/minds/combined.mind` });
+    }
+  );
+
+  // Actualizar solo el combined.mind (después de eliminar una card)
+  app.post('/api/scanmuns/combined-mind', scanmunsUpload.single('mindFile'), (req: any, res: any) => {
+    if (!req.file) return res.status(400).json({ error: 'mindFile requerido' });
+    fs.writeFileSync(path.join(MINDS_DIR, 'combined.mind'), req.file.buffer);
+    res.json({ success: true });
+  });
+
+  // Obtener una card por slug
+  app.get('/api/scanmuns/card/:slug', (req: any, res: any) => {
+    const card = readCards().find(c => c.slug === req.params.slug);
+    if (!card) return res.status(404).json({ error: 'Card no encontrada' });
+    res.json(card);
+  });
+
+  // Listar todas las cards (en orden — el índice = targetIndex en combined.mind)
+  app.get('/api/scanmuns/cards', (req: any, res: any) => {
+    res.json(readCards());
+  });
+
+  // Eliminar una card (el cliente debe recompilar y subir nuevo combined.mind)
+  app.delete('/api/scanmuns/card/:slug', (req: any, res: any) => {
+    const cards = readCards();
+    const idx = cards.findIndex(c => c.slug === req.params.slug);
+    if (idx < 0) return res.status(404).json({ error: 'Card no encontrada' });
+    const imgPath = path.join(IMAGES_DIR, req.params.slug);
+    if (fs.existsSync(imgPath)) fs.unlinkSync(imgPath);
+    cards.splice(idx, 1);
+    saveCards(cards);
+    res.json({ success: true });
+  });
+
+  // ── Noticias Muns ─────────────────────────────────────────────────────────
+  app.use("/api/noticias", createNoticiasRouter());
+
+  // Panel admin — servido ANTES del catch-all del frontend
+  app.get("/noticias-admin", (req, res) => {
+    res.sendFile("noticias-admin.html", { root: "." });
+  });
+
+  // Cron diario: 8am hora Argentina (UTC-3) = 11:00 UTC
+  cron.schedule("0 11 * * *", async () => {
+    console.log("[cron] Iniciando pipeline diario de noticias...");
+    try {
+      await runDailyPipeline();
+    } catch (err: any) {
+      console.error("[cron] Error en pipeline diario:", err.message);
+    }
+  }, { timezone: "America/Argentina/Buenos_Aires" });
 
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {

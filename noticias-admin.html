@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Noticias Muns — Admin</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #F4F1EA; color: #7B6A58; min-height: 100vh; }
+
+  /* Login */
+  #login-screen {
+    display: flex; align-items: center; justify-content: center;
+    min-height: 100vh; flex-direction: column; gap: 16px;
+  }
+  #login-screen h1 { font-size: 1.5rem; color: #4464AD; }
+  #login-screen input {
+    padding: 12px 16px; border: 2px solid #C2DCF2; border-radius: 8px;
+    font-size: 1rem; width: 280px; outline: none;
+  }
+  #login-screen input:focus { border-color: #4464AD; }
+  #login-screen button {
+    padding: 12px 24px; background: #4464AD; color: white;
+    border: none; border-radius: 8px; font-size: 1rem; cursor: pointer; width: 280px;
+  }
+  #login-screen button:hover { background: #3a5599; }
+  #login-error { color: #cf2e2e; font-size: 0.9rem; }
+
+  /* Main */
+  #main-screen { display: none; }
+  header {
+    background: #4464AD; color: white; padding: 16px 24px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  header h1 { font-size: 1.2rem; font-weight: 700; }
+  header .actions { display: flex; gap: 12px; }
+  .btn {
+    padding: 10px 18px; border: none; border-radius: 8px;
+    cursor: pointer; font-size: 0.9rem; font-weight: 600; transition: opacity 0.15s;
+  }
+  .btn:hover { opacity: 0.85; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-primary { background: #9FCFE2; color: #1a2e50; }
+  .btn-run { background: #EDE6D4; color: #4464AD; }
+  .btn-publish { background: #4464AD; color: white; }
+  .btn-delete { background: #cf2e2e22; color: #cf2e2e; border: 1px solid #cf2e2e44; }
+  .btn-save { background: #7B6A5822; color: #7B6A58; border: 1px solid #7B6A5844; }
+
+  /* Status bar */
+  #status-bar {
+    padding: 10px 24px; font-size: 0.85rem; background: #EDE6D4;
+    border-bottom: 1px solid #C2DCF2; min-height: 38px;
+  }
+  #status-bar.error { background: #fde8e8; color: #cf2e2e; }
+  #status-bar.success { background: #e8f5e9; color: #2e7d32; }
+
+  /* Grid */
+  #drafts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 24px; padding: 24px;
+  }
+
+  /* Card */
+  .draft-card {
+    background: white; border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(68,100,173,0.08);
+    overflow: hidden; display: flex; flex-direction: column;
+    border: 1px solid #C2DCF2;
+  }
+  .card-image {
+    width: 100%; height: 200px; object-fit: cover;
+    background: #C2DCF2; display: block;
+  }
+  .card-image-placeholder {
+    width: 100%; height: 200px; background: linear-gradient(135deg, #9FCFE2, #C2DCF2);
+    display: flex; align-items: center; justify-content: center;
+    color: #4464AD; font-size: 2.5rem;
+  }
+  .card-body { padding: 16px; flex: 1; display: flex; flex-direction: column; gap: 12px; }
+  .card-title-input {
+    font-size: 1rem; font-weight: 700; color: #4464AD;
+    border: 1px solid transparent; border-radius: 6px;
+    padding: 6px 8px; width: 100%; background: #F4F1EA;
+    font-family: inherit; resize: none; line-height: 1.4;
+  }
+  .card-title-input:focus { outline: none; border-color: #9FCFE2; background: white; }
+  .card-content-textarea {
+    font-size: 0.85rem; color: #7B6A58; line-height: 1.6;
+    border: 1px solid transparent; border-radius: 6px;
+    padding: 8px; width: 100%; background: #F4F1EA;
+    font-family: inherit; resize: vertical; min-height: 120px;
+  }
+  .card-content-textarea:focus { outline: none; border-color: #9FCFE2; background: white; }
+  .card-meta { font-size: 0.75rem; color: #CBBBA0; }
+  .card-actions { display: flex; gap: 8px; margin-top: auto; padding-top: 8px; }
+  .card-actions .btn { flex: 1; font-size: 0.82rem; padding: 9px 10px; }
+
+  /* Loading spinner */
+  .spinner {
+    display: inline-block; width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,0.3); border-top-color: white;
+    border-radius: 50%; animation: spin 0.7s linear infinite;
+    vertical-align: middle; margin-right: 6px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Empty state */
+  #empty-state {
+    display: none; text-align: center; padding: 60px 24px; color: #CBBBA0;
+  }
+  #empty-state .emoji { font-size: 3rem; margin-bottom: 12px; }
+
+  /* Tag dirty */
+  .dirty-indicator { display: none; font-size: 0.75rem; color: #9FCFE2; margin-left: 4px; }
+</style>
+</head>
+<body>
+
+<!-- Login screen -->
+<div id="login-screen">
+  <h1>🌙 Noticias Muns Admin</h1>
+  <input type="password" id="secret-input" placeholder="Contraseña de administrador" />
+  <button onclick="doLogin()">Entrar</button>
+  <span id="login-error"></span>
+</div>
+
+<!-- Main screen -->
+<div id="main-screen">
+  <header>
+    <h1>🌙 Noticias Muns — Borradores</h1>
+    <div class="actions">
+      <button class="btn btn-primary" onclick="loadDrafts()">↻ Actualizar</button>
+      <button class="btn btn-run" id="run-btn" onclick="runPipeline()">▶ Generar noticias de hoy</button>
+    </div>
+  </header>
+  <div id="status-bar">Cargando borradores...</div>
+  <div id="drafts-grid"></div>
+  <div id="empty-state">
+    <div class="emoji">📭</div>
+    <p>No hay borradores. Presioná "Generar noticias de hoy" para comenzar.</p>
+  </div>
+</div>
+
+<script>
+const API = 'https://infomuns-production.up.railway.app';
+let token = localStorage.getItem('noticias_admin_token') || '';
+
+function setStatus(msg, type = '') {
+  const bar = document.getElementById('status-bar');
+  bar.textContent = msg;
+  bar.className = type;
+}
+
+function doLogin() {
+  const val = document.getElementById('secret-input').value.trim();
+  if (!val) return;
+  token = val;
+  localStorage.setItem('noticias_admin_token', token);
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('main-screen').style.display = 'block';
+  loadDrafts();
+}
+
+document.getElementById('secret-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doLogin();
+});
+
+async function apiFetch(path, opts = {}) {
+  const res = await fetch(`${API}/api/noticias${path}`, {
+    ...opts,
+    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json', ...(opts.headers || {}) }
+  });
+  if (res.status === 401) {
+    localStorage.removeItem('noticias_admin_token');
+    location.reload();
+    throw new Error('No autorizado');
+  }
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || `Error ${res.status}`);
+  }
+  return res.json();
+}
+
+async function loadDrafts() {
+  setStatus('Cargando borradores...');
+  try {
+    const drafts = await apiFetch('/drafts');
+    renderDrafts(drafts);
+    setStatus(drafts.length > 0 ? `${drafts.length} borradores listos para revisar` : 'No hay borradores', '');
+  } catch (err) {
+    setStatus('Error: ' + err.message, 'error');
+  }
+}
+
+function stripHtml(html) {
+  const div = document.createElement('div');
+  div.innerHTML = html;
+  return div.textContent || div.innerText || '';
+}
+
+function renderDrafts(drafts) {
+  const grid = document.getElementById('drafts-grid');
+  const empty = document.getElementById('empty-state');
+  grid.innerHTML = '';
+
+  if (drafts.length === 0) {
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  drafts.forEach(draft => {
+    const card = document.createElement('div');
+    card.className = 'draft-card';
+    card.dataset.id = draft.id;
+
+    const cleanContent = stripHtml(draft.content);
+    const imageHtml = draft.featuredMediaUrl
+      ? `<img class="card-image" src="${draft.featuredMediaUrl}" alt="" loading="lazy" />`
+      : `<div class="card-image-placeholder">🌙</div>`;
+
+    card.innerHTML = `
+      ${imageHtml}
+      <div class="card-body">
+        <textarea class="card-title-input" rows="2" data-field="title">${escapeHtml(draft.title)}</textarea>
+        <textarea class="card-content-textarea" data-field="content">${escapeHtml(cleanContent)}</textarea>
+        <div class="card-meta">Creado: ${new Date(draft.date).toLocaleDateString('es-AR')}</div>
+        <div class="card-actions">
+          <button class="btn btn-save" onclick="saveDraft(${draft.id}, this)">Guardar</button>
+          <button class="btn btn-publish" onclick="publishDraft(${draft.id}, this)">Publicar</button>
+          <button class="btn btn-delete" onclick="deleteDraft(${draft.id}, this)">Borrar</button>
+        </div>
+      </div>`;
+
+    grid.appendChild(card);
+  });
+}
+
+function escapeHtml(str) {
+  return (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+async function saveDraft(id, btn) {
+  const card = btn.closest('.draft-card');
+  const title = card.querySelector('[data-field="title"]').value;
+  const content = card.querySelector('[data-field="content"]').value;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Guardando...';
+  try {
+    await apiFetch(`/drafts/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ title, content })
+    });
+    btn.textContent = '✓ Guardado';
+    setTimeout(() => { btn.textContent = 'Guardar'; btn.disabled = false; }, 2000);
+    setStatus('Guardado correctamente', 'success');
+  } catch (err) {
+    btn.textContent = 'Guardar';
+    btn.disabled = false;
+    setStatus('Error guardando: ' + err.message, 'error');
+  }
+}
+
+async function publishDraft(id, btn) {
+  if (!confirm('¿Publicar esta nota en muns.club?')) return;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Publicando...';
+  try {
+    const post = await apiFetch(`/drafts/${id}/publish`, { method: 'POST' });
+    const card = btn.closest('.draft-card');
+    card.style.opacity = '0.4';
+    card.style.pointerEvents = 'none';
+    setStatus(`✓ Publicado: "${post.title}" → ${post.link}`, 'success');
+    setTimeout(() => card.remove(), 1500);
+  } catch (err) {
+    btn.textContent = 'Publicar';
+    btn.disabled = false;
+    setStatus('Error publicando: ' + err.message, 'error');
+  }
+}
+
+async function deleteDraft(id, btn) {
+  if (!confirm('¿Eliminar este borrador? No se puede deshacer.')) return;
+  btn.disabled = true;
+  try {
+    await apiFetch(`/drafts/${id}`, { method: 'DELETE' });
+    const card = btn.closest('.draft-card');
+    card.style.opacity = '0';
+    card.style.transform = 'scale(0.95)';
+    card.style.transition = 'all 0.2s';
+    setTimeout(() => { card.remove(); setStatus('Borrador eliminado', ''); }, 250);
+  } catch (err) {
+    btn.disabled = false;
+    setStatus('Error eliminando: ' + err.message, 'error');
+  }
+}
+
+async function runPipeline() {
+  if (!confirm('¿Generar las noticias de hoy? El proceso tarda unos minutos.')) return;
+  const btn = document.getElementById('run-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Generando...';
+  setStatus('Generando noticias... esto puede tardar 3-5 minutos.');
+  try {
+    const result = await apiFetch('/run', { method: 'POST' });
+    btn.textContent = '▶ Generar noticias de hoy';
+    btn.disabled = false;
+    setStatus(`✓ ${result.result.succeeded} noticias generadas, ${result.result.failed} errores`, 'success');
+    setTimeout(loadDrafts, 1000);
+  } catch (err) {
+    btn.textContent = '▶ Generar noticias de hoy';
+    btn.disabled = false;
+    setStatus('Error: ' + err.message, 'error');
+  }
+}
+
+// Auto-login si ya tiene token guardado
+if (token) {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('main-screen').style.display = 'block';
+  loadDrafts();
+}
+</script>
+</body>
+</html>

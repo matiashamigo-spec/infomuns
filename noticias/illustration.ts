@@ -1,0 +1,66 @@
+// Convierte una imagen de noticia en ilustración estilo libro infantil
+// usando Gemini 2.5 Flash Image con la paleta de colores de muns.club
+
+import axios from "axios";
+
+const GEMINI_IMAGE_MODEL = "gemini-2.5-flash-image";
+const GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta/models/";
+
+const ILLUSTRATION_PROMPT = `Transform this news photograph into a children's book illustration.
+
+Style: soft watercolor and pastel strokes, hand-drawn quality, warm and friendly, suitable for ages 4-8.
+Color palette (use these as the dominant colors): cornflower blue (#4464AD), sky blue (#9FCFE2), powder blue (#C2DCF2), warm cream (#F4F1EA), sandy cream (#EDE6D4), warm brown (#7B6A58), white (#FFFFFF).
+
+Rules:
+- Render everything as a hand-drawn illustration — people become friendly cartoon characters, backgrounds become painted scenes
+- Keep the scene recognizable and the subject matter clear
+- Bright, warm, joyful mood — even for serious topics, keep it gentle and safe for children
+- No photorealism whatsoever
+- No text, no labels, no captions in the image
+- Soft rounded shapes, no harsh edges
+- The illustration should feel like it belongs in a picture book`;
+
+export async function illustrateImage(imageUrl: string, apiKey: string): Promise<string | null> {
+  try {
+    // Download the original image
+    const response = await axios.get(imageUrl, {
+      responseType: "arraybuffer",
+      timeout: 15000,
+      headers: { "User-Agent": "Mozilla/5.0" },
+    });
+
+    const imageData = Buffer.from(response.data).toString("base64");
+    const mimeType = (response.headers["content-type"] || "image/jpeg").split(";")[0];
+
+    const body = {
+      contents: [{
+        parts: [
+          { inlineData: { data: imageData, mimeType } },
+          { text: ILLUSTRATION_PROMPT },
+        ],
+      }],
+      generationConfig: { responseModalities: ["IMAGE", "TEXT"] },
+    };
+
+    const res = await axios.post(
+      `${GEMINI_BASE}${GEMINI_IMAGE_MODEL}:generateContent?key=${apiKey}`,
+      body,
+      { timeout: 60000 }
+    );
+
+    const candidates = res.data?.candidates || [];
+    for (const c of candidates) {
+      for (const p of (c.content?.parts || [])) {
+        if (p.inlineData?.data) {
+          return `data:${p.inlineData.mimeType || "image/png"};base64,${p.inlineData.data}`;
+        }
+      }
+    }
+
+    console.warn("[illustration] Gemini no devolvió imagen, usando original");
+    return null;
+  } catch (err: any) {
+    console.warn("[illustration] Error generando ilustración:", err.message);
+    return null;
+  }
+}

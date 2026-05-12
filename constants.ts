@@ -24,6 +24,7 @@ DINÁMICA PIXAR PARA NIÑOS:
 REGLAS DE LENGUAJE:
 - Para niños pequeños: Palabras sencillas.
 - SIN MORALEJAS EXPLICATIVAS.
-- SIN NOMBRES PROPIOS reales.
+- SIN NOMBRES PROPIOS reales (ni de personas de la noticia ni de ningún otro personaje).
+- LOS MUNS NO TIENEN NOMBRES PROPIOS INDIVIDUALES: nunca se llaman "Luna", "Cósmo", "Lumi" ni ningún nombre. Son siempre "un Mun", "los Muns", "el Mun". Jamás se les asigna un nombre propio aunque sea inventado.
 - SIMBOLISMO: Transforma la crueldad en metáforas (ej: un incendio es "un calor que se llevó los colores del jardín").
 `;
