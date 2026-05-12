@@ -99,7 +99,8 @@ export async function runDailyPipeline(limit = 10): Promise<PipelineResult> {
       }
       if (illustrated) {
         const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").substring(0, 40);
-        mediaId = await uploadMedia(illustrated, slug) ?? undefined;
+        const media = await uploadMedia(illustrated, slug);
+        mediaId = media?.id ?? undefined;
       }
 
       // 3. Crear borrador en WordPress

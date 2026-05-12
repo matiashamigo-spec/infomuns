@@ -23,7 +23,9 @@ export interface WpPost {
 }
 
 // Sube imagen (base64 dataURL) a la biblioteca de medios vía endpoint propio
-export async function uploadMedia(imageDataUrl: string, filename: string): Promise<number | null> {
+export interface UploadedMedia { id: number; url: string }
+
+export async function uploadMedia(imageDataUrl: string, filename: string): Promise<UploadedMedia | null> {
   const { url, key } = getWpConfig();
   try {
     const match = imageDataUrl.match(/^data:([^;]+);base64,(.+)$/);
@@ -35,7 +37,10 @@ export async function uploadMedia(imageDataUrl: string, filename: string): Promi
       { data: b64, mime, name: filename },
       { headers: { "X-Noticias-Key": key }, timeout: 30000 }
     );
-    return res.data.id ?? null;
+    const id = res.data.id ?? null;
+    const mediaUrl = res.data.url ?? res.data.source_url ?? null;
+    if (!id) return null;
+    return { id, url: mediaUrl };
   } catch (err: any) {
     console.warn("[wp] Error subiendo media:", err.message);
     return null;

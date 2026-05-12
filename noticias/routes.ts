@@ -80,11 +80,11 @@ export function createNoticiasRouter(): Router {
       if (!illustrated) return res.status(500).json({ error: "Gemini no generó imagen" });
 
       const slug = (title || `post-${id}`).toLowerCase().replace(/[^a-z0-9]+/g, "-").substring(0, 40);
-      const mediaId = await uploadMedia(illustrated, slug);
-      if (!mediaId) return res.status(500).json({ error: "No se pudo subir la imagen a WordPress" });
+      const media = await uploadMedia(illustrated, slug);
+      if (!media) return res.status(500).json({ error: "No se pudo subir la imagen a WordPress" });
 
-      const updated = await updatePost(id, { featuredMediaId: mediaId });
-      res.json({ ok: true, mediaUrl: updated.featuredMediaUrl });
+      await updatePost(id, { featuredMediaId: media.id });
+      res.json({ ok: true, mediaUrl: media.url });
     } catch (err: any) {
       res.status(500).json({ error: err.message });
     }
