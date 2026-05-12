@@ -2,7 +2,7 @@
 
 import { GoogleGenAI, Type } from "@google/genai";
 import { fetchAllFeeds, findTopStories } from "./rss.js";
-import { illustrateImage } from "./illustration.js";
+import { illustrateImage, generateIllustrationFromText } from "./illustration.js";
 import { createDraft, uploadMedia } from "./wordpress.js";
 import { MUNS_SYSTEM_INSTRUCTION } from "../constants.js";
 
@@ -65,15 +65,20 @@ export async function runDailyPipeline(): Promise<PipelineResult> {
       const newsText = `${article.title}\n\n${article.content}`;
       const { title, story } = await generateMunsStory(newsText, apiKey);
 
-      // 2. Ilustrar imagen (si tiene)
+      // 2. Ilustrar imagen — siempre genera una (desde foto original o desde texto)
       let mediaId: number | undefined;
+      let illustrated: string | null = null;
       if (article.imageUrl) {
-        console.log(`[pipeline] Ilustrando imagen...`);
-        const illustrated = await illustrateImage(article.imageUrl, apiKey);
-        if (illustrated) {
-          const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").substring(0, 40);
-          mediaId = await uploadMedia(illustrated, slug) ?? undefined;
-        }
+        console.log(`[pipeline] Ilustrando desde imagen original...`);
+        illustrated = await illustrateImage(article.imageUrl, apiKey);
+      }
+      if (!illustrated) {
+        console.log(`[pipeline] Generando ilustración desde texto...`);
+        illustrated = await generateIllustrationFromText(title, story, apiKey);
+      }
+      if (illustrated) {
+        const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").substring(0, 40);
+        mediaId = await uploadMedia(illustrated, slug) ?? undefined;
       }
 
       // 3. Crear borrador en WordPress
