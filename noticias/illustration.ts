@@ -9,7 +9,7 @@ import { fileURLToPath } from "url";
 
 export type NewsTone = "positive" | "concerning" | "negative";
 
-const GEMINI_IMAGE_MODEL = "gemini-2.5-flash-preview-05-20";
+const GEMINI_IMAGE_MODEL = "gemini-2.0-flash-exp-image-generation";
 const GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta/models/";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -93,18 +93,16 @@ export async function illustrateImage(
     const photoData = Buffer.from(photoResponse.data).toString("base64");
     const photoMime = (photoResponse.headers["content-type"] || "image/jpeg").split(";")[0];
 
-    const character = loadCharacter(tone);
-    const prompt = `The first image is a news photograph. Transform it into a children's book illustration.
+    const prompt = `Transform this news photograph into a children's book illustration.
 ${BASE_RULES}
 - Render everything as hand-drawn illustration — people become friendly cartoon characters, backgrounds become painted scenes
 - Keep the scene recognizable, no photorealism
-The third image reference (below) is a character to include. ${characterInstruction(tone)}`;
+${characterInstruction(tone)}`;
 
     const body = {
       contents: [{
         parts: [
           { inlineData: { data: photoData, mimeType: photoMime } },
-          { inlineData: character },
           { text: prompt },
         ],
       }],
