@@ -24,6 +24,7 @@ const FEEDS = [
   { url: "http://rss.cnn.com/rss/edition_world.rss", name: "CNN" },
   { url: "https://www.infobae.com/feeds/rss", name: "Infobae" },
   { url: "https://noticiaspositivas.org/feed/", name: "NoticiasPositivas" },
+  { url: "https://www.positive.news/feed/", name: "PositiveNews" },
 ];
 
 const STOP_WORDS = new Set([
