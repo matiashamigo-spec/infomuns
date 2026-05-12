@@ -33,28 +33,14 @@ const CHARACTER_STRICT_RULES = `STRICT RULES for the character:
 
 // Used when a reference image IS included in the request
 function characterInstructionWithRef(tone: NewsTone): string {
-  if (tone === "negative") {
-    return `The last image is the reference for "Opaq". ${CHARACTER_STRICT_RULES}
-Reproduce EXACTLY from the reference: grey-blue crescent moon body, purple spots, frowning face with furrowed brows.`;
-  }
-  if (tone === "concerning") {
-    return `The last image is the reference for a worried "Mun". ${CHARACTER_STRICT_RULES}
-Reproduce EXACTLY from the reference: cream crescent moon body, blue-grey spots, sad droopy eyes.`;
-  }
+  if (tone !== "positive") return "";
   return `The last image is the reference for a happy "Mun". ${CHARACTER_STRICT_RULES}
 Reproduce EXACTLY from the reference: cream crescent moon body, beige spots, happy squinting eyes.`;
 }
 
 // Used when there is NO reference image — description only
 function characterInstructionTextOnly(tone: NewsTone): string {
-  if (tone === "negative") {
-    return `Add the "Opaq" character in the bottom-right corner. ${CHARACTER_STRICT_RULES}
-Opaq's exact appearance: grey-blue thick crescent moon body, small purple oval spots, round eyes with furrowed brows in a frown, short stubby arms hanging down.`;
-  }
-  if (tone === "concerning") {
-    return `Add a worried "Mun" character in the bottom-right corner. ${CHARACTER_STRICT_RULES}
-This Mun's exact appearance: cream/off-white thick crescent moon body, small blue-grey oval spots, large sad droopy eyes, short stubby arms hanging low.`;
-  }
+  if (tone !== "positive") return "";
   return `Add a happy "Mun" character in the bottom-right corner. ${CHARACTER_STRICT_RULES}
 This Mun's exact appearance: cream/off-white thick crescent moon body, small beige oval spots, happy squinting eyes with a gentle smile, short stubby arms with hands on hips.`;
 }
@@ -75,19 +61,18 @@ export async function generateIllustrationFromText(
   apiKey: string
 ): Promise<string | null> {
   try {
-    const character = loadCharacter(tone);
+    const characterInstruction = characterInstructionWithRef(tone);
     const prompt = `Create a children's book illustration for a story titled "${title}".
 Story summary: ${story.substring(0, 300)}
 ${BASE_RULES}
-${characterInstructionWithRef(tone)}`;
+${characterInstruction}`;
+
+    const parts: any[] = [];
+    if (tone === "positive") parts.push({ inlineData: loadCharacter(tone) });
+    parts.push({ text: prompt });
 
     const body = {
-      contents: [{
-        parts: [
-          { inlineData: character },
-          { text: prompt },
-        ],
-      }],
+      contents: [{ parts }],
       generationConfig: { responseModalities: ["TEXT", "IMAGE"] },
     };
 
@@ -118,23 +103,24 @@ export async function illustrateImage(
     const photoData = Buffer.from(photoResponse.data).toString("base64");
     const photoMime = (photoResponse.headers["content-type"] || "image/jpeg").split(";")[0];
 
-    const character = loadCharacter(tone);
+    const characterInstruction = characterInstructionWithRef(tone);
+    const photoLabel = tone === "positive"
+      ? "The first image is a news photograph. The second image is the character reference."
+      : "The image is a news photograph.";
 
-    const prompt = `The first image is a news photograph. The second image is the character reference.
+    const prompt = `${photoLabel}
 Transform the news photograph into a children's book illustration.
 ${BASE_RULES}
 - Render everything as hand-drawn illustration — people become friendly cartoon characters, backgrounds become painted scenes
 - Keep the scene recognizable, no photorealism
-${characterInstructionWithRef(tone)}`;
+${characterInstruction}`;
+
+    const parts: any[] = [{ inlineData: { data: photoData, mimeType: photoMime } }];
+    if (tone === "positive") parts.push({ inlineData: loadCharacter(tone) });
+    parts.push({ text: prompt });
 
     const body = {
-      contents: [{
-        parts: [
-          { inlineData: { data: photoData, mimeType: photoMime } },
-          { inlineData: character },
-          { text: prompt },
-        ],
-      }],
+      contents: [{ parts }],
       generationConfig: { responseModalities: ["TEXT", "IMAGE"] },
     };
 
