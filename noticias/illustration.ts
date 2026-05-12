@@ -9,7 +9,7 @@ import { fileURLToPath } from "url";
 
 export type NewsTone = "positive" | "concerning" | "negative";
 
-const GEMINI_IMAGE_MODEL = "gemini-2.0-flash-exp-image-generation";
+const GEMINI_IMAGE_MODEL = "gemini-2.5-flash-image";
 const GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta/models/";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -63,7 +63,7 @@ ${characterInstruction(tone)}`;
           { text: prompt },
         ],
       }],
-      generationConfig: { responseModalities: ["IMAGE", "TEXT"] },
+      generationConfig: { responseModalities: ["TEXT", "IMAGE"] },
     };
 
     const res = await axios.post(
@@ -106,7 +106,7 @@ ${characterInstruction(tone)}`;
           { text: prompt },
         ],
       }],
-      generationConfig: { responseModalities: ["IMAGE", "TEXT"] },
+      generationConfig: { responseModalities: ["TEXT", "IMAGE"] },
     };
 
     const res = await axios.post(
