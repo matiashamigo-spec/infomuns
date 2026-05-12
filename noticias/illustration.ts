@@ -41,7 +41,7 @@ async function describeImage(imageUrl: string, apiKey: string): Promise<string |
 // Paso 2: genera la ilustración a partir de la descripción + estilo
 async function generateFromDescription(description: string, apiKey: string): Promise<string | null> {
   try {
-    const prompt = `Create a children's book illustration of: ${description}\n\nStyle: ${STYLE_PROMPT}`;
+    const prompt = `Illustrate exactly this real scene: ${description}\n\nIMPORTANT: Draw the actual people and places described above as they are — real human figures in illustration style. No invented characters, no cartoon mascots, no fantasy beings, no animals replacing humans. Just the real scene drawn in this style: ${STYLE_PROMPT}`;
 
     const res = await axios.post(
       `${API_BASE}${IMAGE_MODEL}:generateContent?key=${apiKey}`,
