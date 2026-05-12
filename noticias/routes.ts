@@ -80,7 +80,9 @@ export function createNoticiasRouter(): Router {
 
       // 2. Si no hay, buscar la URL del artículo fuente en el contenido y scrapear su og:image
       if (!imageUrl && content) {
-        const srcMatch = content.match(/href="([^"]+)"[^>]*>[^<]*<\/a>\): /);
+        // Formato: <a href="URL">FUENTE</a>): URL  o  source-image: URL
+        const srcMatch = content.match(/<!--\s*source-image:\s*(\S+)\s*-->/)
+          || content.match(/href="(https?:\/\/[^"]+)"[^>]*>[^<]+<\/a>\):/);
         const articleUrl = srcMatch ? srcMatch[1] : null;
         if (articleUrl) {
           console.log(`[noticias] Scrapeando og:image de: ${articleUrl}`);
