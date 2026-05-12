@@ -2,9 +2,27 @@
 
 import { GoogleGenAI, Type } from "@google/genai";
 import { fetchAllFeeds, findTopStories } from "./rss.js";
-import { illustrateImage, generateIllustrationFromText } from "./illustration.js";
+import { illustrateImage, generateIllustrationFromText, NewsTone } from "./illustration.js";
 import { createDraft, uploadMedia } from "./wordpress.js";
 import { MUNS_SYSTEM_INSTRUCTION } from "../constants.js";
+
+async function classifyTone(newsText: string, apiKey: string): Promise<NewsTone> {
+  try {
+    const ai = new GoogleGenAI({ apiKey });
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: `Classify the emotional tone of this news in ONE word: "positive", "concerning", or "negative".
+News: "${newsText.substring(0, 400)}"
+Reply with only one of these three words, nothing else.`,
+    });
+    const raw = (response.text || "").trim().toLowerCase();
+    if (raw.includes("negative")) return "negative";
+    if (raw.includes("concern")) return "concerning";
+    return "positive";
+  } catch {
+    return "positive";
+  }
+}
 
 async function generateMunsStory(newsText: string, apiKey: string): Promise<{ title: string; story: string }> {
   const ai = new GoogleGenAI({ apiKey });
@@ -65,16 +83,19 @@ export async function runDailyPipeline(): Promise<PipelineResult> {
       const newsText = `${article.title}\n\n${article.content}`;
       const { title, story } = await generateMunsStory(newsText, apiKey);
 
-      // 2. Ilustrar imagen — siempre genera una (desde foto original o desde texto)
+      // 2. Clasificar tono e ilustrar
+      const tone = await classifyTone(`${article.title}\n${article.content}`, apiKey);
+      console.log(`[pipeline] Tono detectado: ${tone}`);
+
       let mediaId: number | undefined;
       let illustrated: string | null = null;
       if (article.imageUrl) {
         console.log(`[pipeline] Ilustrando desde imagen original...`);
-        illustrated = await illustrateImage(article.imageUrl, apiKey);
+        illustrated = await illustrateImage(article.imageUrl, tone, apiKey);
       }
       if (!illustrated) {
         console.log(`[pipeline] Generando ilustración desde texto...`);
-        illustrated = await generateIllustrationFromText(title, story, apiKey);
+        illustrated = await generateIllustrationFromText(title, story, tone, apiKey);
       }
       if (illustrated) {
         const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").substring(0, 40);
