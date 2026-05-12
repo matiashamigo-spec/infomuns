@@ -86,6 +86,26 @@ export async function publishPostById(id: number): Promise<WpPost> {
   return res.data;
 }
 
+// Lista los posts publicados de Noticias Muns
+export async function listPublished(): Promise<WpPost[]> {
+  const { url, key } = getWpConfig();
+  const res = await axios.get(`${BASE(url)}/published`, {
+    headers: { "X-Noticias-Key": key },
+  });
+  return res.data || [];
+}
+
+// Despublica un post (lo vuelve a borrador)
+export async function unpublishPost(id: number): Promise<WpPost> {
+  const { url, key } = getWpConfig();
+  const res = await axios.put(
+    `${BASE(url)}/drafts/${id}`,
+    { status: "draft" },
+    { headers: { "X-Noticias-Key": key } }
+  );
+  return res.data;
+}
+
 // Elimina un post permanentemente
 export async function deletePost(id: number): Promise<void> {
   const { url, key } = getWpConfig();

@@ -103,7 +103,11 @@ export async function runDailyPipeline(): Promise<PipelineResult> {
       }
 
       // 3. Crear borrador en WordPress
-      const content = `<p>${story.toUpperCase().replace(/\n/g, "</p><p>")}</p>
+      const cleanStory = story
+        .toUpperCase()
+        .replace(/«/g, '"')
+        .replace(/»/g, '"');
+      const content = `<p>${cleanStory.replace(/\n/g, "</p><p>")}</p>
 <p><small>Fuente original (<a href="${article.link}" target="_blank" rel="noopener">${article.source}</a>): ${article.link}</small></p>`;
 
       await createDraft(title, content, mediaId);

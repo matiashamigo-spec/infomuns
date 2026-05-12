@@ -3,7 +3,7 @@
 
 import { Router, Request, Response } from "express";
 import { runDailyPipeline } from "./pipeline.js";
-import { listDrafts, updatePost, publishPostById, deletePost } from "./wordpress.js";
+import { listDrafts, listPublished, updatePost, publishPostById, unpublishPost, deletePost } from "./wordpress.js";
 
 export function createNoticiasRouter(): Router {
   const router = Router();
@@ -64,6 +64,50 @@ export function createNoticiasRouter(): Router {
 
   // DELETE /api/noticias/drafts/:id — borra permanentemente
   router.delete("/drafts/:id", requireAdmin, async (req: Request, res: Response) => {
+    const id = parseInt(req.params.id as string);
+    try {
+      await deletePost(id);
+      res.json({ ok: true });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // GET /api/noticias/published — lista publicadas
+  router.get("/published", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const posts = await listPublished();
+      res.json(posts);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // PUT /api/noticias/published/:id — edita título y/o contenido de publicada
+  router.put("/published/:id", requireAdmin, async (req: Request, res: Response) => {
+    const id = parseInt(req.params.id as string);
+    const { title, content } = req.body;
+    try {
+      const updated = await updatePost(id, { title, content });
+      res.json(updated);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // POST /api/noticias/published/:id/unpublish — vuelve a borrador
+  router.post("/published/:id/unpublish", requireAdmin, async (req: Request, res: Response) => {
+    const id = parseInt(req.params.id as string);
+    try {
+      const post = await unpublishPost(id);
+      res.json(post);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // DELETE /api/noticias/published/:id — borra permanentemente
+  router.delete("/published/:id", requireAdmin, async (req: Request, res: Response) => {
     const id = parseInt(req.params.id as string);
     try {
       await deletePost(id);

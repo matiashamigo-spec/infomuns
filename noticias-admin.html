@@ -45,6 +45,20 @@
   .btn-publish { background: #4464AD; color: white; }
   .btn-delete { background: #cf2e2e22; color: #cf2e2e; border: 1px solid #cf2e2e44; }
   .btn-save { background: #7B6A5822; color: #7B6A58; border: 1px solid #7B6A5844; }
+  .btn-unpublish { background: #EDE6D4; color: #7B6A58; border: 1px solid #C2DCF2; }
+
+  /* Tabs */
+  .tabs {
+    display: flex; gap: 0; background: #EDE6D4;
+    border-bottom: 2px solid #C2DCF2; padding: 0 24px;
+  }
+  .tab {
+    padding: 12px 24px; font-size: 0.9rem; font-weight: 600;
+    cursor: pointer; border: none; background: none; color: #CBBBA0;
+    border-bottom: 3px solid transparent; margin-bottom: -2px; transition: all 0.15s;
+  }
+  .tab.active { color: #4464AD; border-bottom-color: #4464AD; }
+  .tab:hover:not(.active) { color: #7B6A58; }
 
   /* Status bar */
   #status-bar {
@@ -55,7 +69,7 @@
   #status-bar.success { background: #e8f5e9; color: #2e7d32; }
 
   /* Grid */
-  #drafts-grid {
+  .drafts-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
     gap: 24px; padding: 24px;
@@ -93,8 +107,11 @@
   }
   .card-content-textarea:focus { outline: none; border-color: #9FCFE2; background: white; }
   .card-meta { font-size: 0.75rem; color: #CBBBA0; }
-  .card-actions { display: flex; gap: 8px; margin-top: auto; padding-top: 8px; }
-  .card-actions .btn { flex: 1; font-size: 0.82rem; padding: 9px 10px; }
+  .card-link { font-size: 0.75rem; }
+  .card-link a { color: #9FCFE2; text-decoration: none; }
+  .card-link a:hover { text-decoration: underline; }
+  .card-actions { display: flex; gap: 8px; margin-top: auto; padding-top: 8px; flex-wrap: wrap; }
+  .card-actions .btn { flex: 1; font-size: 0.82rem; padding: 9px 10px; min-width: 80px; }
 
   /* Loading spinner */
   .spinner {
@@ -106,13 +123,10 @@
   @keyframes spin { to { transform: rotate(360deg); } }
 
   /* Empty state */
-  #empty-state {
+  .empty-state {
     display: none; text-align: center; padding: 60px 24px; color: #CBBBA0;
   }
-  #empty-state .emoji { font-size: 3rem; margin-bottom: 12px; }
-
-  /* Tag dirty */
-  .dirty-indicator { display: none; font-size: 0.75rem; color: #9FCFE2; margin-left: 4px; }
+  .empty-state .emoji { font-size: 3rem; margin-bottom: 12px; }
 </style>
 </head>
 <body>
@@ -128,23 +142,43 @@
 <!-- Main screen -->
 <div id="main-screen">
   <header>
-    <h1>🌙 Noticias Muns — Borradores</h1>
+    <h1>🌙 Noticias Muns</h1>
     <div class="actions">
-      <button class="btn btn-primary" onclick="loadDrafts()">↻ Actualizar</button>
+      <button class="btn btn-primary" onclick="reload()">↻ Actualizar</button>
       <button class="btn btn-run" id="run-btn" onclick="runPipeline()">▶ Generar noticias de hoy</button>
     </div>
   </header>
-  <div id="status-bar">Cargando borradores...</div>
-  <div id="drafts-grid"></div>
-  <div id="empty-state">
-    <div class="emoji">📭</div>
-    <p>No hay borradores. Presioná "Generar noticias de hoy" para comenzar.</p>
+
+  <div class="tabs">
+    <button class="tab active" id="tab-drafts" onclick="switchTab('drafts')">Borradores</button>
+    <button class="tab" id="tab-published" onclick="switchTab('published')">Publicadas</button>
+  </div>
+
+  <div id="status-bar">Cargando...</div>
+
+  <!-- Borradores -->
+  <div id="view-drafts">
+    <div id="drafts-grid" class="drafts-grid"></div>
+    <div id="drafts-empty" class="empty-state">
+      <div class="emoji">📭</div>
+      <p>No hay borradores. Presioná "Generar noticias de hoy" para comenzar.</p>
+    </div>
+  </div>
+
+  <!-- Publicadas -->
+  <div id="view-published" style="display:none;">
+    <div id="published-grid" class="drafts-grid"></div>
+    <div id="published-empty" class="empty-state">
+      <div class="emoji">📰</div>
+      <p>No hay notas publicadas todavía.</p>
+    </div>
   </div>
 </div>
 
 <script>
 const API = 'https://infomuns-production.up.railway.app';
 let token = localStorage.getItem('noticias_admin_token') || '';
+let currentTab = 'drafts';
 
 function setStatus(msg, type = '') {
   const bar = document.getElementById('status-bar');
@@ -166,6 +200,21 @@ document.getElementById('secret-input').addEventListener('keydown', e => {
   if (e.key === 'Enter') doLogin();
 });
 
+function switchTab(tab) {
+  currentTab = tab;
+  document.getElementById('tab-drafts').classList.toggle('active', tab === 'drafts');
+  document.getElementById('tab-published').classList.toggle('active', tab === 'published');
+  document.getElementById('view-drafts').style.display = tab === 'drafts' ? 'block' : 'none';
+  document.getElementById('view-published').style.display = tab === 'published' ? 'block' : 'none';
+  if (tab === 'drafts') loadDrafts();
+  else loadPublished();
+}
+
+function reload() {
+  if (currentTab === 'drafts') loadDrafts();
+  else loadPublished();
+}
+
 async function apiFetch(path, opts = {}) {
   const res = await fetch(`${API}/api/noticias${path}`, {
     ...opts,
@@ -183,100 +232,46 @@ async function apiFetch(path, opts = {}) {
   return res.json();
 }
 
+// ── BORRADORES ──
+
 async function loadDrafts() {
   setStatus('Cargando borradores...');
   try {
     const drafts = await apiFetch('/drafts');
-    renderDrafts(drafts);
+    renderCards(drafts, 'drafts-grid', 'drafts-empty', 'draft');
     setStatus(drafts.length > 0 ? `${drafts.length} borradores listos para revisar` : 'No hay borradores', '');
   } catch (err) {
     setStatus('Error: ' + err.message, 'error');
   }
 }
 
-function stripHtml(html) {
-  const div = document.createElement('div');
-  div.innerHTML = html;
-  return div.textContent || div.innerText || '';
-}
-
-function renderDrafts(drafts) {
-  const grid = document.getElementById('drafts-grid');
-  const empty = document.getElementById('empty-state');
-  grid.innerHTML = '';
-
-  if (drafts.length === 0) {
-    empty.style.display = 'block';
-    return;
-  }
-  empty.style.display = 'none';
-
-  drafts.forEach(draft => {
-    const card = document.createElement('div');
-    card.className = 'draft-card';
-    card.dataset.id = draft.id;
-
-    const cleanContent = stripHtml(draft.content);
-    const imageHtml = draft.featuredMediaUrl
-      ? `<img class="card-image" src="${draft.featuredMediaUrl}" alt="" loading="lazy" />`
-      : `<div class="card-image-placeholder">🌙</div>`;
-
-    card.innerHTML = `
-      ${imageHtml}
-      <div class="card-body">
-        <textarea class="card-title-input" rows="2" data-field="title">${escapeHtml(draft.title)}</textarea>
-        <textarea class="card-content-textarea" data-field="content">${escapeHtml(cleanContent)}</textarea>
-        <div class="card-meta">Creado: ${new Date(draft.date).toLocaleDateString('es-AR')}</div>
-        <div class="card-actions">
-          <button class="btn btn-save" onclick="saveDraft(${draft.id}, this)">Guardar</button>
-          <button class="btn btn-publish" onclick="publishDraft(${draft.id}, this)">Publicar</button>
-          <button class="btn btn-delete" onclick="deleteDraft(${draft.id}, this)">Borrar</button>
-        </div>
-      </div>`;
-
-    grid.appendChild(card);
-  });
-}
-
-function escapeHtml(str) {
-  return (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
 async function saveDraft(id, btn) {
   const card = btn.closest('.draft-card');
   const title = card.querySelector('[data-field="title"]').value;
   const content = card.querySelector('[data-field="content"]').value;
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span>Guardando...';
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Guardando...';
   try {
-    await apiFetch(`/drafts/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify({ title, content })
-    });
+    await apiFetch(`/drafts/${id}`, { method: 'PUT', body: JSON.stringify({ title, content }) });
     btn.textContent = '✓ Guardado';
     setTimeout(() => { btn.textContent = 'Guardar'; btn.disabled = false; }, 2000);
     setStatus('Guardado correctamente', 'success');
   } catch (err) {
-    btn.textContent = 'Guardar';
-    btn.disabled = false;
+    btn.textContent = 'Guardar'; btn.disabled = false;
     setStatus('Error guardando: ' + err.message, 'error');
   }
 }
 
 async function publishDraft(id, btn) {
   if (!confirm('¿Publicar esta nota en muns.club?')) return;
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span>Publicando...';
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Publicando...';
   try {
     const post = await apiFetch(`/drafts/${id}/publish`, { method: 'POST' });
     const card = btn.closest('.draft-card');
-    card.style.opacity = '0.4';
-    card.style.pointerEvents = 'none';
-    setStatus(`✓ Publicado: "${post.title}" → ${post.link}`, 'success');
+    card.style.opacity = '0.4'; card.style.pointerEvents = 'none';
+    setStatus(`✓ Publicado: "${post.title}"`, 'success');
     setTimeout(() => card.remove(), 1500);
   } catch (err) {
-    btn.textContent = 'Publicar';
-    btn.disabled = false;
+    btn.textContent = 'Publicar'; btn.disabled = false;
     setStatus('Error publicando: ' + err.message, 'error');
   }
 }
@@ -286,32 +281,150 @@ async function deleteDraft(id, btn) {
   btn.disabled = true;
   try {
     await apiFetch(`/drafts/${id}`, { method: 'DELETE' });
-    const card = btn.closest('.draft-card');
-    card.style.opacity = '0';
-    card.style.transform = 'scale(0.95)';
-    card.style.transition = 'all 0.2s';
-    setTimeout(() => { card.remove(); setStatus('Borrador eliminado', ''); }, 250);
+    removeCard(btn);
+    setStatus('Borrador eliminado', '');
   } catch (err) {
     btn.disabled = false;
     setStatus('Error eliminando: ' + err.message, 'error');
   }
 }
 
+// ── PUBLICADAS ──
+
+async function loadPublished() {
+  setStatus('Cargando notas publicadas...');
+  try {
+    const posts = await apiFetch('/published');
+    renderCards(posts, 'published-grid', 'published-empty', 'published');
+    setStatus(posts.length > 0 ? `${posts.length} notas publicadas` : 'No hay notas publicadas', '');
+  } catch (err) {
+    setStatus('Error: ' + err.message, 'error');
+  }
+}
+
+async function savePublished(id, btn) {
+  const card = btn.closest('.draft-card');
+  const title = card.querySelector('[data-field="title"]').value;
+  const content = card.querySelector('[data-field="content"]').value;
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Guardando...';
+  try {
+    await apiFetch(`/published/${id}`, { method: 'PUT', body: JSON.stringify({ title, content }) });
+    btn.textContent = '✓ Guardado';
+    setTimeout(() => { btn.textContent = 'Guardar'; btn.disabled = false; }, 2000);
+    setStatus('Guardado correctamente', 'success');
+  } catch (err) {
+    btn.textContent = 'Guardar'; btn.disabled = false;
+    setStatus('Error guardando: ' + err.message, 'error');
+  }
+}
+
+async function unpublishPost(id, btn) {
+  if (!confirm('¿Volver a borrador? Se va a quitar de muns.club.')) return;
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>...';
+  try {
+    await apiFetch(`/published/${id}/unpublish`, { method: 'POST' });
+    const card = btn.closest('.draft-card');
+    card.style.opacity = '0.4'; card.style.pointerEvents = 'none';
+    setStatus('Nota movida a borradores', 'success');
+    setTimeout(() => card.remove(), 1500);
+  } catch (err) {
+    btn.textContent = 'A borrador'; btn.disabled = false;
+    setStatus('Error: ' + err.message, 'error');
+  }
+}
+
+async function deletePublished(id, btn) {
+  if (!confirm('¿Eliminar permanentemente esta nota publicada? No se puede deshacer.')) return;
+  btn.disabled = true;
+  try {
+    await apiFetch(`/published/${id}`, { method: 'DELETE' });
+    removeCard(btn);
+    setStatus('Nota eliminada', '');
+  } catch (err) {
+    btn.disabled = false;
+    setStatus('Error eliminando: ' + err.message, 'error');
+  }
+}
+
+// ── RENDER ──
+
+function stripHtml(html) {
+  const div = document.createElement('div');
+  div.innerHTML = html;
+  return div.textContent || div.innerText || '';
+}
+
+function escapeHtml(str) {
+  return (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function removeCard(btn) {
+  const card = btn.closest('.draft-card');
+  card.style.opacity = '0';
+  card.style.transform = 'scale(0.95)';
+  card.style.transition = 'all 0.2s';
+  setTimeout(() => card.remove(), 250);
+}
+
+function renderCards(posts, gridId, emptyId, type) {
+  const grid = document.getElementById(gridId);
+  const empty = document.getElementById(emptyId);
+  grid.innerHTML = '';
+
+  if (posts.length === 0) {
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  posts.forEach(post => {
+    const card = document.createElement('div');
+    card.className = 'draft-card';
+    card.dataset.id = post.id;
+
+    const cleanContent = stripHtml(post.content);
+    const imageHtml = post.featuredMediaUrl
+      ? `<img class="card-image" src="${post.featuredMediaUrl}" alt="" loading="lazy" />`
+      : `<div class="card-image-placeholder">🌙</div>`;
+
+    const actionsHtml = type === 'draft'
+      ? `<button class="btn btn-save" onclick="saveDraft(${post.id}, this)">Guardar</button>
+         <button class="btn btn-publish" onclick="publishDraft(${post.id}, this)">Publicar</button>
+         <button class="btn btn-delete" onclick="deleteDraft(${post.id}, this)">Borrar</button>`
+      : `<button class="btn btn-save" onclick="savePublished(${post.id}, this)">Guardar</button>
+         <button class="btn btn-unpublish" onclick="unpublishPost(${post.id}, this)">A borrador</button>
+         <button class="btn btn-delete" onclick="deletePublished(${post.id}, this)">Borrar</button>`;
+
+    const linkHtml = type === 'published' && post.link
+      ? `<div class="card-link"><a href="${post.link}" target="_blank">🔗 Ver en muns.club</a></div>`
+      : '';
+
+    card.innerHTML = `
+      ${imageHtml}
+      <div class="card-body">
+        <textarea class="card-title-input" rows="2" data-field="title">${escapeHtml(post.title)}</textarea>
+        <textarea class="card-content-textarea" data-field="content">${escapeHtml(cleanContent)}</textarea>
+        <div class="card-meta">📅 ${new Date(post.date).toLocaleDateString('es-AR')}</div>
+        ${linkHtml}
+        <div class="card-actions">${actionsHtml}</div>
+      </div>`;
+
+    grid.appendChild(card);
+  });
+}
+
 async function runPipeline() {
   if (!confirm('¿Generar las noticias de hoy? El proceso tarda unos minutos.')) return;
   const btn = document.getElementById('run-btn');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span>Generando...';
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Generando...';
   setStatus('Generando noticias... esto puede tardar 3-5 minutos.');
   try {
     const result = await apiFetch('/run', { method: 'POST' });
-    btn.textContent = '▶ Generar noticias de hoy';
-    btn.disabled = false;
+    btn.textContent = '▶ Generar noticias de hoy'; btn.disabled = false;
     setStatus(`✓ ${result.result.succeeded} noticias generadas, ${result.result.failed} errores`, 'success');
     setTimeout(loadDrafts, 1000);
   } catch (err) {
-    btn.textContent = '▶ Generar noticias de hoy';
-    btn.disabled = false;
+    btn.textContent = '▶ Generar noticias de hoy'; btn.disabled = false;
     setStatus('Error: ' + err.message, 'error');
   }
 }
