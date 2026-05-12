@@ -118,9 +118,16 @@ export function findTopStories(articles: RssArticle[], limit = 10): RssArticle[]
 
   const selected: RssArticle[] = [];
 
-  // Tomar regulares
-  for (const group of groups.slice(0, regularSlots)) {
-    selected.push(pickBest(group));
+  // Tomar regulares con límite por fuente (máx 2 de CNN)
+  const sourceCount: Record<string, number> = {};
+  const SOURCE_CAP: Record<string, number> = { CNN: 2 };
+  for (const group of groups) {
+    if (selected.length >= regularSlots) break;
+    const best = pickBest(group);
+    const cap = SOURCE_CAP[best.source] ?? 99;
+    sourceCount[best.source] = (sourceCount[best.source] || 0) + 1;
+    if (sourceCount[best.source] > cap) continue;
+    selected.push(best);
   }
 
   // Tomar positivas (sin agrupar, son únicas)
