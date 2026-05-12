@@ -46,6 +46,8 @@
   .btn-delete { background: #cf2e2e22; color: #cf2e2e; border: 1px solid #cf2e2e44; }
   .btn-save { background: #7B6A5822; color: #7B6A58; border: 1px solid #7B6A5844; }
   .btn-unpublish { background: #EDE6D4; color: #7B6A58; border: 1px solid #C2DCF2; }
+  .btn-feature { background: #fffbe6; color: #b8860b; border: 1px solid #f0d060; }
+  .btn-feature.active { background: #f0d060; color: #5a4000; }
   .btn-reimg { background: #f4eeff; color: #7c4dbb; border: 1px solid #d4b8f0; }
 
   /* Tabs */
@@ -335,6 +337,25 @@ async function unpublishPost(id, btn) {
   }
 }
 
+async function featurePost(id, btn) {
+  btn.disabled = true;
+  try {
+    await apiFetch(`/published/${id}/feature`, { method: 'POST' });
+    // Quitar destacada de todas las cards
+    document.querySelectorAll('.btn-feature').forEach(b => {
+      b.classList.remove('active');
+      b.textContent = '☆ Destacar';
+    });
+    btn.classList.add('active');
+    btn.textContent = '⭐ Destacada';
+    setStatus('Noticia destacada actualizada. Se verá arriba en /infomuns.', 'success');
+  } catch (err) {
+    setStatus('Error: ' + err.message, 'error');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
 async function deletePublished(id, btn) {
   if (!confirm('¿Eliminar permanentemente esta nota publicada? No se puede deshacer.')) return;
   btn.disabled = true;
@@ -394,7 +415,8 @@ function renderCards(posts, gridId, emptyId, type) {
          <button class="btn btn-publish" onclick="publishDraft(${post.id}, this)">Publicar</button>
          <button class="btn btn-reimg" onclick="regenerateImage(${post.id}, this)">🎨 Nueva imagen</button>
          <button class="btn btn-delete" onclick="deleteDraft(${post.id}, this)">Borrar</button>`
-      : `<button class="btn btn-save" onclick="savePublished(${post.id}, this)">Guardar</button>
+      : `<button class="btn btn-feature ${post.isFeatured ? 'active' : ''}" onclick="featurePost(${post.id}, this)">${post.isFeatured ? '⭐ Destacada' : '☆ Destacar'}</button>
+         <button class="btn btn-save" onclick="savePublished(${post.id}, this)">Guardar</button>
          <button class="btn btn-unpublish" onclick="unpublishPost(${post.id}, this)">A borrador</button>
          <button class="btn btn-delete" onclick="deletePublished(${post.id}, this)">Borrar</button>`;
 

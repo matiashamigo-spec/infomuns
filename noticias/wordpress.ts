@@ -115,6 +115,12 @@ export async function unpublishPost(id: number): Promise<WpPost> {
   return res.data;
 }
 
+// Marca un post como "noticia destacada" (hero en /infomuns)
+export async function setFeaturedPost(id: number): Promise<void> {
+  const { url, key } = getWpConfig();
+  await axios.post(`${BASE(url)}/featured`, { id }, { headers: { "X-Noticias-Key": key } });
+}
+
 // Elimina un post permanentemente
 export async function deletePost(id: number): Promise<void> {
   const { url, key } = getWpConfig();

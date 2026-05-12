@@ -4,7 +4,7 @@
 import { Router, Request, Response } from "express";
 import { runDailyPipeline, classifyTone } from "./pipeline.js";
 import { generateIllustrationFromText } from "./illustration.js";
-import { listDrafts, listPublished, updatePost, publishPostById, unpublishPost, deletePost, uploadMedia } from "./wordpress.js";
+import { listDrafts, listPublished, updatePost, publishPostById, unpublishPost, deletePost, uploadMedia, setFeaturedPost } from "./wordpress.js";
 
 export function createNoticiasRouter(): Router {
   const router = Router();
@@ -129,6 +129,17 @@ export function createNoticiasRouter(): Router {
     try {
       const post = await unpublishPost(id);
       res.json(post);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // POST /api/noticias/published/:id/feature — marca como noticia destacada
+  router.post("/published/:id/feature", requireAdmin, async (req: Request, res: Response) => {
+    const id = parseInt(req.params.id as string);
+    try {
+      await setFeaturedPost(id);
+      res.json({ ok: true });
     } catch (err: any) {
       res.status(500).json({ error: err.message });
     }
