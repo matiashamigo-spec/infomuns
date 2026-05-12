@@ -14,11 +14,14 @@ Color palette (use these as the dominant colors): cornflower blue (#4464AD), sky
 Rules:
 - Render everything as a hand-drawn illustration — people become friendly cartoon characters, backgrounds become painted scenes
 - Keep the scene recognizable and the subject matter clear
-- Bright, warm, joyful mood — even for serious topics, keep it gentle and safe for children
+- Bright, warm, joyful mood — even for serious topics, keep it gentle and safe for children ages 3 to 7
 - No photorealism whatsoever
 - No text, no labels, no captions in the image
 - Soft rounded shapes, no harsh edges
-- The illustration should feel like it belongs in a picture book`;
+- The illustration should feel like it belongs in a picture book
+- STRICT SAFETY: absolutely NO weapons of any kind (no guns, knives, swords, missiles, bombs, or any object that could harm), NO violence, NO blood, NO explosions, NO threatening gestures, NO military equipment shown as threatening. If the original image contains any of these elements, replace them with neutral, peaceful objects (e.g. a flag becomes a flower, a weapon becomes a musical instrument, soldiers become explorers)
+- Characters must look friendly, round-faced, and approachable — never scary, angry, or threatening
+- Everything must be 100% appropriate for a 3-year-old child`;
 
 export async function illustrateImage(imageUrl: string, apiKey: string): Promise<string | null> {
   try {
