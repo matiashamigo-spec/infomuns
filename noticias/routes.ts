@@ -2,6 +2,8 @@
 // Todas protegidas con NOTICIAS_ADMIN_SECRET via header Authorization: Bearer <secret>
 
 import { Router, Request, Response } from "express";
+import axios from "axios";
+import * as cheerio from "cheerio";
 import { runDailyPipeline } from "./pipeline.js";
 import { illustrateImage } from "./illustration.js";
 import { listDrafts, listPublished, updatePost, publishPostById, unpublishPost, deletePost, uploadMedia, setFeaturedPost } from "./wordpress.js";
@@ -66,14 +68,37 @@ export function createNoticiasRouter(): Router {
   });
 
   // POST /api/noticias/drafts/:id/regenerate-image — regenera la imagen ilustrada
-  // Requiere { imageUrl } en el body — extraído del comentario <!-- source-image: URL --> del contenido
   router.post("/drafts/:id/regenerate-image", requireAdmin, async (req: Request, res: Response) => {
     const id = parseInt(req.params.id as string);
-    const { title, imageUrl } = req.body;
+    const { title, imageUrl: providedImageUrl, content } = req.body;
     try {
       const apiKey = process.env.GEMINI_API_KEY;
       if (!apiKey) return res.status(500).json({ error: "GEMINI_API_KEY no configurada" });
-      if (!imageUrl) return res.status(400).json({ error: "imageUrl requerido — esta noticia no tiene foto original" });
+
+      // 1. Intentar imageUrl del comentario guardado
+      let imageUrl = providedImageUrl;
+
+      // 2. Si no hay, buscar la URL del artículo fuente en el contenido y scrapear su og:image
+      if (!imageUrl && content) {
+        const srcMatch = content.match(/href="([^"]+)"[^>]*>[^<]*<\/a>\): /);
+        const articleUrl = srcMatch ? srcMatch[1] : null;
+        if (articleUrl) {
+          console.log(`[noticias] Scrapeando og:image de: ${articleUrl}`);
+          try {
+            const page = await axios.get(articleUrl, { timeout: 10000, headers: { "User-Agent": "Mozilla/5.0" } });
+            const $ = cheerio.load(page.data);
+            imageUrl = $('meta[property="og:image"]').attr("content")
+              || $('meta[name="twitter:image"]').attr("content")
+              || $('article img').first().attr("src")
+              || null;
+            console.log(`[noticias] og:image encontrada: ${imageUrl}`);
+          } catch (e: any) {
+            console.warn(`[noticias] Error scrapeando: ${e.message}`);
+          }
+        }
+      }
+
+      if (!imageUrl) return res.status(400).json({ error: "No se encontró foto para esta noticia" });
 
       console.log(`[noticias] Regenerando imagen para post ${id} desde ${imageUrl}`);
       const illustrated = await illustrateImage(imageUrl, apiKey);
