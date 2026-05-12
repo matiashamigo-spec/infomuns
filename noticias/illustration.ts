@@ -26,16 +26,17 @@ function loadCharacter(tone: NewsTone): { data: string; mimeType: string } {
 
 const CHARACTER_STRICT_RULES = `STRICT RULES for the character:
 - Include EXACTLY ONE character — never two, never three, always one only.
-- Place it in the bottom-right corner, occupying about 1/5 of the image height.
+- The character is an ACTIVE PARTICIPANT in the scene — interacting with objects, other characters, or the environment. It is part of the story, not a decoration or overlay.
+- Size: roughly 1/4 to 1/3 of the image height, naturally integrated into the composition.
 - Body shape: crescent moon silhouette, rounded and soft, like a thick half-moon lying sideways.
-- The pose and arm position may vary naturally, but face, body shape, and colors must stay consistent.
+- The pose and arm position should match what is happening in the scene.
 - The character must look clean, friendly, and coherent — never deformed, stretched, or blurry.`;
 
 // Used when a reference image IS included in the request
 function characterInstructionWithRef(tone: NewsTone): string {
   if (tone !== "positive") return "";
   return `The last image is the reference for a happy "Mun". ${CHARACTER_STRICT_RULES}
-Reproduce EXACTLY from the reference: cream crescent moon body, beige spots, happy squinting eyes.`;
+Reproduce EXACTLY from the reference: cream crescent moon body, beige spots, happy squinting eyes. The Mun must feel like it belongs in the scene — doing something, reacting, or being part of the moment.`;
 }
 
 // Used when there is NO reference image — description only
