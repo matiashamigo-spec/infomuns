@@ -2,8 +2,8 @@
 // Todas protegidas con NOTICIAS_ADMIN_SECRET via header Authorization: Bearer <secret>
 
 import { Router, Request, Response } from "express";
-import { runDailyPipeline, classifyTone } from "./pipeline.js";
-import { generateIllustrationFromText } from "./illustration.js";
+import { runDailyPipeline } from "./pipeline.js";
+import { illustrateImage } from "./illustration.js";
 import { listDrafts, listPublished, updatePost, publishPostById, unpublishPost, deletePost, uploadMedia, setFeaturedPost } from "./wordpress.js";
 
 export function createNoticiasRouter(): Router {
@@ -66,17 +66,17 @@ export function createNoticiasRouter(): Router {
   });
 
   // POST /api/noticias/drafts/:id/regenerate-image — regenera la imagen ilustrada
+  // Requiere { imageUrl } en el body — extraído del comentario <!-- source-image: URL --> del contenido
   router.post("/drafts/:id/regenerate-image", requireAdmin, async (req: Request, res: Response) => {
     const id = parseInt(req.params.id as string);
-    const { title, content } = req.body;
+    const { title, imageUrl } = req.body;
     try {
       const apiKey = process.env.GEMINI_API_KEY;
       if (!apiKey) return res.status(500).json({ error: "GEMINI_API_KEY no configurada" });
+      if (!imageUrl) return res.status(400).json({ error: "imageUrl requerido — esta noticia no tiene foto original" });
 
-      const tone = await classifyTone(`${title}\n${content}`, apiKey);
-      console.log(`[noticias] Regenerando imagen para post ${id} (tono: ${tone})`);
-
-      const illustrated = await generateIllustrationFromText(title, content, tone, apiKey);
+      console.log(`[noticias] Regenerando imagen para post ${id} desde ${imageUrl}`);
+      const illustrated = await illustrateImage(imageUrl, apiKey);
       if (!illustrated) return res.status(500).json({ error: "Gemini no generó imagen" });
 
       const slug = "img-" + (title || `post-${id}`).toLowerCase().replace(/[^a-z0-9]+/g, "-").substring(0, 36);

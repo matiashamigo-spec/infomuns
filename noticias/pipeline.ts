@@ -2,7 +2,7 @@
 
 import { GoogleGenAI, Type } from "@google/genai";
 import { fetchAllFeeds, findTopStories } from "./rss.js";
-import { illustrateImage, generateIllustrationFromText, NewsTone } from "./illustration.js";
+import { illustrateImage, generateIllustrationFromText } from "./illustration.js";
 import { createDraft, uploadMedia } from "./wordpress.js";
 import { MUNS_SYSTEM_INSTRUCTION } from "../constants.js";
 
@@ -83,32 +83,30 @@ export async function runDailyPipeline(limit = 10): Promise<PipelineResult> {
       const newsText = `${article.title}\n\n${article.content}`;
       const { title, story } = await generateMunsStory(newsText, apiKey);
 
-      // 2. Clasificar tono e ilustrar
-      const tone = await classifyTone(`${article.title}\n${article.content}`, apiKey);
-      console.log(`[pipeline] Tono detectado: ${tone}`);
-
+      // 2. Ilustrar (solo si hay foto original — sin fallback a texto)
       let mediaId: number | undefined;
-      let illustrated: string | null = null;
       if (article.imageUrl) {
         console.log(`[pipeline] Ilustrando desde imagen original...`);
-        illustrated = await illustrateImage(article.imageUrl, tone, apiKey);
-      }
-      if (!illustrated) {
-        console.log(`[pipeline] Generando ilustración desde texto...`);
-        illustrated = await generateIllustrationFromText(title, story, tone, apiKey);
-      }
-      if (illustrated) {
-        const slug = "img-" + title.toLowerCase().replace(/[^a-z0-9]+/g, "-").substring(0, 36);
-        const media = await uploadMedia(illustrated, slug);
-        mediaId = media?.id ?? undefined;
+        const illustrated = await illustrateImage(article.imageUrl, apiKey);
+        if (illustrated) {
+          const slug = "img-" + title.toLowerCase().replace(/[^a-z0-9]+/g, "-").substring(0, 36);
+          const media = await uploadMedia(illustrated, slug);
+          mediaId = media?.id ?? undefined;
+        }
+      } else {
+        console.log(`[pipeline] Sin foto original, se omite ilustración`);
       }
 
       // 3. Crear borrador en WordPress
+      // Guardar URL de foto original como comentario oculto para poder regenerar imagen después
+      const sourceImageComment = article.imageUrl
+        ? `<!-- source-image: ${article.imageUrl} -->\n`
+        : "";
       const cleanStory = story
         .toUpperCase()
         .replace(/«/g, '"')
         .replace(/»/g, '"');
-      const content = `<p>${cleanStory.replace(/\n/g, "</p><p>")}</p>
+      const content = `${sourceImageComment}<p>${cleanStory.replace(/\n/g, "</p><p>")}</p>
 <p><small>Fuente original (<a href="${article.link}" target="_blank" rel="noopener">${article.source}</a>): ${article.link}</small></p>`;
 
       await createDraft(title, content, mediaId);
