@@ -2,8 +2,9 @@
 // Todas protegidas con NOTICIAS_ADMIN_SECRET via header Authorization: Bearer <secret>
 
 import { Router, Request, Response } from "express";
-import { runDailyPipeline } from "./pipeline.js";
-import { listDrafts, listPublished, updatePost, publishPostById, unpublishPost, deletePost } from "./wordpress.js";
+import { runDailyPipeline, classifyTone } from "./pipeline.js";
+import { generateIllustrationFromText } from "./illustration.js";
+import { listDrafts, listPublished, updatePost, publishPostById, unpublishPost, deletePost, uploadMedia } from "./wordpress.js";
 
 export function createNoticiasRouter(): Router {
   const router = Router();
@@ -59,6 +60,31 @@ export function createNoticiasRouter(): Router {
     try {
       const published = await publishPostById(id);
       res.json(published);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // POST /api/noticias/drafts/:id/regenerate-image — regenera la imagen ilustrada
+  router.post("/drafts/:id/regenerate-image", requireAdmin, async (req: Request, res: Response) => {
+    const id = parseInt(req.params.id as string);
+    const { title, content } = req.body;
+    try {
+      const apiKey = process.env.GEMINI_API_KEY;
+      if (!apiKey) return res.status(500).json({ error: "GEMINI_API_KEY no configurada" });
+
+      const tone = await classifyTone(`${title}\n${content}`, apiKey);
+      console.log(`[noticias] Regenerando imagen para post ${id} (tono: ${tone})`);
+
+      const illustrated = await generateIllustrationFromText(title, content, tone, apiKey);
+      if (!illustrated) return res.status(500).json({ error: "Gemini no generó imagen" });
+
+      const slug = (title || `post-${id}`).toLowerCase().replace(/[^a-z0-9]+/g, "-").substring(0, 40);
+      const mediaId = await uploadMedia(illustrated, slug);
+      if (!mediaId) return res.status(500).json({ error: "No se pudo subir la imagen a WordPress" });
+
+      const updated = await updatePost(id, { featuredMediaId: mediaId });
+      res.json({ ok: true, mediaUrl: updated.featuredMediaUrl });
     } catch (err: any) {
       res.status(500).json({ error: err.message });
     }

@@ -66,10 +66,14 @@ export async function listDrafts(): Promise<WpPost[]> {
   return res.data || [];
 }
 
-// Actualiza título y/o contenido de un post
-export async function updatePost(id: number, data: { title?: string; content?: string }): Promise<WpPost> {
+// Actualiza título, contenido y/o imagen destacada de un post
+export async function updatePost(id: number, data: { title?: string; content?: string; featuredMediaId?: number }): Promise<WpPost> {
   const { url, key } = getWpConfig();
-  const res = await axios.put(`${BASE(url)}/drafts/${id}`, data, {
+  const body: Record<string, any> = {};
+  if (data.title !== undefined) body.title = data.title;
+  if (data.content !== undefined) body.content = data.content;
+  if (data.featuredMediaId !== undefined) body.featured_media = data.featuredMediaId;
+  const res = await axios.put(`${BASE(url)}/drafts/${id}`, body, {
     headers: { "X-Noticias-Key": key },
   });
   return res.data;

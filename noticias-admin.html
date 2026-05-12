@@ -46,6 +46,7 @@
   .btn-delete { background: #cf2e2e22; color: #cf2e2e; border: 1px solid #cf2e2e44; }
   .btn-save { background: #7B6A5822; color: #7B6A58; border: 1px solid #7B6A5844; }
   .btn-unpublish { background: #EDE6D4; color: #7B6A58; border: 1px solid #C2DCF2; }
+  .btn-reimg { background: #f4eeff; color: #7c4dbb; border: 1px solid #d4b8f0; }
 
   /* Tabs */
   .tabs {
@@ -391,6 +392,7 @@ function renderCards(posts, gridId, emptyId, type) {
     const actionsHtml = type === 'draft'
       ? `<button class="btn btn-save" onclick="saveDraft(${post.id}, this)">Guardar</button>
          <button class="btn btn-publish" onclick="publishDraft(${post.id}, this)">Publicar</button>
+         <button class="btn btn-reimg" onclick="regenerateImage(${post.id}, this)">🎨 Nueva imagen</button>
          <button class="btn btn-delete" onclick="deleteDraft(${post.id}, this)">Borrar</button>`
       : `<button class="btn btn-save" onclick="savePublished(${post.id}, this)">Guardar</button>
          <button class="btn btn-unpublish" onclick="unpublishPost(${post.id}, this)">A borrador</button>
@@ -412,6 +414,36 @@ function renderCards(posts, gridId, emptyId, type) {
 
     grid.appendChild(card);
   });
+}
+
+async function regenerateImage(id, btn) {
+  const card = btn.closest('.draft-card');
+  const title = card.querySelector('[data-field="title"]').value;
+  const content = card.querySelector('[data-field="content"]').value;
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Generando...';
+  setStatus('Generando nueva imagen, puede tardar 30-60 segundos...');
+  try {
+    const result = await apiFetch(`/drafts/${id}/regenerate-image`, {
+      method: 'POST',
+      body: JSON.stringify({ title, content })
+    });
+    // Reemplazar imagen en la card
+    const existing = card.querySelector('.card-image, .card-image-placeholder');
+    if (existing && result.mediaUrl) {
+      const img = document.createElement('img');
+      img.className = 'card-image';
+      img.src = result.mediaUrl;
+      img.alt = '';
+      img.loading = 'lazy';
+      existing.replaceWith(img);
+    }
+    btn.textContent = '✓ Lista'; btn.disabled = false;
+    setStatus('Nueva imagen generada correctamente', 'success');
+    setTimeout(() => { btn.textContent = '🎨 Nueva imagen'; }, 3000);
+  } catch (err) {
+    btn.textContent = '🎨 Nueva imagen'; btn.disabled = false;
+    setStatus('Error generando imagen: ' + err.message, 'error');
+  }
 }
 
 async function runPipeline(limit = 10) {

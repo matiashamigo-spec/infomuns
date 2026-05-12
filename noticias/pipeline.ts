@@ -6,7 +6,7 @@ import { illustrateImage, generateIllustrationFromText, NewsTone } from "./illus
 import { createDraft, uploadMedia } from "./wordpress.js";
 import { MUNS_SYSTEM_INSTRUCTION } from "../constants.js";
 
-async function classifyTone(newsText: string, apiKey: string): Promise<NewsTone> {
+export async function classifyTone(newsText: string, apiKey: string): Promise<NewsTone> {
   try {
     const ai = new GoogleGenAI({ apiKey });
     const response = await ai.models.generateContent({
