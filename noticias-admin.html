@@ -442,10 +442,14 @@ async function regenerateImage(id, btn) {
   const card = btn.closest('.draft-card');
   const title = card.querySelector('[data-field="title"]').value;
   const content = card.querySelector('[data-field="content"]').value;
-  // Extraer URL de foto original del comentario guardado en el contenido
-  const srcMatch = content.match(/<!--\s*source-image:\s*(\S+)\s*-->/);
-  const imageUrl = srcMatch ? srcMatch[1] : null;
+  // 1. Intentar source-image guardado
+  let imageUrl = (content.match(/<!--\s*source-image:\s*(\S+)\s*-->/) || [])[1] || null;
+  // 2. Si no hay, extraer el link del artículo fuente del contenido
+  let articleUrl = null;
   if (!imageUrl) {
+    articleUrl = (content.match(/href="(https?:\/\/[^"]+)"/) || [])[1] || null;
+  }
+  if (!imageUrl && !articleUrl) {
     setStatus('Esta noticia no tiene foto original guardada', 'error');
     return;
   }
@@ -454,7 +458,7 @@ async function regenerateImage(id, btn) {
   try {
     const result = await apiFetch(`/drafts/${id}/regenerate-image`, {
       method: 'POST',
-      body: JSON.stringify({ title, imageUrl })
+      body: JSON.stringify({ title, imageUrl, articleUrl })
     });
     // Reemplazar imagen en la card
     const existing = card.querySelector('.card-image, .card-image-placeholder');

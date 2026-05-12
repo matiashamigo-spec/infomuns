@@ -70,20 +70,16 @@ export function createNoticiasRouter(): Router {
   // POST /api/noticias/drafts/:id/regenerate-image — regenera la imagen ilustrada
   router.post("/drafts/:id/regenerate-image", requireAdmin, async (req: Request, res: Response) => {
     const id = parseInt(req.params.id as string);
-    const { title, imageUrl: providedImageUrl, content } = req.body;
+    const { title, imageUrl: providedImageUrl, articleUrl: providedArticleUrl } = req.body;
     try {
       const apiKey = process.env.GEMINI_API_KEY;
       if (!apiKey) return res.status(500).json({ error: "GEMINI_API_KEY no configurada" });
 
-      // 1. Intentar imageUrl del comentario guardado
       let imageUrl = providedImageUrl;
 
-      // 2. Si no hay, buscar la URL del artículo fuente en el contenido y scrapear su og:image
-      if (!imageUrl && content) {
-        // Formato: <a href="URL">FUENTE</a>): URL  o  source-image: URL
-        const srcMatch = content.match(/<!--\s*source-image:\s*(\S+)\s*-->/)
-          || content.match(/href="(https?:\/\/[^"]+)"[^>]*>[^<]+<\/a>\):/);
-        const articleUrl = srcMatch ? srcMatch[1] : null;
+      // Si no hay imageUrl directa, scrapear og:image del artículo fuente
+      if (!imageUrl && providedArticleUrl) {
+        const articleUrl = providedArticleUrl;
         if (articleUrl) {
           console.log(`[noticias] Scrapeando og:image de: ${articleUrl}`);
           try {
