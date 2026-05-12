@@ -3,7 +3,7 @@ import axios from "axios";
 const MODEL = "gemini-2.0-flash-exp-image-generation";
 const API_BASE = "https://generativelanguage.googleapis.com/v1beta/models/";
 
-const PROMPT = `Transform the uploaded image into this style: Soft hand drawn children's book illustration style, delicate pencil and crayon sketch lines, warm textured paper background, pastel muted palette, light watercolor shading, airy composition with lots of negative space, imperfect organic outlines, subtle grain texture, minimal botanical doodles, fine ink linework, cozy nostalgic atmosphere, handcrafted traditional illustration aesthetic, soft warm lighting, whimsical and poetic mood, analog sketchbook feel, gentle layering of color, loose expressive strokes, vintage storybook illustration style, minimal yet emotional visual language.`;
+const PROMPT = `Redraw this exact photo as a children's book illustration. Keep the same people, scene, composition and setting from the photo — do not invent new subjects or characters. Only change the visual style to: soft hand drawn lines, delicate pencil and crayon sketch, warm textured paper background, pastel muted palette, light watercolor shading, airy composition, imperfect organic outlines, subtle grain texture, fine ink linework, cozy nostalgic atmosphere, soft warm lighting, vintage storybook aesthetic, analog sketchbook feel, loose expressive strokes.`;
 
 export async function illustrateImage(imageUrl: string, apiKey: string): Promise<string | null> {
   console.log(`[illustration] Procesando: ${imageUrl}`);
