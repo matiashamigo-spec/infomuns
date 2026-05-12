@@ -3,7 +3,16 @@ import axios from "axios";
 const MODEL = "gemini-2.5-flash-image";
 const API_BASE = "https://generativelanguage.googleapis.com/v1beta/models/";
 
-const PROMPT = `Transform this image into a soft hand drawn children's book illustration style. Delicate pencil and crayon sketch lines, warm textured paper background, pastel muted palette, light watercolor shading, airy composition with lots of negative space, imperfect organic outlines, subtle grain texture, minimal botanical doodles, fine ink linework, cozy nostalgic atmosphere, handcrafted traditional illustration aesthetic, soft warm lighting, whimsical and poetic mood, analog sketchbook feel, gentle layering of color, loose expressive strokes, vintage storybook illustration style, minimal yet emotional visual language.`;
+const PROMPT = `Transform this news photograph into a children's book illustration.
+- Soft hand drawn style, delicate pencil and crayon sketch lines, warm textured paper background
+- Pastel muted palette, light watercolor shading
+- Keep the scene recognizable from the original photo — same setting, same people, same composition
+- Render people as friendly illustrated figures, backgrounds as painted scenes
+- Airy composition, imperfect organic outlines, subtle grain texture
+- Fine ink linework, cozy nostalgic atmosphere, soft warm lighting
+- Vintage storybook aesthetic, analog sketchbook feel
+- No text, labels or captions in the image
+- STRICT SAFETY: no weapons, no violence, no blood, no threatening content`;
 
 export async function illustrateImage(imageUrl: string, apiKey: string): Promise<string | null> {
   console.log(`[illustration] Procesando: ${imageUrl}`);
@@ -38,7 +47,7 @@ export async function illustrateImage(imageUrl: string, apiKey: string): Promise
         }
       }
     }
-    console.warn("[illustration] Sin imagen en respuesta:", JSON.stringify(res.data?.candidates?.[0]?.content?.parts?.map((p: any) => p.text)));
+    console.warn("[illustration] Sin imagen:", JSON.stringify(res.data?.candidates?.[0]?.content?.parts?.map((p: any) => p.text)));
     return null;
   } catch (err: any) {
     console.warn("[illustration] Error:", err.message);
