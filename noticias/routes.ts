@@ -79,7 +79,7 @@ export function createNoticiasRouter(): Router {
       const illustrated = await generateIllustrationFromText(title, content, tone, apiKey);
       if (!illustrated) return res.status(500).json({ error: "Gemini no generó imagen" });
 
-      const slug = (title || `post-${id}`).toLowerCase().replace(/[^a-z0-9]+/g, "-").substring(0, 40);
+      const slug = "img-" + (title || `post-${id}`).toLowerCase().replace(/[^a-z0-9]+/g, "-").substring(0, 36);
       const media = await uploadMedia(illustrated, slug);
       if (!media) return res.status(500).json({ error: "No se pudo subir la imagen a WordPress" });
 

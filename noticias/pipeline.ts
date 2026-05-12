@@ -98,7 +98,7 @@ export async function runDailyPipeline(limit = 10): Promise<PipelineResult> {
         illustrated = await generateIllustrationFromText(title, story, tone, apiKey);
       }
       if (illustrated) {
-        const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").substring(0, 40);
+        const slug = "img-" + title.toLowerCase().replace(/[^a-z0-9]+/g, "-").substring(0, 36);
         const media = await uploadMedia(illustrated, slug);
         mediaId = media?.id ?? undefined;
       }
