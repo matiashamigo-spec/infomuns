@@ -61,16 +61,16 @@ export interface PipelineResult {
   errors: string[];
 }
 
-export async function runDailyPipeline(): Promise<PipelineResult> {
+export async function runDailyPipeline(limit = 10): Promise<PipelineResult> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error("GEMINI_API_KEY no configurada");
 
-  console.log("[pipeline] Iniciando pipeline diario...");
+  console.log(`[pipeline] Iniciando pipeline (limit=${limit})...`);
 
   const articles = await fetchAllFeeds();
   console.log(`[pipeline] ${articles.length} artículos obtenidos de los feeds`);
 
-  const topStories = findTopStories(articles, 10);
+  const topStories = findTopStories(articles, limit);
   console.log(`[pipeline] ${topStories.length} noticias seleccionadas`);
 
   const result: PipelineResult = { total: topStories.length, succeeded: 0, failed: 0, errors: [] };

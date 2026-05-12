@@ -19,10 +19,12 @@ export function createNoticiasRouter(): Router {
   }
 
   // POST /api/noticias/run — ejecuta el pipeline manualmente
+  // Acepta body { limit: number } para limitar cantidad (útil para pruebas)
   router.post("/run", requireAdmin, async (req: Request, res: Response) => {
     try {
-      console.log("[noticias] Pipeline iniciado manualmente");
-      const result = await runDailyPipeline();
+      const limit = parseInt(req.body?.limit) || 10;
+      console.log(`[noticias] Pipeline iniciado manualmente (limit=${limit})`);
+      const result = await runDailyPipeline(limit);
       res.json({ ok: true, result });
     } catch (err: any) {
       res.status(500).json({ error: err.message });

@@ -145,7 +145,8 @@
     <h1>🌙 Noticias Muns</h1>
     <div class="actions">
       <button class="btn btn-primary" onclick="reload()">↻ Actualizar</button>
-      <button class="btn btn-run" id="run-btn" onclick="runPipeline()">▶ Generar noticias de hoy</button>
+      <button class="btn btn-run" id="run-btn" onclick="runPipeline(10)">▶ Generar noticias de hoy</button>
+      <button class="btn btn-primary" onclick="runPipeline(1)">🧪 Probar 1</button>
     </div>
   </header>
 
@@ -413,13 +414,14 @@ function renderCards(posts, gridId, emptyId, type) {
   });
 }
 
-async function runPipeline() {
-  if (!confirm('¿Generar las noticias de hoy? El proceso tarda unos minutos.')) return;
+async function runPipeline(limit = 10) {
+  const msg = limit === 1 ? '¿Generar 1 nota de prueba?' : '¿Generar las noticias de hoy? El proceso tarda unos minutos.';
+  if (!confirm(msg)) return;
   const btn = document.getElementById('run-btn');
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Generando...';
-  setStatus('Generando noticias... esto puede tardar 3-5 minutos.');
+  setStatus(limit === 1 ? 'Generando 1 nota de prueba...' : 'Generando noticias... esto puede tardar 3-5 minutos.');
   try {
-    const result = await apiFetch('/run', { method: 'POST' });
+    const result = await apiFetch('/run', { method: 'POST', body: JSON.stringify({ limit }) });
     btn.textContent = '▶ Generar noticias de hoy'; btn.disabled = false;
     setStatus(`✓ ${result.result.succeeded} noticias generadas, ${result.result.failed} errores`, 'success');
     setTimeout(loadDrafts, 1000);
