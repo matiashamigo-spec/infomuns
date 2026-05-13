@@ -16,16 +16,10 @@ export interface RssArticle {
   imageUrl: string;
   source: string;
   pubDate: string;
-  positive: boolean;
 }
 
 const FEEDS = [
-  { url: "https://news.un.org/feed/subscribe/es/news/all/rss.xml", name: "ONU", positive: false },
-  { url: "https://rss.nytimes.com/services/xml/rss/nyt/World.xml", name: "NYT", positive: false },
-  { url: "http://rss.cnn.com/rss/edition_world.rss", name: "CNN", positive: false },
   { url: "https://www.infobae.com/feeds/rss", name: "Infobae", positive: false },
-  { url: "https://noticiaspositivas.org/feed/", name: "NoticiasPositivas", positive: true },
-  { url: "https://www.positive.news/feed/", name: "PositiveNews", positive: true },
 ];
 
 const STOP_WORDS = new Set([
@@ -78,7 +72,6 @@ export async function fetchAllFeeds(): Promise<RssArticle[]> {
         imageUrl: extractImage(item),
         source: feed.name,
         pubDate: item.pubDate || item.isoDate || new Date().toISOString(),
-        positive: feed.positive,
       }));
     })
   );
@@ -95,55 +88,14 @@ function pickBest(group: RssArticle[]): RssArticle {
 }
 
 export function findTopStories(articles: RssArticle[], limit = 10): RssArticle[] {
-  // Separar positivas del resto
-  const positiveArticles = articles.filter(a => a.positive && a.title);
-  const regularArticles = articles.filter(a => !a.positive && a.title);
+  const valid = articles.filter(a => a.title);
 
-  // Agrupar regulares por similitud
-  const groups: RssArticle[][] = [];
-  for (const article of regularArticles) {
-    let added = false;
-    for (const group of groups) {
-      if (similarity(article.title, group[0].title) >= 0.35) {
-        group.push(article); added = true; break;
-      }
-    }
-    if (!added) groups.push([article]);
-  }
-  groups.sort((a, b) => b.length - a.length);
-
-  // Reservar al menos 40% del límite para noticias positivas
-  const positiveSlots = Math.max(1, Math.round(limit * 0.4));
-  const regularSlots = limit - positiveSlots;
-
-  const selected: RssArticle[] = [];
-
-  // Tomar regulares con límite por fuente (máx 2 de CNN)
-  const sourceCount: Record<string, number> = {};
-  const SOURCE_CAP: Record<string, number> = { CNN: 2 };
-  for (const group of groups) {
-    if (selected.length >= regularSlots) break;
-    const best = pickBest(group);
-    const cap = SOURCE_CAP[best.source] ?? 99;
-    sourceCount[best.source] = (sourceCount[best.source] || 0) + 1;
-    if (sourceCount[best.source] > cap) continue;
-    selected.push(best);
-  }
-
-  // Tomar positivas (sin agrupar, son únicas)
-  const positiveSelected = positiveArticles
-    .filter(a => a.imageUrl) // preferir las que tienen foto
-    .slice(0, positiveSlots);
-  // Si no hay suficientes con foto, completar sin filtro
-  if (positiveSelected.length < positiveSlots) {
-    const extra = positiveArticles
-      .filter(a => !positiveSelected.includes(a))
-      .slice(0, positiveSlots - positiveSelected.length);
-    positiveSelected.push(...extra);
-  }
-
-  selected.push(...positiveSelected);
-
-  // Mezclar para que no vayan todas positivas al final
-  return selected.sort(() => Math.random() - 0.5).slice(0, limit);
+  // Preferir artículos con imagen, luego por largo de contenido
+  return valid
+    .sort((a, b) => {
+      const scoreA = (a.imageUrl ? 100 : 0) + a.content.length;
+      const scoreB = (b.imageUrl ? 100 : 0) + b.content.length;
+      return scoreB - scoreA;
+    })
+    .slice(0, limit);
 }
