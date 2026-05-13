@@ -14,11 +14,11 @@ import { createNoticiasRouter } from "./noticias/routes.js";
 import { runDailyPipeline } from "./noticias/pipeline.js";
 
 const storyLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000,
-  max: 10,
+  windowMs: 24 * 60 * 60 * 1000,
+  max: 3,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { error: "Demasiadas historias generadas. Volvé en un rato." },
+  message: { error: "Ya generaste 3 historias hoy. ¡Volvé mañana para más!" },
 });
 
 const munsmoodLimiter = rateLimit({
