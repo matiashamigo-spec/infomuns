@@ -1,5 +1,7 @@
 // Pipeline diario: busca noticias → genera historia Muns → ilustra imagen → guarda como borrador en WP
 
+import axios from "axios";
+import * as cheerio from "cheerio";
 import { GoogleGenAI, Type } from "@google/genai";
 import { fetchAllFeeds, findTopStories } from "./rss.js";
 import { illustrateImage, generateIllustrationFromText } from "./illustration.js";
@@ -59,6 +61,51 @@ export interface PipelineResult {
   succeeded: number;
   failed: number;
   errors: string[];
+}
+
+export async function processSingleUrl(url: string, apiKey: string): Promise<{ id: number; title: string }> {
+  console.log(`[pipeline] Procesando URL manual: ${url}`);
+
+  // 1. Scrapear el artículo
+  const page = await axios.get(url, { timeout: 15000, headers: { "User-Agent": "Mozilla/5.0" } });
+  const $ = cheerio.load(page.data);
+
+  const rawTitle = $('meta[property="og:title"]').attr("content") || $("title").text() || "Sin título";
+  const description = $('meta[property="og:description"]').attr("content") || "";
+  const imageUrl = $('meta[property="og:image"]').attr("content")
+    || $('meta[name="twitter:image"]').attr("content")
+    || null;
+  const siteName = $('meta[property="og:site_name"]').attr("content") || new URL(url).hostname;
+
+  const bodyText = $("article p").map((_: number, el: cheerio.Element) => $(el).text()).get().join("\n")
+    || $("p").map((_: number, el: cheerio.Element) => $(el).text()).get().slice(0, 10).join("\n")
+    || description;
+
+  // 2. Generar historia Muns
+  const newsText = `${rawTitle}\n\n${bodyText || description}`;
+  const { title, story } = await generateMunsStory(newsText, apiKey);
+
+  // 3. Ilustrar imagen (si hay foto)
+  let mediaId: number | undefined;
+  if (imageUrl) {
+    console.log(`[pipeline] Ilustrando desde imagen original...`);
+    const illustrated = await illustrateImage(imageUrl, apiKey);
+    if (illustrated) {
+      const slug = "img-" + title.toLowerCase().replace(/[^a-z0-9]+/g, "-").substring(0, 36);
+      const media = await uploadMedia(illustrated, slug);
+      mediaId = media?.id ?? undefined;
+    }
+  }
+
+  // 4. Crear borrador en WordPress
+  const sourceImageComment = imageUrl ? `<!-- source-image: ${imageUrl} -->\n` : "";
+  const cleanStory = story.toUpperCase().replace(/«/g, '"').replace(/»/g, '"');
+  const content = `${sourceImageComment}<p>${cleanStory.replace(/\n/g, "</p><p>")}</p>
+<p><small>Fuente original (<a href="${url}" target="_blank" rel="noopener">${siteName}</a>): ${url}</small></p>`;
+
+  const draft = await createDraft(title, content, mediaId);
+  console.log(`[pipeline] ✓ Borrador manual creado: "${title}"`);
+  return { id: (draft as any).id, title };
 }
 
 export async function runDailyPipeline(limit = 10): Promise<PipelineResult> {

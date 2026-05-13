@@ -4,7 +4,7 @@
 import { Router, Request, Response } from "express";
 import axios from "axios";
 import * as cheerio from "cheerio";
-import { runDailyPipeline } from "./pipeline.js";
+import { runDailyPipeline, processSingleUrl } from "./pipeline.js";
 import { illustrateImage } from "./illustration.js";
 import { listDrafts, listPublished, updatePost, publishPostById, unpublishPost, deletePost, uploadMedia, setFeaturedPost } from "./wordpress.js";
 
@@ -20,6 +20,21 @@ export function createNoticiasRouter(): Router {
     if (token !== secret) return res.status(401).json({ error: "No autorizado" });
     next();
   }
+
+  // POST /api/noticias/from-url — procesa una URL manual y crea un borrador
+  router.post("/from-url", requireAdmin, async (req: Request, res: Response) => {
+    const { url } = req.body;
+    if (!url || typeof url !== "string") return res.status(400).json({ error: "Se requiere una URL válida" });
+    try {
+      const apiKey = process.env.GEMINI_API_KEY;
+      if (!apiKey) return res.status(500).json({ error: "GEMINI_API_KEY no configurada" });
+      console.log(`[noticias] Procesando URL manual: ${url}`);
+      const draft = await processSingleUrl(url, apiKey);
+      res.json({ ok: true, draft });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
 
   // POST /api/noticias/run — ejecuta el pipeline manualmente
   // Acepta body { limit: number } para limitar cantidad (útil para pruebas)

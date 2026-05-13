@@ -153,6 +153,15 @@
     </div>
   </header>
 
+  <!-- Cargar URL manual -->
+  <div id="url-section" style="display:flex; gap:10px; align-items:center; padding:12px 24px; background:#EDE6D4; border-bottom:1px solid #C2DCF2;">
+    <input id="url-input" type="url" placeholder="Pegá la URL de la noticia que querés publicar..."
+      style="flex:1; padding:10px 14px; border:2px solid #C2DCF2; border-radius:8px; font-size:0.9rem; outline:none; font-family:inherit; background:white; color:#4464AD;"
+      onfocus="this.style.borderColor='#4464AD'" onblur="this.style.borderColor='#C2DCF2'"
+    />
+    <button class="btn btn-publish" id="url-btn" onclick="processUrl()">📰 Procesar URL</button>
+  </div>
+
   <div class="tabs">
     <button class="tab active" id="tab-drafts" onclick="switchTab('drafts')">Borradores</button>
     <button class="tab" id="tab-published" onclick="switchTab('published')">Publicadas</button>
@@ -476,6 +485,30 @@ async function regenerateImage(id, btn) {
   } catch (err) {
     btn.textContent = '🎨 Nueva imagen'; btn.disabled = false;
     setStatus('Error generando imagen: ' + err.message, 'error');
+  }
+}
+
+async function processUrl() {
+  const input = document.getElementById('url-input');
+  const url = input.value.trim();
+  if (!url) { setStatus('Pegá una URL primero', 'error'); return; }
+  try { new URL(url); } catch { setStatus('La URL no es válida', 'error'); return; }
+
+  const btn = document.getElementById('url-btn');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Procesando...';
+  setStatus('Procesando la noticia... puede tardar 30-60 segundos.');
+
+  try {
+    const result = await apiFetch('/from-url', { method: 'POST', body: JSON.stringify({ url }) });
+    input.value = '';
+    btn.textContent = '✓ Listo';
+    setStatus(`✓ Borrador creado: "${result.draft.title}"`, 'success');
+    setTimeout(() => { btn.textContent = '📰 Procesar URL'; btn.disabled = false; }, 2000);
+    if (currentTab === 'drafts') setTimeout(loadDrafts, 500);
+    else switchTab('drafts');
+  } catch (err) {
+    btn.textContent = '📰 Procesar URL'; btn.disabled = false;
+    setStatus('Error: ' + err.message, 'error');
   }
 }
 
