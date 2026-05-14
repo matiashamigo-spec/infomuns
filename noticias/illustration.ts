@@ -5,7 +5,7 @@ const API_BASE = "https://generativelanguage.googleapis.com/v1beta/models/";
 
 const PROMPT = `Transform this news photograph into a minimalist editorial illustration.
 - Simple black ink line drawing on off-white paper background
-- 2-3 flat muted color fills only (terracotta, dusty blue or sage green) — no gradients, no shading
+- Exactly 3 flat color fills only: deep blue (#4464AD), sky blue (#9FCFE2), warm beige (#CBBBA0) — no gradients, no shading
 - Bold clean outlines, figures and objects reduced to their essential simplified shapes
 - Style: mid-century editorial illustration, like a New Yorker spot drawing
 - Keep the scene recognizable — same setting, same people, same composition
