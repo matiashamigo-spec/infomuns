@@ -7,6 +7,11 @@ const parser = new Parser({
   customFields: {
     item: [["media:content", "mediaContent"], ["media:thumbnail", "mediaThumbnail"], ["enclosure", "enclosure"]],
   },
+  headers: {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+    "Accept": "application/rss+xml, application/xml, text/xml, */*",
+    "Accept-Language": "es-AR,es;q=0.9",
+  },
 });
 
 export interface RssArticle {
@@ -19,7 +24,7 @@ export interface RssArticle {
 }
 
 const FEEDS = [
-  { url: "https://www.infobae.com/feeds/rss", name: "Infobae", positive: false },
+  { url: "https://www.infobae.com/arc/outboundfeeds/rss/", name: "Infobae", positive: false },
 ];
 
 const STOP_WORDS = new Set([
