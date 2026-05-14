@@ -3,14 +3,13 @@ import axios from "axios";
 const MODEL = "gemini-2.5-flash-image";
 const API_BASE = "https://generativelanguage.googleapis.com/v1beta/models/";
 
-const PROMPT = `Transform this news photograph into a children's book illustration.
-- Soft hand drawn style, delicate pencil and crayon sketch lines, warm textured paper background
-- Pastel muted palette, light watercolor shading
-- Keep the scene recognizable from the original photo — same setting, same people, same composition
-- Render people as friendly illustrated figures, backgrounds as painted scenes
-- Airy composition, imperfect organic outlines, subtle grain texture
-- Fine ink linework, cozy nostalgic atmosphere, soft warm lighting
-- Vintage storybook aesthetic, analog sketchbook feel
+const PROMPT = `Transform this news photograph into a minimalist editorial illustration.
+- Simple black ink line drawing on off-white paper background
+- 2-3 flat muted color fills only (terracotta, dusty blue or sage green) — no gradients, no shading
+- Bold clean outlines, figures and objects reduced to their essential simplified shapes
+- Style: mid-century editorial illustration, like a New Yorker spot drawing
+- Keep the scene recognizable — same setting, same people, same composition
+- Generous white space, flat composition, no photographic detail
 - No text, labels or captions in the image
 - STRICT SAFETY: no weapons, no violence, no blood, no threatening content`;
 
