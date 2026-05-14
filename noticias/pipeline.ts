@@ -2,11 +2,38 @@
 
 import axios from "axios";
 import * as cheerio from "cheerio";
+import fs from "fs";
+import path from "path";
 import { GoogleGenAI, Type } from "@google/genai";
 import { fetchAllFeeds, findTopStories } from "./rss.js";
 import { illustrateImage, generateIllustrationFromText } from "./illustration.js";
 import { createDraft, uploadMedia } from "./wordpress.js";
 import { MUNS_SYSTEM_INSTRUCTION } from "../constants.js";
+
+const DATA_DIR = process.env.RAILWAY_VOLUME_MOUNT_PATH || process.env.DATA_DIR || path.join(process.cwd(), "data");
+const PROCESSED_FILE = path.join(DATA_DIR, "processed-urls.json");
+
+function loadProcessedUrls(): Set<string> {
+  try {
+    if (fs.existsSync(PROCESSED_FILE)) {
+      const data = JSON.parse(fs.readFileSync(PROCESSED_FILE, "utf-8"));
+      return new Set(Array.isArray(data) ? data : []);
+    }
+  } catch {}
+  return new Set();
+}
+
+function saveProcessedUrl(url: string, processed: Set<string>): void {
+  try {
+    if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+    processed.add(url);
+    // Conservar solo las últimas 500 para que el archivo no crezca infinito
+    const arr = Array.from(processed).slice(-500);
+    fs.writeFileSync(PROCESSED_FILE, JSON.stringify(arr));
+  } catch (e: any) {
+    console.warn("[pipeline] No se pudo guardar processed-urls:", e.message);
+  }
+}
 
 export async function classifyTone(newsText: string, apiKey: string): Promise<NewsTone> {
   try {
@@ -123,11 +150,17 @@ export async function runDailyPipeline(limit = 10): Promise<PipelineResult> {
 
   console.log(`[pipeline] Iniciando pipeline (limit=${limit})...`);
 
+  const processedUrls = loadProcessedUrls();
+
   const articles = await fetchAllFeeds();
   console.log(`[pipeline] ${articles.length} artículos obtenidos de los feeds`);
 
-  const topStories = findTopStories(articles, limit);
-  console.log(`[pipeline] ${topStories.length} noticias seleccionadas`);
+  const allStories = findTopStories(articles, articles.length);
+  const topStories = allStories
+    .filter(a => !processedUrls.has(a.link))
+    .slice(0, limit);
+
+  console.log(`[pipeline] ${topStories.length} noticias nuevas (${allStories.length - topStories.length} ya procesadas)`);
 
   const result: PipelineResult = { total: topStories.length, succeeded: 0, failed: 0, errors: [] };
 
@@ -166,6 +199,7 @@ export async function runDailyPipeline(limit = 10): Promise<PipelineResult> {
 <p><small>Fuente original (<a href="${article.link}" target="_blank" rel="noopener">${article.source}</a>): ${article.link}</small></p>`;
 
       await createDraft(title, content, mediaId);
+      saveProcessedUrl(article.link, processedUrls);
       result.succeeded++;
       console.log(`[pipeline] ✓ Borrador creado: "${title}"`);
 
