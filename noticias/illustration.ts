@@ -3,13 +3,13 @@ import axios from "axios";
 const MODEL = "gemini-2.5-flash-image";
 const API_BASE = "https://generativelanguage.googleapis.com/v1beta/models/";
 
-const PROMPT = `Transform this news photograph into a minimalist editorial illustration.
-- Simple black ink line drawing on off-white paper background
-- Exactly 3 flat color fills only: deep blue (#4464AD), sky blue (#9FCFE2), warm beige (#CBBBA0) — no gradients, no shading
-- Bold clean outlines, figures and objects reduced to their essential simplified shapes
-- Style: mid-century editorial illustration, like a New Yorker spot drawing
+const PROMPT = `Transform this news photograph into a raw hand-drawn child-like illustration.
+- Wobbly imperfect outlines, uneven stroke weight, slightly shaky lines — like drawn by a confident kid, not polished
+- Exactly 3 flat color fills only: deep blue (#4464AD), sky blue (#9FCFE2), warm beige (#CBBBA0) — colors slightly overflow the lines, no gradients
+- Shapes are simplified and a bit wonky — proportions don't need to be perfect
+- Off-white paper background with visible rough texture
 - Keep the scene recognizable — same setting, same people, same composition
-- Generous white space, flat composition, no photographic detail
+- Flat composition, generous white space, no photographic detail
 - No text, labels or captions in the image
 - STRICT SAFETY: no weapons, no violence, no blood, no threatening content`;
 
