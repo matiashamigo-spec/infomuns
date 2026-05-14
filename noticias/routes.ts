@@ -21,6 +21,17 @@ export function createNoticiasRouter(): Router {
     next();
   }
 
+  // GET /api/noticias/featured — devuelve la noticia destacada (público, sin auth)
+  router.get("/featured", async (req: Request, res: Response) => {
+    try {
+      const posts = await listPublished();
+      const featured = posts.find((p: any) => p.isFeatured) || posts[0] || null;
+      res.json(featured);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
   // POST /api/noticias/from-url — procesa una URL manual y crea un borrador
   router.post("/from-url", requireAdmin, async (req: Request, res: Response) => {
     const { url } = req.body;
