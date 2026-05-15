@@ -426,7 +426,7 @@ async function startServer() {
   interface Card {
     id: string; slug: string; name: string;
     overlayUrl: string;
-    overlayType: 'youtube' | 'tiktok' | 'drive' | 'image';
+    overlayType: 'youtube' | 'tiktok' | 'drive' | 'image' | 'spotify';
     imageMime: string;
     aspectRatio: string;
     createdAt: string; updatedAt: string;
@@ -445,6 +445,7 @@ async function startServer() {
     if (/youtube\.com|youtu\.be/.test(url)) return 'youtube';
     if (/tiktok\.com/.test(url)) return 'tiktok';
     if (/drive\.google\.com/.test(url)) return 'drive';
+    if (/open\.spotify\.com/.test(url)) return 'spotify';
     return 'image';
   }
 
