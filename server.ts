@@ -210,7 +210,8 @@ async function startServer() {
         model: "gemini-2.5-flash",
         contents: `Crea una historia simbólica para niños basada en esta noticia: "${newsText}".
       REGLA DE ORO: Si hay una muerte o pérdida en la noticia, respeta la realidad del hecho. No digas que el personaje sigue ahí. Usa una metáfora de partida definitiva y honesta, pero con la suavidad de los Muns.
-      Sigue la estructura Pixar (Emoción, Grieta, Elección con costo, Consecuencia parcial).`,
+      Sigue la estructura Pixar (Emoción, Grieta, Elección con costo, Consecuencia parcial).
+      PROHIBIDO usar "luz" como símbolo principal del cuento. Elegí otro símbolo (el bolso de sonrisas, el cohete, el viento, semillas, huellas, colores, objetos pequeños, etc.).`,
         config: {
           systemInstruction: MUNS_SYSTEM_INSTRUCTION,
           temperature: 0.8,
@@ -541,7 +542,8 @@ async function startServer() {
     res.sendFile("noticias-admin.html", { root: "." });
   });
 
-  // Cron diario: 8am hora Argentina (UTC-3) = 11:00 UTC
+  // Cron diario DESACTIVADO
+  /* // Cron diario: 8am hora Argentina (UTC-3) = 11:00 UTC
   cron.schedule("0 11 * * *", async () => {
     console.log("[cron] Iniciando pipeline diario de noticias...");
     try {
@@ -549,7 +551,7 @@ async function startServer() {
     } catch (err: any) {
       console.error("[cron] Error en pipeline diario:", err.message);
     }
-  }, { timezone: "America/Argentina/Buenos_Aires" });
+  }, { timezone: "America/Argentina/Buenos_Aires" }); */
 
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
