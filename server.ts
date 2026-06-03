@@ -282,7 +282,7 @@ async function startServer() {
         SAD:             { useMun: false, useOpaq: true  },
         HUG_TWO:         { useMun: true,  useOpaq: false },
         TONGUE_OUT:      { useMun: true,  useOpaq: true  },
-        MULTIPLE_PEOPLE: { useMun: true,  useOpaq: false }
+        MULTIPLE_PEOPLE: { useMun: true,  useOpaq: true  }
       };
 
       const cfg = EMOTION_ACTIONS[emotion] || EMOTION_ACTIONS.HAPPY_NEUTRAL;
