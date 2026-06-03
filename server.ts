@@ -258,7 +258,7 @@ async function startServer() {
         contents: [{
           parts: [
             { inlineData: { data: imageBase64, mimeType: imageMime } },
-            { text: "Analice la imagen con suma atención. Responda únicamente con una de estas categorías:\n- 'MULTIPLE_PEOPLE' si se observan dos o más personas.\n- 'HUG_TWO' si hay una sola persona con los brazos extendidos para un abrazo.\n- 'TONGUE_OUT' si hay una sola persona con la lengua fuera.\n- 'SAD' si hay una sola persona con expresión de angustia o tristeza.\n- 'HAPPY_NEUTRAL' en cualquier otro caso." }
+            { text: "Analice la imagen con suma atención. Responda únicamente con una de estas categorías:\n- 'MULTIPLE_PEOPLE' si se observan dos o más personas.\n- 'HUG_TWO' si hay una sola persona con los brazos extendidos para un abrazo.\n- 'TONGUE_OUT' si hay una sola persona sacando la lengua.\n- 'SAD' si hay una sola persona con expresión negativa: tristeza, llanto, angustia, enojo, bronca, frustración, miedo o decepción.\n- 'HAPPY_NEUTRAL' en cualquier otro caso (feliz, neutral, sonriendo, pensativo, etc.)." }
           ]
         }],
         generationConfig: { responseMimeType: "text/plain" }
