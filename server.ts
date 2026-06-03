@@ -292,7 +292,7 @@ async function startServer() {
       if (emotion === "TONGUE_OUT") {
         specificAction = "La persona realiza un gesto ameno sacando la lengua. Mun y Opaq se posicionan de forma juguetona junto a ella; uno puede estar asomándose y el otro intentando subirse 'a cocochito' (piggyback) o apoyándose en su hombro de forma cariñosa.";
       } else if (emotion === "MULTIPLE_PEOPLE") {
-        specificAction = "Se observa un grupo de personas. Mun se integra de forma natural, quizás apoyándose suavemente en el hombro de alguien o asomándose desde atrás con mucha confianza y afecto.";
+        specificAction = "Se observa un grupo de personas. Mun se integra de forma natural asomándose entre la gente o apoyándose en el hombro de alguien. Opaq aparece del otro lado del grupo, también integrado naturalmente, abrazando o asomándose junto a otra persona. Ambos están presentes en la foto, uno a cada lado o entre las personas del grupo.";
       } else if (emotion === "HUG_TWO") {
         specificAction = "La persona ofrece un abrazo. Mun responde de forma activa: puede estar abrazando a la persona, apoyando su cabeza en su hombro o intentando trepar suavemente para un abrazo más cercano.";
       } else if (emotion === "SAD") {
