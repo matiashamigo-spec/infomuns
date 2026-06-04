@@ -447,7 +447,7 @@ async function startServer() {
     if (/youtube\.com|youtu\.be/.test(url)) return 'youtube';
     if (/tiktok\.com/.test(url)) return 'tiktok';
     if (/drive\.google\.com/.test(url)) return 'drive';
-    if (/open\.spotify\.com/.test(url)) return 'spotify';
+    if (/spotify\.com|spotifycreators-web\.app\.link/.test(url)) return 'spotify';
     return 'image';
   }
 
@@ -457,7 +457,7 @@ async function startServer() {
   // CORS abierto para ScanMuns (datos públicos)
   app.use(['/api/scanmuns', '/minds', '/images'], (req: any, res: any, next: any) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
     if (req.method === 'OPTIONS') return res.sendStatus(204);
     next();
@@ -521,6 +521,23 @@ async function startServer() {
   // Listar todas las cards (en orden — el índice = targetIndex en combined.mind)
   app.get('/api/scanmuns/cards', (req: any, res: any) => {
     res.json(readCards());
+  });
+
+  // Actualizar overlayUrl/name/aspectRatio de una card sin subir archivos
+  app.patch('/api/scanmuns/card/:slug', (req: any, res: any) => {
+    const cards = readCards();
+    const idx = cards.findIndex(c => c.slug === req.params.slug);
+    if (idx < 0) return res.status(404).json({ error: 'Card no encontrada' });
+    const { overlayUrl, name, aspectRatio } = req.body;
+    if (overlayUrl) {
+      cards[idx].overlayUrl = overlayUrl;
+      cards[idx].overlayType = detectOverlayType(overlayUrl);
+    }
+    if (name) cards[idx].name = name;
+    if (aspectRatio) cards[idx].aspectRatio = aspectRatio;
+    cards[idx].updatedAt = new Date().toISOString();
+    saveCards(cards);
+    res.json({ success: true, card: cards[idx] });
   });
 
   // Eliminar una card (el cliente debe recompilar y subir nuevo combined.mind)
