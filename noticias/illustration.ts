@@ -3,20 +3,23 @@ import axios from "axios";
 const MODEL = "gemini-2.5-flash-image";
 const API_BASE = "https://generativelanguage.googleapis.com/v1beta/models/";
 
-const PROMPT = `Redraw the concept of this news photograph as if drawn by a 4 to 6 year old child using crayons or thick markers on white paper.
+const PROMPT = `Redraw the concept of this news photograph in the style of a child's notebook doodle — like the "Mini Episodes" hand-drawn aesthetic where characters are deliberately crude and geometric.
 
-CRITICAL — what this must look like:
-- Stick figures or potato-shaped blobs for people. No anatomy, no realistic proportions. Heads are circles, bodies are rectangles or ovals, arms and legs are just lines or thick stumps.
-- Faces are ONLY: two dots for eyes and a curved line or U shape for a mouth. Nothing more.
-- Lines are shaky, uneven, inconsistent — a child's hand, not a steady adult hand
-- Colors are scribbled and often go outside the lines
-- Exactly 3 colors used for fills: deep blue (#4464AD), sky blue (#9FCFE2), warm beige (#CBBBA0)
-- White background, minimal scene — just the essential shapes, lots of empty white space
-- DO NOT invent named characters, cartoon mascots, animals with clothes, or any character from any show or franchise
-- DO NOT make it look like animation, illustration, or graphic design — it must look like actual crayon drawings by a small child
-- SIMPLIFICATION RULE: reduce the scene to its simplest symbolic representation. A protest = 2-3 blob people with their arms up. A car crash = a boxy rectangle shape tipped over. A building = a square with a triangle on top.
-- The result MUST look primitive, clumsy, and lovably imperfect — NOT polished, NOT cute-cartoon, NOT professional
-- No text, labels or captions
+VISUAL STYLE — this is mandatory:
+- Background: lined notebook paper texture (light cream with faint blue horizontal rules)
+- Characters/people are drawn as simple geometric shapes: rectangular bodies, circle heads, stick or stubby limbs — NO realistic anatomy whatsoever
+- Faces: only two dot eyes and a single curved line for mouth — that's it
+- Lines are thick, uneven, wobbly — drawn with a felt-tip marker by an unsteady hand
+- Colors scribble slightly outside the outlines — imprecise, not filled cleanly
+- Exactly 3 fill colors: deep blue (#4464AD), sky blue (#9FCFE2), warm beige (#CBBBA0)
+- Proportions are intentionally wrong: huge heads, tiny bodies, arms coming out of the wrong place
+- The overall look must feel hand-made, rushed, and charmingly bad — NOT clean, NOT polished, NOT like professional animation
+
+CONTENT RULES:
+- DO NOT reproduce any character from any existing show, franchise, or IP
+- Represent people as anonymous geometric blobs — no fur, no animal features, no costumes
+- SIMPLIFICATION: reduce the scene to 1–3 figures max representing the idea symbolically. A crowd = 2-3 rectangles with circle heads. A meeting = blobs sitting around a shape. Always simplify, never reproduce.
+- No text, labels or captions in the image
 - STRICT SAFETY: no weapons, no violence, no blood, no threatening content`;
 
 export async function illustrateImage(imageUrl: string, apiKey: string): Promise<string | null> {
