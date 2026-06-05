@@ -3,15 +3,19 @@ import axios from "axios";
 const MODEL = "gemini-2.5-flash-image";
 const API_BASE = "https://generativelanguage.googleapis.com/v1beta/models/";
 
-const PROMPT = `Redraw this news photograph as if a 7-year-old child drew it with markers and watercolors.
-- Thick wobbly black marker outlines, uneven stroke weight, slightly shaky lines — NOT clean, NOT digital-looking
-- Watercolor fills that bleed slightly outside the outlines — loose, imprecise, hand-painted feel
-- Pure white background, no scenery detail, lots of empty space
-- Extremely simplified shapes: people are blobs with round heads, dot eyes, a curved line for mouth — no realistic faces
-- Proportions are wrong in a charming way: big heads, stubby arms, flat feet
-- Exactly 3 watercolor fill colors: deep blue (#4464AD), sky blue (#9FCFE2), warm beige (#CBBBA0)
-- SIMPLIFICATION RULE: if there are many people or a complex scene, draw only 1–3 simplified figures that represent the idea — like a child summarizing the scene, not reproducing it. A crowd becomes 2-3 little blob people.
-- The result should look genuinely hand-made and imperfect, NOT like a polished cartoon or animation studio output
+const PROMPT = `Redraw the concept of this news photograph as if drawn by a 4 to 6 year old child using crayons or thick markers on white paper.
+
+CRITICAL — what this must look like:
+- Stick figures or potato-shaped blobs for people. No anatomy, no realistic proportions. Heads are circles, bodies are rectangles or ovals, arms and legs are just lines or thick stumps.
+- Faces are ONLY: two dots for eyes and a curved line or U shape for a mouth. Nothing more.
+- Lines are shaky, uneven, inconsistent — a child's hand, not a steady adult hand
+- Colors are scribbled and often go outside the lines
+- Exactly 3 colors used for fills: deep blue (#4464AD), sky blue (#9FCFE2), warm beige (#CBBBA0)
+- White background, minimal scene — just the essential shapes, lots of empty white space
+- DO NOT invent named characters, cartoon mascots, animals with clothes, or any character from any show or franchise
+- DO NOT make it look like animation, illustration, or graphic design — it must look like actual crayon drawings by a small child
+- SIMPLIFICATION RULE: reduce the scene to its simplest symbolic representation. A protest = 2-3 blob people with their arms up. A car crash = a boxy rectangle shape tipped over. A building = a square with a triangle on top.
+- The result MUST look primitive, clumsy, and lovably imperfect — NOT polished, NOT cute-cartoon, NOT professional
 - No text, labels or captions
 - STRICT SAFETY: no weapons, no violence, no blood, no threatening content`;
 
