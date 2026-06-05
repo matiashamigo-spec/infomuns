@@ -3,23 +3,22 @@ import axios from "axios";
 const MODEL = "gemini-2.5-flash-image";
 const API_BASE = "https://generativelanguage.googleapis.com/v1beta/models/";
 
-const PROMPT = `Redraw the concept of this news photograph in the style of a child's notebook doodle — like the "Mini Episodes" hand-drawn aesthetic where characters are deliberately crude and geometric.
+const PROMPT = `Redraw the concept of this news photograph as a deliberately crude, geometric hand-drawn illustration — like a child's doodle made with thick markers on plain white paper.
 
-VISUAL STYLE — this is mandatory:
-- Background: lined notebook paper texture (light cream with faint blue horizontal rules)
-- Characters/people are drawn as simple geometric shapes: rectangular bodies, circle heads, stick or stubby limbs — NO realistic anatomy whatsoever
-- Faces: only two dot eyes and a single curved line for mouth — that's it
-- Lines are thick, uneven, wobbly — drawn with a felt-tip marker by an unsteady hand
-- Colors scribble slightly outside the outlines — imprecise, not filled cleanly
+VISUAL STYLE — strictly required:
+- Plain white background, no texture, no scenery details
+- People are drawn as simple geometric shapes: rectangle or oval body, circle head, stick or stubby arms and legs — zero realistic anatomy
+- Faces have ONLY two dot eyes and one curved line for mouth — nothing else
+- Thick, wobbly, uneven marker-like outlines — imprecise, not smooth
+- Colors filled loosely, slightly outside the lines
 - Exactly 3 fill colors: deep blue (#4464AD), sky blue (#9FCFE2), warm beige (#CBBBA0)
-- Proportions are intentionally wrong: huge heads, tiny bodies, arms coming out of the wrong place
-- The overall look must feel hand-made, rushed, and charmingly bad — NOT clean, NOT polished, NOT like professional animation
+- Intentionally wrong proportions: oversized heads, tiny bodies, arms in odd positions
+- Must look hand-made, rushed, and charmingly crude — NOT polished, NOT like a cartoon studio, NOT like graphic design
 
 CONTENT RULES:
-- DO NOT reproduce any character from any existing show, franchise, or IP
-- Represent people as anonymous geometric blobs — no fur, no animal features, no costumes
-- SIMPLIFICATION: reduce the scene to 1–3 figures max representing the idea symbolically. A crowd = 2-3 rectangles with circle heads. A meeting = blobs sitting around a shape. Always simplify, never reproduce.
-- No text, labels or captions in the image
+- DO NOT copy characters from any existing show, franchise, or IP — people are anonymous geometric blobs only
+- SIMPLIFICATION: reduce everything to 1–3 symbolic figures. A crowd = 2-3 rectangle-bodied blobs. A building = a square with a triangle. Always choose the simplest possible representation.
+- No text, labels or captions
 - STRICT SAFETY: no weapons, no violence, no blood, no threatening content`;
 
 export async function illustrateImage(imageUrl: string, apiKey: string): Promise<string | null> {
