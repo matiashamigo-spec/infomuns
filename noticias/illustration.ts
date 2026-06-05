@@ -10,7 +10,7 @@ VISUAL STYLE — strictly required:
 - People are drawn as simple geometric shapes: rectangle or oval body, circle head, stick or stubby arms and legs — zero realistic anatomy
 - Faces have ONLY two dot eyes and one curved line for mouth — nothing else
 - Thick, wobbly, uneven marker-like outlines — imprecise, not smooth
-- Colors filled loosely, slightly outside the lines
+- Colors filled very messily, spilling well outside the lines — like a kid who doesn't care about staying inside
 - Exactly 3 fill colors: deep blue (#4464AD), sky blue (#9FCFE2), warm beige (#CBBBA0)
 - Intentionally wrong proportions: oversized heads, tiny bodies, arms in odd positions
 - Must look hand-made, rushed, and charmingly crude — NOT polished, NOT like a cartoon studio, NOT like graphic design
