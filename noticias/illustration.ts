@@ -3,13 +3,16 @@ import axios from "axios";
 const MODEL = "gemini-2.5-flash-image";
 const API_BASE = "https://generativelanguage.googleapis.com/v1beta/models/";
 
-const PROMPT = `Transform this news photograph into a raw hand-drawn child-like illustration.
-- Wobbly imperfect outlines, uneven stroke weight, slightly shaky lines — like drawn by a confident kid, not polished
+const PROMPT = `Transform this news photograph into a hand-drawn doodle art style illustration.
+- Naive cartoon aesthetic, rough uneven sketchy linework, intentionally imperfect drawing
+- Simple rounded shapes, loose expressive lines, imperfect digital brush strokes
+- Storyboard / animatic look, flat muted colors, sparse composition
 - Exactly 3 flat color fills only: deep blue (#4464AD), sky blue (#9FCFE2), warm beige (#CBBBA0) — colors slightly overflow the lines, no gradients
-- Shapes are simplified and a bit wonky — proportions don't need to be perfect
-- Off-white paper background with visible rough texture
+- Cute anthropomorphic character or object if present, childlike but intentional drawing
+- Indie web animation vibe, lots of negative space, plain white or light background
+- Minimalist illustration, slightly awkward proportions, simple facial expressions
+- Low-detail, casual scribbly charm, not polished, not hyper-detailed
 - Keep the scene recognizable — same setting, same people, same composition
-- Flat composition, generous white space, no photographic detail
 - No text, labels or captions in the image
 - STRICT SAFETY: no weapons, no violence, no blood, no threatening content`;
 
