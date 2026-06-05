@@ -3,17 +3,16 @@ import axios from "axios";
 const MODEL = "gemini-2.5-flash-image";
 const API_BASE = "https://generativelanguage.googleapis.com/v1beta/models/";
 
-const PROMPT = `Transform this news photograph into a children's illustration in the style of Bluey (the Australian animated show).
-- Thick, slightly wobbly black marker-style outlines — irregular stroke weight, not perfectly smooth
-- Watercolor-like flat fills that slightly overflow the outlines, giving a hand-painted feel
-- Clean white background with lots of negative space — no busy backgrounds
-- Very simple rounded shapes, cute exaggerated proportions, large heads, small bodies
-- Characters have minimal facial features: dot eyes, simple curved mouth, basic expressions
-- Exactly 3 color fills only: deep blue (#4464AD), sky blue (#9FCFE2), warm beige (#CBBBA0) — used as the watercolor fills
-- Loose, casual, slightly imperfect linework — confident but not polished
-- SIMPLIFICATION RULE: If the scene has many people or complex elements, do NOT try to draw everyone. Pick 1–3 representative figures drawn simply — like a child would sketch "a crowd" as just a few rounded cartoon people. Always prioritize a clean readable image over accuracy.
-- Keep the general mood and topic recognizable, but simplify everything aggressively
-- No text, labels or captions in the image
+const PROMPT = `Redraw this news photograph as if a 7-year-old child drew it with markers and watercolors.
+- Thick wobbly black marker outlines, uneven stroke weight, slightly shaky lines — NOT clean, NOT digital-looking
+- Watercolor fills that bleed slightly outside the outlines — loose, imprecise, hand-painted feel
+- Pure white background, no scenery detail, lots of empty space
+- Extremely simplified shapes: people are blobs with round heads, dot eyes, a curved line for mouth — no realistic faces
+- Proportions are wrong in a charming way: big heads, stubby arms, flat feet
+- Exactly 3 watercolor fill colors: deep blue (#4464AD), sky blue (#9FCFE2), warm beige (#CBBBA0)
+- SIMPLIFICATION RULE: if there are many people or a complex scene, draw only 1–3 simplified figures that represent the idea — like a child summarizing the scene, not reproducing it. A crowd becomes 2-3 little blob people.
+- The result should look genuinely hand-made and imperfect, NOT like a polished cartoon or animation studio output
+- No text, labels or captions
 - STRICT SAFETY: no weapons, no violence, no blood, no threatening content`;
 
 export async function illustrateImage(imageUrl: string, apiKey: string): Promise<string | null> {
