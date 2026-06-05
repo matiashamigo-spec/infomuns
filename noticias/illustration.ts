@@ -3,17 +3,16 @@ import axios from "axios";
 const MODEL = "gemini-2.5-flash-image";
 const API_BASE = "https://generativelanguage.googleapis.com/v1beta/models/";
 
-const PROMPT = `Transform this news photograph into a hand-drawn doodle art style illustration, as if drawn by a child with confidence but no technical skill.
-- Naive cartoon aesthetic, rough uneven sketchy linework, intentionally imperfect drawing
-- Simple rounded shapes, loose expressive lines, imperfect digital brush strokes
-- Storyboard / animatic look, flat muted colors, sparse composition
-- Exactly 3 flat color fills only: deep blue (#4464AD), sky blue (#9FCFE2), warm beige (#CBBBA0) — colors slightly overflow the lines, no gradients
-- Cute anthropomorphic characters if present, childlike but intentional drawing
-- Indie web animation vibe, lots of negative space, plain white or light background
-- Minimalist illustration, slightly awkward proportions, simple smiley-face-level expressions
-- Low-detail, casual scribbly charm, not polished, not hyper-detailed
-- SIMPLIFICATION RULE: If the scene has many people or complex elements, do NOT try to draw everyone. Pick 1–3 representative figures and draw them simply — like a kid would draw "a crowd" as just a few stick-ish rounded people. The goal is a simple readable image, not a faithful reproduction of the photo.
-- Keep the general mood and setting recognizable, but always prioritize simplicity over accuracy
+const PROMPT = `Transform this news photograph into a children's illustration in the style of Bluey (the Australian animated show).
+- Thick, slightly wobbly black marker-style outlines — irregular stroke weight, not perfectly smooth
+- Watercolor-like flat fills that slightly overflow the outlines, giving a hand-painted feel
+- Clean white background with lots of negative space — no busy backgrounds
+- Very simple rounded shapes, cute exaggerated proportions, large heads, small bodies
+- Characters have minimal facial features: dot eyes, simple curved mouth, basic expressions
+- Exactly 3 color fills only: deep blue (#4464AD), sky blue (#9FCFE2), warm beige (#CBBBA0) — used as the watercolor fills
+- Loose, casual, slightly imperfect linework — confident but not polished
+- SIMPLIFICATION RULE: If the scene has many people or complex elements, do NOT try to draw everyone. Pick 1–3 representative figures drawn simply — like a child would sketch "a crowd" as just a few rounded cartoon people. Always prioritize a clean readable image over accuracy.
+- Keep the general mood and topic recognizable, but simplify everything aggressively
 - No text, labels or captions in the image
 - STRICT SAFETY: no weapons, no violence, no blood, no threatening content`;
 
