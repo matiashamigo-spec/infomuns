@@ -3,21 +3,22 @@ import axios from "axios";
 const MODEL = "gemini-2.5-flash-image";
 const API_BASE = "https://generativelanguage.googleapis.com/v1beta/models/";
 
-const PROMPT = `Redraw the concept of this news photograph as a deliberately crude, geometric hand-drawn illustration — like a child's doodle made with thick markers on plain white paper.
+const PROMPT = `Redraw the concept of this news photograph as an extremely crude, messy drawing made by a 4-year-old child with crayons on white paper. This must look GENUINELY bad — not stylized bad, but actually bad.
 
-VISUAL STYLE — strictly required:
-- Plain white background, no texture, no scenery details
-- People are drawn as simple geometric shapes: rectangle or oval body, circle head, stick or stubby arms and legs — zero realistic anatomy
-- Faces have ONLY two dot eyes and one curved line for mouth — nothing else
-- Thick, wobbly, uneven marker-like outlines — imprecise, not smooth
-- Colors filled very messily, spilling well outside the lines — like a kid who doesn't care about staying inside
-- Exactly 3 fill colors: deep blue (#4464AD), sky blue (#9FCFE2), warm beige (#CBBBA0)
-- Intentionally wrong proportions: oversized heads, tiny bodies, arms in odd positions
-- Must look hand-made, rushed, and charmingly crude — NOT polished, NOT like a cartoon studio, NOT like graphic design
+VISUAL STYLE — non-negotiable:
+- Plain white background, absolutely nothing else
+- Every shape is wrong: wobbly circles, lopsided rectangles, uneven lines — nothing is straight or symmetrical
+- People are blobs: a round or lumpy head, a rectangle or blob for body, two sticks for legs, two sticks for arms — that's it. No detail whatsoever.
+- Faces: two asymmetric dots for eyes, one wonky curved line for mouth — nothing else. No nose. No ears. No hair.
+- Lines are shaky, broken, uneven — like drawn very slowly by an unsteady hand
+- Colors scribbled chaotically: heavy outside the shapes, uneven fill, patches of white showing through, overlapping strokes going in random directions
+- Exactly 3 colors: deep blue (#4464AD), sky blue (#9FCFE2), warm beige (#CBBBA0)
+- Grotesquely wrong proportions: head bigger than the body, arms at impossible angles, legs too short or too long
+- This must look like the drawing was done in 30 seconds by someone who has never drawn before
 
 CONTENT RULES:
-- DO NOT copy characters from any existing show, franchise, or IP — people are anonymous geometric blobs only
-- SIMPLIFICATION: reduce everything to 1–3 symbolic figures. A crowd = 2-3 rectangle-bodied blobs. A building = a square with a triangle. Always choose the simplest possible representation.
+- DO NOT copy characters from any existing show, franchise, or IP — people are anonymous blobs only
+- SIMPLIFICATION: 1–3 figures maximum. A crowd = 2-3 blobs. A building = a wobbly square with a triangle on top. Always the simplest possible.
 - No text, labels or captions
 - STRICT SAFETY: no weapons, no violence, no blood, no threatening content`;
 
