@@ -50,6 +50,24 @@
   .btn-feature.active { background: #f0d060; color: #5a4000; }
   .btn-reimg { background: #f4eeff; color: #7c4dbb; border: 1px solid #d4b8f0; }
 
+  /* Media picker modal */
+  #media-modal { display:none; position:fixed; inset:0; z-index:1000; background:rgba(0,0,0,0.6); align-items:center; justify-content:center; }
+  #media-modal.open { display:flex; }
+  #media-modal-inner { background:#fff; border-radius:16px; width:90vw; max-width:860px; max-height:85vh; display:flex; flex-direction:column; overflow:hidden; box-shadow:0 8px 40px rgba(0,0,0,0.3); }
+  #media-modal-header { padding:16px 20px; background:#4464AD; color:#fff; display:flex; align-items:center; justify-content:space-between; }
+  #media-modal-header h2 { font-size:1rem; font-weight:700; margin:0; }
+  #media-modal-close { background:none; border:none; color:#fff; font-size:1.4rem; cursor:pointer; line-height:1; }
+  #media-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:10px; padding:16px; overflow-y:auto; flex:1; }
+  .media-thumb { cursor:pointer; border-radius:8px; overflow:hidden; border:3px solid transparent; transition:border-color 0.15s; aspect-ratio:1; background:#F4F1EA; }
+  .media-thumb:hover { border-color:#9FCFE2; }
+  .media-thumb.selected { border-color:#4464AD; }
+  .media-thumb img { width:100%; height:100%; object-fit:cover; display:block; }
+  #media-modal-footer { padding:12px 20px; border-top:1px solid #C2DCF2; display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  #media-pagination { display:flex; gap:8px; align-items:center; font-size:0.85rem; color:#7B6A58; }
+  #media-pagination button { padding:6px 14px; border:1px solid #C2DCF2; border-radius:6px; background:#F4F1EA; cursor:pointer; font-size:0.82rem; }
+  #media-pagination button:disabled { opacity:0.4; cursor:not-allowed; }
+  #media-loading { text-align:center; padding:40px; color:#CBBBA0; grid-column:1/-1; }
+
   /* Manual section */
   #manual-section { background: #fff; border-bottom: 1px solid #C2DCF2; }
   #manual-toggle {
@@ -221,6 +239,25 @@
     <div id="published-empty" class="empty-state">
       <div class="emoji">📰</div>
       <p>No hay notas publicadas todavía.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Media picker modal -->
+<div id="media-modal">
+  <div id="media-modal-inner">
+    <div id="media-modal-header">
+      <h2>📸 Biblioteca de imágenes</h2>
+      <button id="media-modal-close" onclick="closeMediaPicker()">✕</button>
+    </div>
+    <div id="media-grid"></div>
+    <div id="media-modal-footer">
+      <div id="media-pagination">
+        <button id="media-prev" onclick="loadMediaPage(mediaPage - 1)" disabled>← Anterior</button>
+        <span id="media-page-label">Página 1</span>
+        <button id="media-next" onclick="loadMediaPage(mediaPage + 1)">Siguiente →</button>
+      </div>
+      <button class="btn btn-publish" id="media-confirm-btn" onclick="confirmMediaSelection()" disabled>Usar imagen seleccionada</button>
     </div>
   </div>
 </div>
@@ -460,9 +497,11 @@ function renderCards(posts, gridId, emptyId, type) {
       ? `<button class="btn btn-save" onclick="saveDraft(${post.id}, this)">Guardar</button>
          <button class="btn btn-publish" onclick="publishDraft(${post.id}, this)">Publicar</button>
          <button class="btn btn-reimg" onclick="regenerateImage(${post.id}, this)">🎨 Nueva imagen</button>
+         <button class="btn btn-reimg" onclick="openMediaPicker(${post.id}, 'draft', this)">📸 Biblioteca</button>
          <button class="btn btn-delete" onclick="deleteDraft(${post.id}, this)">Borrar</button>`
       : `<button class="btn btn-feature ${post.isFeatured ? 'active' : ''}" onclick="featurePost(${post.id}, this)">${post.isFeatured ? '⭐ Destacada' : '☆ Destacar'}</button>
          <button class="btn btn-save" onclick="savePublished(${post.id}, this)">Guardar</button>
+         <button class="btn btn-reimg" onclick="openMediaPicker(${post.id}, 'published', this)">📸 Biblioteca</button>
          <button class="btn btn-unpublish" onclick="unpublishPost(${post.id}, this)">A borrador</button>
          <button class="btn btn-delete" onclick="deletePublished(${post.id}, this)">Borrar</button>`;
 
@@ -524,6 +563,93 @@ async function regenerateImage(id, btn) {
     setStatus('Error generando imagen: ' + err.message, 'error');
   }
 }
+
+// ── MEDIA PICKER ──
+let mediaPage = 1;
+let mediaSelectedId = null;
+let mediaSelectedUrl = null;
+let mediaTargetPostId = null;
+let mediaTargetType = null;
+let mediaTargetBtn = null;
+
+function openMediaPicker(postId, type, btn) {
+  mediaTargetPostId = postId;
+  mediaTargetType = type;
+  mediaTargetBtn = btn;
+  mediaSelectedId = null; mediaSelectedUrl = null;
+  document.getElementById('media-confirm-btn').disabled = true;
+  document.getElementById('media-modal').classList.add('open');
+  loadMediaPage(1);
+}
+
+function closeMediaPicker() {
+  document.getElementById('media-modal').classList.remove('open');
+}
+
+async function loadMediaPage(page) {
+  if (page < 1) return;
+  mediaPage = page;
+  document.getElementById('media-page-label').textContent = `Página ${page}`;
+  document.getElementById('media-prev').disabled = page === 1;
+  const grid = document.getElementById('media-grid');
+  grid.innerHTML = '<div id="media-loading">Cargando...</div>';
+  try {
+    const items = await apiFetch(`/media?page=${page}`);
+    document.getElementById('media-next').disabled = items.length < 24;
+    grid.innerHTML = '';
+    if (items.length === 0) { grid.innerHTML = '<div id="media-loading">No hay más imágenes.</div>'; return; }
+    items.forEach(item => {
+      const div = document.createElement('div');
+      div.className = 'media-thumb';
+      div.dataset.id = item.id;
+      div.dataset.url = item.url;
+      div.innerHTML = `<img src="${item.thumb || item.url}" alt="${item.title}" loading="lazy" />`;
+      div.addEventListener('click', () => {
+        document.querySelectorAll('.media-thumb').forEach(t => t.classList.remove('selected'));
+        div.classList.add('selected');
+        mediaSelectedId = item.id;
+        mediaSelectedUrl = item.url;
+        document.getElementById('media-confirm-btn').disabled = false;
+      });
+      grid.appendChild(div);
+    });
+  } catch (err) {
+    grid.innerHTML = `<div id="media-loading">Error: ${err.message}</div>`;
+  }
+}
+
+async function confirmMediaSelection() {
+  if (!mediaSelectedId || !mediaTargetPostId) return;
+  const btn = document.getElementById('media-confirm-btn');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Aplicando...';
+  const endpoint = mediaTargetType === 'draft' ? `/drafts/${mediaTargetPostId}/set-image` : `/published/${mediaTargetPostId}/set-image`;
+  try {
+    await apiFetch(endpoint, { method: 'POST', body: JSON.stringify({ mediaId: mediaSelectedId, mediaUrl: mediaSelectedUrl }) });
+    // Actualizar imagen en la card
+    const card = document.querySelector(`.draft-card[data-id="${mediaTargetPostId}"]`);
+    if (card) {
+      const existing = card.querySelector('.card-image, .card-image-placeholder');
+      if (existing) {
+        const img = document.createElement('img');
+        img.className = 'card-image';
+        img.src = mediaSelectedUrl;
+        img.alt = ''; img.loading = 'lazy';
+        existing.replaceWith(img);
+      }
+    }
+    closeMediaPicker();
+    setStatus('Imagen actualizada correctamente', 'success');
+  } catch (err) {
+    setStatus('Error: ' + err.message, 'error');
+  } finally {
+    btn.textContent = 'Usar imagen seleccionada'; btn.disabled = false;
+  }
+}
+
+// Cerrar modal al clickear fondo
+document.getElementById('media-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeMediaPicker();
+});
 
 function toggleManual() {
   const toggle = document.getElementById('manual-toggle');
