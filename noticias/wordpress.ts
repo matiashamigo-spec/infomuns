@@ -121,6 +121,18 @@ export async function setFeaturedPost(id: number): Promise<void> {
   await axios.post(`${BASE(url)}/featured`, { id }, { headers: { "X-Noticias-Key": key } });
 }
 
+// Lista imágenes de la biblioteca de medios
+export interface WpMedia { id: number; thumb: string; url: string; title: string }
+
+export async function listMedia(page = 1): Promise<WpMedia[]> {
+  const { url, key } = getWpConfig();
+  const res = await axios.get(`${BASE(url)}/media-list?page=${page}`, {
+    headers: { "X-Noticias-Key": key },
+    timeout: 10000,
+  });
+  return res.data || [];
+}
+
 // Elimina un post permanentemente
 export async function deletePost(id: number): Promise<void> {
   const { url, key } = getWpConfig();
