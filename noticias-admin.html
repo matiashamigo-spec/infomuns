@@ -50,6 +50,28 @@
   .btn-feature.active { background: #f0d060; color: #5a4000; }
   .btn-reimg { background: #f4eeff; color: #7c4dbb; border: 1px solid #d4b8f0; }
 
+  /* Manual section */
+  #manual-section { background: #fff; border-bottom: 1px solid #C2DCF2; }
+  #manual-toggle {
+    width: 100%; text-align: left; padding: 10px 24px;
+    background: #EDE6D4; border: none; border-bottom: 1px solid #C2DCF2;
+    cursor: pointer; font-size: 0.88rem; font-weight: 600; color: #7B6A58;
+    display: flex; align-items: center; gap: 8px;
+  }
+  #manual-toggle:hover { background: #e4dcc8; }
+  #manual-toggle .arrow { transition: transform 0.2s; display: inline-block; }
+  #manual-toggle.open .arrow { transform: rotate(90deg); }
+  #manual-body { display: none; padding: 16px 24px; display: none; flex-direction: column; gap: 12px; }
+  #manual-body.open { display: flex; }
+  #manual-body input, #manual-body textarea {
+    padding: 10px 14px; border: 2px solid #C2DCF2; border-radius: 8px;
+    font-size: 0.9rem; outline: none; font-family: inherit; background: white; color: #4464AD; width: 100%;
+  }
+  #manual-body input:focus, #manual-body textarea:focus { border-color: #4464AD; }
+  #manual-body textarea { min-height: 160px; resize: vertical; color: #7B6A58; }
+  #manual-body .row { display: flex; gap: 10px; }
+  #manual-body .row input { flex: 1; }
+
   /* Tabs */
   .tabs {
     display: flex; gap: 0; background: #EDE6D4;
@@ -160,6 +182,21 @@
       onfocus="this.style.borderColor='#4464AD'" onblur="this.style.borderColor='#C2DCF2'"
     />
     <button class="btn btn-publish" id="url-btn" onclick="processUrl()">📰 Procesar URL</button>
+  </div>
+
+  <!-- Cargar cuento manual -->
+  <div id="manual-section">
+    <button id="manual-toggle" onclick="toggleManual()">
+      <span class="arrow">▶</span> ✍️ Cargar cuento manualmente
+    </button>
+    <div id="manual-body">
+      <input id="manual-title" type="text" placeholder="Título del cuento..." />
+      <textarea id="manual-content" placeholder="Pegá el cuento acá..."></textarea>
+      <div class="row">
+        <input id="manual-imageurl" type="url" placeholder="URL de la imagen de referencia (para generar la ilustración)..." />
+        <button class="btn btn-publish" id="manual-btn" onclick="submitManual()">🎨 Crear borrador</button>
+      </div>
+    </div>
   </div>
 
   <div class="tabs">
@@ -485,6 +522,42 @@ async function regenerateImage(id, btn) {
   } catch (err) {
     btn.textContent = '🎨 Nueva imagen'; btn.disabled = false;
     setStatus('Error generando imagen: ' + err.message, 'error');
+  }
+}
+
+function toggleManual() {
+  const toggle = document.getElementById('manual-toggle');
+  const body = document.getElementById('manual-body');
+  const open = toggle.classList.toggle('open');
+  body.classList.toggle('open', open);
+}
+
+async function submitManual() {
+  const title = document.getElementById('manual-title').value.trim();
+  const content = document.getElementById('manual-content').value.trim();
+  const imageUrl = document.getElementById('manual-imageurl').value.trim();
+  if (!title) { setStatus('Falta el título', 'error'); return; }
+  if (!content) { setStatus('Falta el cuento', 'error'); return; }
+  if (!imageUrl) { setStatus('Falta la URL de la imagen', 'error'); return; }
+  try { new URL(imageUrl); } catch { setStatus('La URL de imagen no es válida', 'error'); return; }
+
+  const btn = document.getElementById('manual-btn');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Creando...';
+  setStatus('Generando ilustración y creando borrador... puede tardar 30-60 segundos.');
+
+  try {
+    const result = await apiFetch('/from-manual', { method: 'POST', body: JSON.stringify({ title, content, imageUrl }) });
+    document.getElementById('manual-title').value = '';
+    document.getElementById('manual-content').value = '';
+    document.getElementById('manual-imageurl').value = '';
+    btn.textContent = '✓ Listo';
+    setStatus(`✓ Borrador creado: "${result.draft.title}"`, 'success');
+    setTimeout(() => { btn.textContent = '🎨 Crear borrador'; btn.disabled = false; }, 2000);
+    if (currentTab === 'drafts') setTimeout(loadDrafts, 500);
+    else switchTab('drafts');
+  } catch (err) {
+    btn.textContent = '🎨 Crear borrador'; btn.disabled = false;
+    setStatus('Error: ' + err.message, 'error');
   }
 }
 
