@@ -6,7 +6,7 @@ import axios from "axios";
 import * as cheerio from "cheerio";
 import { runDailyPipeline, processSingleUrl } from "./pipeline.js";
 import { illustrateImage } from "./illustration.js";
-import { listDrafts, listPublished, updatePost, publishPostById, unpublishPost, deletePost, uploadMedia, setFeaturedPost, createDraft } from "./wordpress.js";
+import { listDrafts, listPublished, updatePost, publishPostById, unpublishPost, deletePost, uploadMedia, setFeaturedPost, createDraft, listMedia } from "./wordpress.js";
 
 export function createNoticiasRouter(): Router {
   const router = Router();
@@ -163,6 +163,19 @@ export function createNoticiasRouter(): Router {
     }
   });
 
+  // POST /api/noticias/drafts/:id/set-image — asigna imagen de la biblioteca
+  router.post("/drafts/:id/set-image", requireAdmin, async (req: Request, res: Response) => {
+    const id = parseInt(req.params.id as string);
+    const { mediaId, mediaUrl } = req.body;
+    if (!mediaId) return res.status(400).json({ error: "Se requiere mediaId" });
+    try {
+      await updatePost(id, { featuredMediaId: mediaId });
+      res.json({ ok: true, mediaUrl });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
   // DELETE /api/noticias/drafts/:id — borra permanentemente
   router.delete("/drafts/:id", requireAdmin, async (req: Request, res: Response) => {
     const id = parseInt(req.params.id as string);
@@ -213,6 +226,30 @@ export function createNoticiasRouter(): Router {
     try {
       await setFeaturedPost(id);
       res.json({ ok: true });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // POST /api/noticias/published/:id/set-image — asigna imagen de la biblioteca
+  router.post("/published/:id/set-image", requireAdmin, async (req: Request, res: Response) => {
+    const id = parseInt(req.params.id as string);
+    const { mediaId, mediaUrl } = req.body;
+    if (!mediaId) return res.status(400).json({ error: "Se requiere mediaId" });
+    try {
+      await updatePost(id, { featuredMediaId: mediaId });
+      res.json({ ok: true, mediaUrl });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // GET /api/noticias/media — lista imágenes de la biblioteca de WP
+  router.get("/media", requireAdmin, async (req: Request, res: Response) => {
+    const page = parseInt(req.query.page as string) || 1;
+    try {
+      const items = await listMedia(page);
+      res.json(items);
     } catch (err: any) {
       res.status(500).json({ error: err.message });
     }
