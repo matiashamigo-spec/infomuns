@@ -6,7 +6,7 @@ import axios from "axios";
 import * as cheerio from "cheerio";
 import { runDailyPipeline, processSingleUrl } from "./pipeline.js";
 import { illustrateImage } from "./illustration.js";
-import { listDrafts, listPublished, updatePost, publishPostById, unpublishPost, deletePost, uploadMedia, setFeaturedPost } from "./wordpress.js";
+import { listDrafts, listPublished, updatePost, publishPostById, unpublishPost, deletePost, uploadMedia, setFeaturedPost, createDraft } from "./wordpress.js";
 
 export function createNoticiasRouter(): Router {
   const router = Router();
@@ -41,6 +41,30 @@ export function createNoticiasRouter(): Router {
       if (!apiKey) return res.status(500).json({ error: "GEMINI_API_KEY no configurada" });
       console.log(`[noticias] Procesando URL manual: ${url}`);
       const draft = await processSingleUrl(url, apiKey);
+      res.json({ ok: true, draft });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // POST /api/noticias/from-manual — crea borrador desde cuento + URL de imagen
+  router.post("/from-manual", requireAdmin, async (req: Request, res: Response) => {
+    const { title, content, imageUrl } = req.body;
+    if (!title || !content || !imageUrl) return res.status(400).json({ error: "Se requieren título, cuento y URL de imagen" });
+    try {
+      const apiKey = process.env.GEMINI_API_KEY;
+      if (!apiKey) return res.status(500).json({ error: "GEMINI_API_KEY no configurada" });
+
+      console.log(`[noticias] Creando borrador manual: "${title}"`);
+      const illustrated = await illustrateImage(imageUrl, apiKey);
+      let mediaId: number | undefined;
+      if (illustrated) {
+        const slug = "img-" + title.toLowerCase().replace(/[^a-z0-9]+/g, "-").substring(0, 36);
+        const media = await uploadMedia(illustrated, slug);
+        if (media) mediaId = media.id;
+      }
+
+      const draft = await createDraft(title, content, mediaId);
       res.json({ ok: true, draft });
     } catch (err: any) {
       res.status(500).json({ error: err.message });
