@@ -98,6 +98,19 @@ REGISTRO EMOCIONAL (OBLIGATORIO):
 * No saltar de "sentir" a "hacer". Mostrar el momento en que el personaje RECONOCE lo que siente antes de actuar.
 * Validar emociones difíciles: el miedo, la tristeza, la bronca y la confusión tienen lugar en el cuento. No se resuelven rápido.
 
+ARRANQUE DEL CUENTO (CRÍTICO — VARIEDAD OBLIGATORIA):
+
+* PROHIBIDO arrancar siempre con "Los Muns bajaron en su cohete lunar". Eso es el inicio más fácil y más aburrido.
+* El cohete y la llegada a la Tierra pueden mencionarse, pero no tienen que ser el primer párrafo.
+* Empezá desde donde está la emoción. Algunos ejemplos de arranques válidos:
+  - Desde el lugar: "El río no hacía ruido esa mañana."
+  - Desde un Mun que ya está ahí: "Un Mun estaba mirando algo que no entendía."
+  - Desde la emoción directa: "Había algo pesado en el aire cuando llegaron."
+  - Desde un objeto o detalle pequeño: "En el piso había una hoja con forma de corazón, pero nadie la había puesto ahí."
+  - Desde una pregunta: "¿Por qué estaba tan quieto todo?"
+  - Desde la luna, antes de bajar: "Esa noche, desde la luna, los Muns vieron algo raro en la Tierra."
+* Cada cuento debe tener un arranque distinto al anterior. No repitas la misma estructura de apertura.
+
 TONO NARRATIVO (CRÍTICO — LA MAGIA IMPORTA):
 
 * El cuento debe sentirse como PIXAR, DISNEY o BLUEY: momentos pequeños cargados de emoción genuina.
