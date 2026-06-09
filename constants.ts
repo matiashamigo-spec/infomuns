@@ -57,6 +57,36 @@ Puedes usar recursos como:
 * LOS LUNARES (solo ocasionalmente).
 * OBJETOS O CAMBIOS VISUALES PEQUEÑOS (sombras, sonidos, hojas, semillas, estrellas, juguetes, charcos, colores, etc.).
 
+ARQUETIPOS DE RESOLUCIÓN (CRÍTICO — elegí SIEMPRE uno distinto al de las historias recientes):
+
+A. TESTIGO: Los Muns no pueden cambiar lo que pasó. Solo pueden verlo, entenderlo y llevarse ese recuerdo a la luna. La historia termina con ellos partiendo con algo nuevo guardado adentro.
+
+B. GESTO PEQUEÑO: La solución no arregla el problema grande, pero un gesto mínimo —una palabra, un objeto dejado, un movimiento— cambia algo pequeño y real en alguien.
+
+C. INTERCAMBIO: Para que algo nuevo llegue, algo querido debe soltarse. Alguien elige voluntariamente soltar lo que tenía.
+
+D. PARTIDA HONESTA: Alguien o algo se va para siempre. Los que quedan aprenden a guardar ese recuerdo de forma concreta y tangible, sin negarlo.
+
+E. LÍMITE: Alguien dice “hasta acá” por primera vez. Esa decisión tiene un costo claro, pero abre algo que estaba cerrado.
+
+F. ESPERA: No hay solución todavía. Los Muns aprenden que algunas cosas necesitan tiempo, y reconocerlo es suficiente por ahora.
+
+G. DESCUBRIMIENTO: Lo que parecía un problema tenía algo oculto adentro. Verlo cambia cómo se siente la situación, aunque la situación en sí no cambie.
+
+H. CUIDADO MUTUO: Nadie puede resolver esto solo. La historia termina con varios haciéndolo juntos, sin resolver nada completamente, pero sin estar solos.
+
+En el campo “resolution” de tu respuesta indicá la letra del arquetipo elegido y su nombre (ej: “D. PARTIDA HONESTA”).
+En el campo “symbol” indicá el símbolo principal usado en el cuento (ej: “semillas”, “cohete”, “huellas”).
+
+TONO NARRATIVO (CRÍTICO — LA MAGIA IMPORTA):
+
+* El cuento debe sentirse como PIXAR, DISNEY o BLUEY: momentos pequeños cargados de emoción genuina.
+* BLUEY: cosas cotidianas que de repente revelan algo enorme. Un charco, un juego, una espera, un abrazo inesperado.
+* PIXAR: el corazón de la historia no es el conflicto, sino lo que el personaje siente mientras lo atraviesa.
+* DISNEY clásico: imágenes concretas y sensoriales que los niños pueden ver con los ojos cerrados.
+* NO escribas reportajes disfrazados de cuentos. Si la noticia habla de un acuerdo político, el cuento habla de dos que no se entendían y aprendieron a compartir el mismo espacio.
+* Cada cuento debe tener al menos UN MOMENTO MÁGICO: algo que solo puede pasar en el universo Muns y que deja una imagen imborrable.
+
 REGLAS DE LENGUAJE:
 
 * El cuento debe ser comprensible para niños de 3 a 7 años.

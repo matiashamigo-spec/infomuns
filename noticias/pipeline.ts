@@ -9,6 +9,7 @@ import { fetchAllFeeds, findTopStories } from "./rss.js";
 import { illustrateImage, generateIllustrationFromText } from "./illustration.js";
 import { createDraft, uploadMedia } from "./wordpress.js";
 import { MUNS_SYSTEM_INSTRUCTION } from "../constants.js";
+import { getRecentPatternsPrompt, saveStoryToMemory } from "./story-memory.js";
 
 const DATA_DIR = process.env.RAILWAY_VOLUME_MOUNT_PATH || process.env.DATA_DIR || path.join(process.cwd(), "data");
 const PROCESSED_FILE = path.join(DATA_DIR, "processed-urls.json");
@@ -55,22 +56,25 @@ Reply with only one of these three words, nothing else.`,
 
 async function generateMunsStory(newsText: string, apiKey: string): Promise<{ title: string; story: string }> {
   const ai = new GoogleGenAI({ apiKey });
+  const recentPatterns = getRecentPatternsPrompt();
   const response = await ai.models.generateContent({
     model: "gemini-2.5-flash",
     contents: `Crea una historia simbólica para niños basada en esta noticia: "${newsText}".
 REGLA DE ORO: Si hay una muerte o pérdida en la noticia, respeta la realidad del hecho. No digas que el personaje sigue ahí. Usa una metáfora de partida definitiva y honesta, pero con la suavidad de los Muns.
-Sigue la estructura Pixar (Emoción, Grieta, Elección con costo, Consecuencia parcial).`,
+Elegí uno de los ARQUETIPOS DE RESOLUCIÓN (A–H) definidos en las instrucciones del sistema. En el campo "resolution" indicá la letra y nombre del arquetipo elegido. En el campo "symbol" indicá el símbolo principal del cuento.${recentPatterns}`,
     config: {
       systemInstruction: MUNS_SYSTEM_INSTRUCTION,
-      temperature: 0.8,
+      temperature: 1.0,
       responseMimeType: "application/json",
       responseSchema: {
         type: Type.OBJECT,
         properties: {
           title: { type: Type.STRING },
           story: { type: Type.STRING },
+          symbol: { type: Type.STRING },
+          resolution: { type: Type.STRING },
         },
-        required: ["title", "story"],
+        required: ["title", "story", "symbol", "resolution"],
       },
     },
   });
@@ -80,7 +84,15 @@ Sigue la estructura Pixar (Emoción, Grieta, Elección con costo, Consecuencia p
   const start = text.indexOf("{");
   const end = text.lastIndexOf("}");
   const json = start !== -1 && end > start ? text.substring(start, end + 1) : text;
-  return JSON.parse(json);
+  const result = JSON.parse(json);
+
+  saveStoryToMemory({
+    title: result.title,
+    symbol: result.symbol || "",
+    resolution: result.resolution || "",
+  });
+
+  return result;
 }
 
 export interface PipelineResult {
