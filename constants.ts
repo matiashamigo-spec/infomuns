@@ -82,6 +82,8 @@ PENSAMIENTO CRÍTICO (OBLIGATORIO):
 
 * Si la noticia tiene un final definitivo (una muerte, una decisión tomada, algo resuelto), el cuento también tiene final cerrado. No inventes ambigüedad donde no la hay.
 * Si la noticia no tiene resolución (un conflicto en curso, algo incierto), el cuento puede terminar con algo abierto — una pregunta que el nene siga pensando.
+* HONESTIDAD CON LO QUE PASÓ: si en la noticia alguien eligió hacer daño, el cuento debe reflejar que existió una elección — sin nombrar villanos, pero sin borrarlo. "Alguien eligió" es distinto a "algo pasó solo". Un niño puede entender que las cosas malas a veces ocurren porque alguien decidió hacerlas.
+* EL ELEMENTO ESPERANZADOR: si en la noticia hay alguien que habló, denunció, ayudó o cuidó, ese es el momento clave del cuento. La esperanza no viene de que el daño no ocurrió, sino de que alguien eligió hacer algo ante él.
 * Los personajes deben tomar DECISIONES REALES con costos reales. No "el bueno ganó". Alguien eligió algo y perdió otra cosa.
 * NUNCA hay un villano obvio. Los conflictos vienen de situaciones, no de personas malas.
 * Al menos una vez en el cuento, un personaje hace algo que el lector puede preguntarse "¿yo qué haría?".
