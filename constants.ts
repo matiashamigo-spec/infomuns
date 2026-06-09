@@ -37,7 +37,7 @@ ADAPTACIÓN DE LA NOTICIA (CRÍTICO):
 
 DINÁMICA PIXAR PARA NIÑOS:
 
-1. EMOCIÓN HONESTA: una emoción principal al inicio.
+1. EMOCIÓN HONESTA: una emoción central al inicio, pero que puede complejizarse durante el cuento.
 2. GRIETA: un pequeño cambio visual rompe la normalidad.
 3. MOVIMIENTO: los Muns intentan entender o hacer algo juntos.
 4. CONSECUENCIA REAL: el final no tiene que ser perfecto, pero sí seguro y contenedor.
@@ -78,6 +78,22 @@ H. CUIDADO MUTUO: Nadie puede resolver esto solo. La historia termina con varios
 En el campo “resolution” de tu respuesta indicá la letra del arquetipo elegido y su nombre (ej: “D. PARTIDA HONESTA”).
 En el campo “symbol” indicá el símbolo principal usado en el cuento (ej: “semillas”, “cohete”, “huellas”).
 
+PENSAMIENTO CRÍTICO (OBLIGATORIO):
+
+* El cuento no puede resolver todo. Tiene que dejar algo abierto — una pregunta que el nene siga pensando después.
+* Los personajes deben tomar DECISIONES REALES con costos reales. No "el bueno ganó". Alguien eligió algo y perdió otra cosa.
+* NUNCA hay un villano obvio. Los conflictos vienen de situaciones, no de personas malas.
+* Al menos una vez en el cuento, un personaje hace algo que el lector puede preguntarse "¿yo qué haría?".
+* El final puede ser incómodo, incompleto o sorprendente. Eso es intencional. Los niños soportan más ambigüedad de lo que creemos.
+
+REGISTRO EMOCIONAL (OBLIGATORIO):
+
+* NOMBRAR LAS EMOCIONES con palabras simples y concretas: "el Mun sentía algo pesado adentro", "algo apretado en el pecho", "un calor en las manos".
+* Las LUNARES son la herramienta principal: cuando hay tristeza, miedo o angustia, los lunares se vuelven violeta oscuro. Úsalos como termómetro emocional visible.
+* EMOCIONES MIXTAS: un personaje puede sentir dos cosas al mismo tiempo (triste Y curioso, asustado Y decidido). Eso es válido y hay que mostrarlo.
+* No saltar de "sentir" a "hacer". Mostrar el momento en que el personaje RECONOCE lo que siente antes de actuar.
+* Validar emociones difíciles: el miedo, la tristeza, la bronca y la confusión tienen lugar en el cuento. No se resuelven rápido.
+
 TONO NARRATIVO (CRÍTICO — LA MAGIA IMPORTA):
 
 * El cuento debe sentirse como PIXAR, DISNEY o BLUEY: momentos pequeños cargados de emoción genuina.
@@ -92,7 +108,7 @@ REGLAS DE LENGUAJE:
 * El cuento debe ser comprensible para niños de 3 a 7 años.
 * PRIORIZA CLARIDAD SOBRE POESÍA.
 * Usa frases cortas y palabras sencillas.
-* Solo una emoción principal por cuento.
+* Las emociones pueden ser mixtas o evolucionar durante el cuento.
 * SIN MORALEJAS EXPLICATIVAS.
 * El aprendizaje debe surgir de las acciones.
 * SIN NOMBRES PROPIOS reales.
