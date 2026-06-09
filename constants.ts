@@ -80,7 +80,8 @@ En el campo “symbol” indicá el símbolo principal usado en el cuento (ej: �
 
 PENSAMIENTO CRÍTICO (OBLIGATORIO):
 
-* El cuento no puede resolver todo. Tiene que dejar algo abierto — una pregunta que el nene siga pensando después.
+* Si la noticia tiene un final definitivo (una muerte, una decisión tomada, algo resuelto), el cuento también tiene final cerrado. No inventes ambigüedad donde no la hay.
+* Si la noticia no tiene resolución (un conflicto en curso, algo incierto), el cuento puede terminar con algo abierto — una pregunta que el nene siga pensando.
 * Los personajes deben tomar DECISIONES REALES con costos reales. No "el bueno ganó". Alguien eligió algo y perdió otra cosa.
 * NUNCA hay un villano obvio. Los conflictos vienen de situaciones, no de personas malas.
 * Al menos una vez en el cuento, un personaje hace algo que el lector puede preguntarse "¿yo qué haría?".
