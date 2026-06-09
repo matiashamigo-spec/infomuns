@@ -56,7 +56,7 @@ Reply with only one of these three words, nothing else.`,
 
 interface NewsAnalysis {
   what: string;
-  human_choice: "daño" | "bien" | "ninguna";
+  human_choice: "daño" | "bien" | "ninguna" | "político";
   core_emotion: string;
   has_resolution: boolean;
   hopeful_actor: string;
@@ -72,7 +72,7 @@ Noticia: "${newsText.substring(0, 2000)}"
 
 Respondé:
 - what: qué pasó en UNA oración simple (para un adulto que va a escribir un cuento para niños)
-- human_choice: ¿hubo una elección humana detrás del hecho? "daño" si alguien eligió lastimar, "bien" si alguien eligió ayudar/cuidar/hablar, "ninguna" si fue natural o estructural
+- human_choice: ¿cuál es la naturaleza del hecho? "daño" solo si hay una acción claramente dañina y no debatible (violencia, abuso, crimen). "bien" solo si hay un gesto claramente positivo y no debatible (rescate, donación, cuidado). "político" si involucra gobiernos, partidos, políticas públicas, movimientos sociales o cualquier tema donde distintas personas pueden tener opiniones legítimas distintas. "ninguna" si fue natural, accidental o estructural sin actor claro.
 - core_emotion: cuál es la emoción principal que un nene de 5 años sentiría al escuchar esto (una sola palabra: tristeza, bronca, miedo, alegría, orgullo, confusión, ternura, alivio)
 - has_resolution: true si el hecho ya tiene un final definitivo, false si la situación sigue abierta
 - hopeful_actor: si hay alguien que denunció, ayudó, cuidó o habló en esta noticia, describilo en una frase. Si no hay nadie así, dejalo vacío.`,
@@ -114,6 +114,8 @@ async function generateMunsStory(newsText: string, apiKey: string): Promise<{ ti
     ? `IMPORTANTE: En esta noticia alguien eligió hacer daño. El cuento debe reflejar que existió esa elección — sin nombrar al culpable, pero sin borrarlo. "Alguien decidió" es distinto a "algo pasó solo".`
     : analysis.human_choice === "bien"
     ? `IMPORTANTE: En esta noticia alguien eligió hacer algo bueno (ayudar, cuidar, hablar). Ese gesto es el momento clave del cuento.`
+    : analysis.human_choice === "político"
+    ? `IMPORTANTE: Esta noticia involucra un tema político o social donde distintas personas pueden tener opiniones legítimas distintas. El cuento NO toma partido. Muestra lo que sienten los personajes, no quién tiene razón. Ningún bando es el malo ni el bueno.`
     : "";
 
   const hopefulContext = analysis.hopeful_actor
