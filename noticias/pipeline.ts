@@ -54,14 +54,88 @@ Reply with only one of these three words, nothing else.`,
   }
 }
 
-async function generateMunsStory(newsText: string, apiKey: string): Promise<{ title: string; story: string }> {
+interface NewsAnalysis {
+  what: string;
+  human_choice: "daño" | "bien" | "ninguna";
+  core_emotion: string;
+  has_resolution: boolean;
+  hopeful_actor: string;
+}
+
+async function analyzeNews(newsText: string, apiKey: string): Promise<NewsAnalysis> {
   const ai = new GoogleGenAI({ apiKey });
-  const recentPatterns = getRecentPatternsPrompt();
   const response = await ai.models.generateContent({
     model: "gemini-2.5-flash",
-    contents: `Crea una historia simbólica para niños basada en esta noticia: "${newsText}".
-REGLA DE ORO: Si hay una muerte o pérdida en la noticia, respeta la realidad del hecho. No digas que el personaje sigue ahí. Usa una metáfora de partida definitiva y honesta, pero con la suavidad de los Muns.
-Elegí uno de los ARQUETIPOS DE RESOLUCIÓN (A–H) definidos en las instrucciones del sistema. En el campo "resolution" indicá la letra y nombre del arquetipo elegido. En el campo "symbol" indicá el símbolo principal del cuento.${recentPatterns}`,
+    contents: `Analizá esta noticia para preparar un cuento infantil. Respondé en JSON.
+
+Noticia: "${newsText.substring(0, 2000)}"
+
+Respondé:
+- what: qué pasó en UNA oración simple (para un adulto que va a escribir un cuento para niños)
+- human_choice: ¿hubo una elección humana detrás del hecho? "daño" si alguien eligió lastimar, "bien" si alguien eligió ayudar/cuidar/hablar, "ninguna" si fue natural o estructural
+- core_emotion: cuál es la emoción principal que un nene de 5 años sentiría al escuchar esto (una sola palabra: tristeza, bronca, miedo, alegría, orgullo, confusión, ternura, alivio)
+- has_resolution: true si el hecho ya tiene un final definitivo, false si la situación sigue abierta
+- hopeful_actor: si hay alguien que denunció, ayudó, cuidó o habló en esta noticia, describilo en una frase. Si no hay nadie así, dejalo vacío.`,
+    config: {
+      temperature: 0.2,
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          what: { type: Type.STRING },
+          human_choice: { type: Type.STRING },
+          core_emotion: { type: Type.STRING },
+          has_resolution: { type: Type.BOOLEAN },
+          hopeful_actor: { type: Type.STRING },
+        },
+        required: ["what", "human_choice", "core_emotion", "has_resolution", "hopeful_actor"],
+      },
+    },
+  });
+
+  const text = response.text;
+  if (!text) throw new Error("Gemini no devolvió análisis");
+  const start = text.indexOf("{");
+  const end = text.lastIndexOf("}");
+  const json = start !== -1 && end > start ? text.substring(start, end + 1) : text;
+  return JSON.parse(json);
+}
+
+async function generateMunsStory(newsText: string, apiKey: string): Promise<{ title: string; story: string }> {
+  const ai = new GoogleGenAI({ apiKey });
+
+  // Paso 1: analizar la noticia
+  const analysis = await analyzeNews(newsText, apiKey);
+  console.log(`[pipeline] Análisis: ${JSON.stringify(analysis)}`);
+
+  // Paso 2: construir contexto para el cuento
+  const recentPatterns = getRecentPatternsPrompt();
+  const choiceContext = analysis.human_choice === "daño"
+    ? `IMPORTANTE: En esta noticia alguien eligió hacer daño. El cuento debe reflejar que existió esa elección — sin nombrar al culpable, pero sin borrarlo. "Alguien decidió" es distinto a "algo pasó solo".`
+    : analysis.human_choice === "bien"
+    ? `IMPORTANTE: En esta noticia alguien eligió hacer algo bueno (ayudar, cuidar, hablar). Ese gesto es el momento clave del cuento.`
+    : "";
+
+  const hopefulContext = analysis.hopeful_actor
+    ? `ACTOR ESPERANZADOR: ${analysis.hopeful_actor}. Incluirlo en el cuento como el gesto que vale.`
+    : "";
+
+  const endingContext = analysis.has_resolution
+    ? `FINAL CERRADO: lo que pasó ya terminó. El cuento también debe tener final cerrado.`
+    : `FINAL ABIERTO: la situación sigue sin resolverse. El cuento puede terminar con algo pendiente.`;
+
+  const contents = `Lo que pasó: ${analysis.what}
+Emoción central para un nene de 5 años: ${analysis.core_emotion}
+${choiceContext}
+${hopefulContext}
+${endingContext}
+
+Con este contexto, creá una historia simbólica para niños en el universo Muns.
+Elegí uno de los ARQUETIPOS DE RESOLUCIÓN (A–H). Indicá en "resolution" la letra y nombre. Indicá en "symbol" el símbolo principal del cuento.${recentPatterns}`;
+
+  const response = await ai.models.generateContent({
+    model: "gemini-2.5-flash",
+    contents,
     config: {
       systemInstruction: MUNS_SYSTEM_INSTRUCTION,
       temperature: 1.0,
