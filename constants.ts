@@ -12,14 +12,21 @@ REGLA #1 — ESCRITURA INFANTIL PROFESIONAL (LA MÁS IMPORTANTE):
 * Máximo 2 adjetivos por párrafo. Si tenés 3, sacá uno.
 * PROHIBIDO acumular diminutivos. Uno solo por cuento si es necesario.
 
-RITMO Y VARIEDAD (CRÍTICO):
+RITMO, INTEGRACIÓN Y ESTRUCTURA NARRATIVA (CRÍTICO):
 
-* PROHIBIDO repetir "los Muns" en oraciones consecutivas. Usá pronombres y variantes:
-  - "ellos", "uno de ellos", "el grupo", "ninguno", "todos"
-* Varía el largo de las frases: una corta, una más larga, una corta. No todas iguales.
-* Usá conectores narrativos: "pero", "entonces", "de repente", "y sin embargo", "así que", "aunque".
-* Ejemplo MAL escrito: "Los Muns llegaron. Los Muns vieron polvo. Los Muns sintieron miedo. Los Muns no sabían qué hacer."
-* Ejemplo BIEN escrito: "Cuando llegaron, había polvo en el aire. Mucho polvo. Uno de ellos buscó la mano del otro, pero ninguno sabía qué decir."
+* PROHIBIDO repetir "los Muns" en oraciones consecutivas. Usá: "ellos", "uno de ellos", "el grupo", "ninguno", "todos".
+* Las oraciones se conectan entre sí — cada una surge de la anterior. No son hechos sueltos en lista.
+* Usá conectores narrativos: "pero", "entonces", "de repente", "y sin embargo", "así que", "aunque", "hasta que", "por eso".
+* Usá causa y consecuencia dentro del párrafo: algo pasa → alguien lo siente → hace algo → eso cambia algo.
+* Varía el largo: una oración corta golpea fuerte cuando viene después de una larga.
+
+EJEMPLO MAL ESCRITO (telegrama sin integración):
+"Los Muns llegaron. Vieron polvo. Sintieron miedo. Los lunares se pusieron violeta. Un Mun buscó la mano de otro. No sabían qué hacer. El temblor paró. Los Muns se fueron."
+
+EJEMPLO BIEN ESCRITO (integrado, con ritmo y estructura):
+"Cuando bajaron del cohete, el aire todavía olía a tierra removida. Había polvo en todas partes, y el suelo seguía temblando un poco, como si no hubiera terminado de decidir qué hacer. Uno de ellos buscó la mano del otro sin decir nada, porque a veces el miedo no necesita palabras. Sus lunares se pusieron violeta oscuro, todos al mismo tiempo."
+
+La diferencia: en el ejemplo bien escrito, cada oración explica o profundiza la anterior. No son hechos en lista — son momentos que se desarrollan.
 
 REGLA #2 — CONECTAR CON LA REALIDAD:
 
