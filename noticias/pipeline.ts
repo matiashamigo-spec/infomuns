@@ -6,7 +6,7 @@ import fs from "fs";
 import path from "path";
 import { GoogleGenAI, Type } from "@google/genai";
 import { fetchAllFeeds, findTopStories } from "./rss.js";
-import { illustrateImage, generateIllustrationFromText } from "./illustration.js";
+import { illustrateImage, generateIllustrationFromText, generateIllustrationSet } from "./illustration.js";
 import { createDraft, uploadMedia } from "./wordpress.js";
 import { MUNS_SYSTEM_INSTRUCTION } from "../constants.js";
 import { getRecentPatternsPrompt, saveStoryToMemory } from "./story-memory.js";
@@ -209,20 +209,23 @@ export async function processSingleUrl(url: string, apiKey: string): Promise<{ i
   const newsText = `${rawTitle}\n\n${bodyText || description}`;
   const { title, story } = await generateMunsStory(newsText, apiKey);
 
-  // 3. Ilustrar desde el cuento (no desde la foto original)
+  // 3. Ilustrar 4 escenas desde el cuento
   let mediaId: number | undefined;
-  console.log(`[pipeline] Ilustrando desde cuento...`);
-  const illustrated = await generateIllustrationFromText(title, story, apiKey);
-  if (illustrated) {
-    const slug = "img-" + title.toLowerCase().replace(/[^a-z0-9]+/g, "-").substring(0, 36);
-    const media = await uploadMedia(illustrated, slug);
-    mediaId = media?.id ?? undefined;
+  console.log(`[pipeline] Ilustrando 4 escenas desde cuento...`);
+  const scenes = await generateIllustrationSet(title, story, apiKey);
+  const mediaIds: number[] = [];
+  for (let i = 0; i < scenes.length; i++) {
+    const slug = "img-" + title.toLowerCase().replace(/[^a-z0-9]+/g, "-").substring(0, 30) + `-${i + 1}`;
+    const media = await uploadMedia(scenes[i], slug);
+    if (media) mediaIds.push(media.id);
   }
+  if (mediaIds.length > 0) mediaId = mediaIds[0];
 
   // 4. Crear borrador en WordPress
   const sourceImageComment = imageUrl ? `<!-- source-image: ${imageUrl} -->\n` : "";
+  const extraMediaComment = mediaIds.length > 1 ? `<!-- scene-media-ids: ${mediaIds.join(",")} -->\n` : "";
   const cleanStory = story.toUpperCase().replace(/«/g, '"').replace(/»/g, '"');
-  const content = `${sourceImageComment}<p>${cleanStory.replace(/\n/g, "</p><p>")}</p>
+  const content = `${sourceImageComment}${extraMediaComment}<p>${cleanStory.replace(/\n/g, "</p><p>")}</p>
 <p><small>Fuente original (<a href="${url}" target="_blank" rel="noopener">${siteName}</a>): ${url}</small></p>`;
 
   const draft = await createDraft(title, content, mediaId);
@@ -258,26 +261,29 @@ export async function runDailyPipeline(limit = 10): Promise<PipelineResult> {
       const newsText = `${article.title}\n\n${article.content}`;
       const { title, story } = await generateMunsStory(newsText, apiKey);
 
-      // 2. Ilustrar desde el cuento (no desde la foto original)
+      // 2. Ilustrar 4 escenas desde el cuento
       let mediaId: number | undefined;
-      console.log(`[pipeline] Ilustrando desde cuento...`);
-      const illustrated = await generateIllustrationFromText(title, story, apiKey);
-      if (illustrated) {
-        const slug = "img-" + title.toLowerCase().replace(/[^a-z0-9]+/g, "-").substring(0, 36);
-        const media = await uploadMedia(illustrated, slug);
-        mediaId = media?.id ?? undefined;
+      console.log(`[pipeline] Ilustrando 4 escenas desde cuento...`);
+      const scenes = await generateIllustrationSet(title, story, apiKey);
+      const mediaIds: number[] = [];
+      for (let i = 0; i < scenes.length; i++) {
+        const slug = "img-" + title.toLowerCase().replace(/[^a-z0-9]+/g, "-").substring(0, 30) + `-${i + 1}`;
+        const media = await uploadMedia(scenes[i], slug);
+        if (media) mediaIds.push(media.id);
       }
+      if (mediaIds.length > 0) mediaId = mediaIds[0];
 
       // 3. Crear borrador en WordPress
       // Guardar URL de foto original como comentario oculto para poder regenerar imagen después
       const sourceImageComment = article.imageUrl
         ? `<!-- source-image: ${article.imageUrl} -->\n`
         : "";
+      const extraMediaComment = mediaIds.length > 1 ? `<!-- scene-media-ids: ${mediaIds.join(",")} -->\n` : "";
       const cleanStory = story
         .toUpperCase()
         .replace(/«/g, '"')
         .replace(/»/g, '"');
-      const content = `${sourceImageComment}<p>${cleanStory.replace(/\n/g, "</p><p>")}</p>
+      const content = `${sourceImageComment}${extraMediaComment}<p>${cleanStory.replace(/\n/g, "</p><p>")}</p>
 <p><small>Fuente original (<a href="${article.link}" target="_blank" rel="noopener">${article.source}</a>): ${article.link}</small></p>`;
 
       await createDraft(title, content, mediaId);
