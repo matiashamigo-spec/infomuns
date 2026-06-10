@@ -3,39 +3,25 @@ import axios from "axios";
 const MODEL = "gemini-2.5-flash-image";
 const API_BASE = "https://generativelanguage.googleapis.com/v1beta/models/";
 
-const PROMPT = `Redraw the concept of this news photograph as an extremely simple, clumsy crayon drawing made by a happy 4-year-old child on plain white paper.
+const PROMPT = `Draw this as a very basic crayon sketch made by a 4-year-old child on plain white paper.
 
-The drawing must feel genuinely childlike, warm and innocent — messy in a cute way, never creepy, disturbing or unsettling.
-
-VISUAL STYLE — non-negotiable:
-- Plain white paper background, absolutely nothing else
-- Very simple child drawing, as if made quickly with crayons
-- Wobbly circles, uneven rectangles, shaky imperfect lines — clearly drawn by a small child
-- People are simple blobs: oversized round head, rectangle or soft blob body, stick arms and legs
-- Faces are VERY minimal: two uneven dots for eyes and a small curved smile
-- Expressions should feel friendly, curious, surprised or happy — never sad, threatening or uncanny
-- Scribbly coloring inside shapes with visible crayon texture
-- Coloring should be loose and imperfect, slightly outside the lines, but soft and playful rather than chaotic
-- Exactly 3 colors only:
-  - deep blue (#4464AD)
-  - sky blue (#9FCFE2)
-  - warm beige (#CBBBA0)
-- Uneven proportions are encouraged, but in a cute and playful way (big heads, tiny legs, funny poses)
-- The result should feel charmingly naive and wholesome, like a drawing proudly shown by a preschooler to their parents
+STYLE — strict:
+- Plain white background, nothing else
+- OUTLINES ONLY: shapes are drawn with a single wobbly crayon line — no fill, no shading, no solid blocks of color
+- If there is any color fill, it must be very sparse: a few loose scribble strokes inside the shape, leaving most of the interior white
+- Lines are shaky, uneven, clearly hand-drawn by a small child
+- People: circle head, rectangle body, stick arms and legs — nothing more
+- Faces: two dots for eyes, one curved line for mouth — that's all
+- Objects: simplest possible outline shape — a house is a square and a triangle, a tree is a circle on a stick
+- Exactly 3 colors: deep blue (#4464AD), sky blue (#9FCFE2), warm beige (#CBBBA0)
+- Each color used sparingly — mostly outlines, almost no fill
+- The drawing looks unfinished and sparse, like a child who drew quickly and got bored halfway through
 
 CONTENT RULES:
-- Anonymous people only, no recognizable characters or IP
-- Simplify everything aggressively:
-  - crowd = 2–3 happy blobs
-  - building = wobbly square with triangle roof
-  - vehicle = simple rounded shape with circles
-- Prefer uplifting or neutral interpretations of the original scene
-- No sadness, fear, panic, crying or threatening atmosphere
-- No violence, weapons, blood, destruction or dark symbolism
+- Anonymous figures only, no recognizable characters or IP
+- Maximum 2–3 elements total in the scene — do not crowd the drawing
 - No text, labels or captions
-
-IMPORTANT:
-This must look authentically child-made, but emotionally warm and endearing — imperfect, cute and playful, not disturbing or psychologically intense.`;
+- No violence, weapons, blood or dark content`;
 
 export async function illustrateImage(imageUrl: string, apiKey: string): Promise<string | null> {
   console.log(`[illustration] Procesando: ${imageUrl}`);
@@ -126,10 +112,10 @@ export async function generateIllustrationSet(title: string, story: string, apiK
 
   const storySummary = story.substring(0, 600);
   const sceneDescriptions = [
-    `The opening moment: the very first image of the story — where it begins, what the characters first see or feel.`,
-    `The emotional turning point: the moment when something changes — a discovery, a decision, a feeling that shifts everything.`,
-    `A key object or place from the story: a symbolic element that carries the emotional weight of the narrative.`,
-    `The closing image: how the story ends — what remains, what changed, what the characters carry with them.`,
+    `SCENE 1 — THE PLACE: Draw only the setting where the story happens. No characters. Just the location — a landscape, a building, a river, a street. One or two simple outline shapes maximum. Empty and sparse.`,
+    `SCENE 2 — THE CHARACTER(S): Draw only the Muns or main figure(s) in this story. No background, no setting. Just the character(s) standing or doing something simple. Stick figures with big round heads.`,
+    `SCENE 3 — THE KEY OBJECT: Draw only the one most important object from the story — the bolso, a broken thing, an animal, a door, whatever matters most. Just that object, centered, alone on white paper.`,
+    `SCENE 4 — THE ENDING MOMENT: Draw the final moment of the story — what the scene looks like when it ends. Could be a character leaving, something left behind, or an empty place. One simple image.`,
   ];
 
   const prompts = sceneDescriptions.map((scene, i) => `Draw scene ${i + 1} of 4 from this children's story as a crayon drawing by a 4-year-old child.
