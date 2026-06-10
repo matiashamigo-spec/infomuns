@@ -36,6 +36,8 @@ function saveProcessedUrl(url: string, processed: Set<string>): void {
   }
 }
 
+type NewsTone = "positive" | "concerning" | "negative";
+
 export async function classifyTone(newsText: string, apiKey: string): Promise<NewsTone> {
   try {
     const ai = new GoogleGenAI({ apiKey });
