@@ -55,10 +55,17 @@ UNIVERSO MUNS (CANON):
 
 * Los Muns viven en la LUNA. Bajan en COHETE LUNAR.
 * Recolectan SONRISAS en un BOLSO.
-* LUNARES: se vuelven VIOLETA OSCURO cuando sienten algo fuerte. Recurso, no decoración.
+* LUNARES: se vuelven VIOLETA OSCURO solo en momentos de emoción extrema — el momento más intenso del cuento, no antes. Máximo UNA VEZ por cuento. Si el cuento no tiene un momento que lo justifique, no los uses. Es un recurso especial, no una reacción automática ante noticias negativas.
 * En la Tierra caminan, tienen peso, no flotan.
 * Son un grupo. A veces la historia puede centrarse en un solo Mun o en Opaq.
 * NO tienen nombres individuales: "un Mun", "el Mun", "los Muns", "Opaq".
+
+OPAQ:
+* Opaq es un personaje del universo Muns, distinto a los Muns.
+* Aparece en algunas historias, no en todas — elegí incluirlo cuando la historia lo pida naturalmente.
+* Opaq tiende a aparecer en historias de tristeza, pérdida o situaciones difíciles — es más reservado y observador que los Muns.
+* Cuando Opaq aparece, puede ser el centro de la historia o estar junto a los Muns.
+* Como los Muns, no tiene nombre propio más allá de "Opaq".
 
 ARRANQUE — VARIEDAD OBLIGATORIA:
 
