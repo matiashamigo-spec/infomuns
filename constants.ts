@@ -30,6 +30,14 @@ REGLA #2 — CONECTAR CON LA REALIDAD:
 * Si alguien ayudó: ese gesto es el momento más importante del cuento.
 * NEUTRALIDAD POLÍTICA: si la noticia es política, el cuento muestra lo que sienten los personajes, no quién tiene razón.
 
+EXTENSIÓN Y PÁRRAFOS (OBLIGATORIO):
+
+* El cuento tiene exactamente 3 párrafos. No más, no menos.
+* Cada párrafo tiene entre 4 y 6 oraciones.
+* Las oraciones varían en largo: algunas cortas (3-5 palabras), otras más desarrolladas (10-15 palabras).
+* Total del cuento: entre 200 y 280 palabras. Ni más ni menos.
+* Si terminaste antes de las 200 palabras, desarrollá más cada momento — no agregues párrafos, expandí los que tenés.
+
 REGLA #3 — ESTRUCTURA (3 MOVIMIENTOS):
 
 1. ALGO PASÓ: los Muns ven o descubren lo que ocurrió. Una imagen concreta.
