@@ -78,6 +78,43 @@ export async function illustrateImage(imageUrl: string, apiKey: string): Promise
   }
 }
 
-export async function generateIllustrationFromText(_title: string, _story: string, _apiKey: string): Promise<string | null> {
-  return null;
+export async function generateIllustrationFromText(title: string, story: string, apiKey: string): Promise<string | null> {
+  console.log(`[illustration] Generando desde cuento: "${title}"`);
+  try {
+    const scenePrompt = `Draw this children's story scene as a crayon drawing by a 4-year-old child.
+
+STORY TITLE: ${title}
+
+STORY SUMMARY (use this to decide WHAT to draw):
+${story.substring(0, 600)}
+
+Based on the story above, identify the most visual and emotionally meaningful scene — a character, a place, an object or a moment — and draw it in the childlike crayon style described below. The drawing must illustrate the STORY, not a news photo.
+
+${PROMPT}`;
+
+    const res = await axios.post(
+      `${API_BASE}${MODEL}:generateContent?key=${apiKey}`,
+      {
+        contents: [{
+          parts: [{ text: scenePrompt }],
+        }],
+        generationConfig: { responseModalities: ["TEXT", "IMAGE"] },
+      },
+      { timeout: 60000 }
+    );
+
+    for (const c of res.data?.candidates || []) {
+      for (const p of c.content?.parts || []) {
+        if (p.inlineData?.data) {
+          console.log(`[illustration] OK (desde cuento)`);
+          return `data:${p.inlineData.mimeType || "image/png"};base64,${p.inlineData.data}`;
+        }
+      }
+    }
+    console.warn("[illustration] Sin imagen desde cuento:", JSON.stringify(res.data?.candidates?.[0]?.content?.parts?.map((p: any) => p.text)));
+    return null;
+  } catch (err: any) {
+    console.warn("[illustration] Error desde cuento:", err.message);
+    return null;
+  }
 }

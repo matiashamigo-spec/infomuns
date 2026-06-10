@@ -209,16 +209,14 @@ export async function processSingleUrl(url: string, apiKey: string): Promise<{ i
   const newsText = `${rawTitle}\n\n${bodyText || description}`;
   const { title, story } = await generateMunsStory(newsText, apiKey);
 
-  // 3. Ilustrar imagen (si hay foto)
+  // 3. Ilustrar desde el cuento (no desde la foto original)
   let mediaId: number | undefined;
-  if (imageUrl) {
-    console.log(`[pipeline] Ilustrando desde imagen original...`);
-    const illustrated = await illustrateImage(imageUrl, apiKey);
-    if (illustrated) {
-      const slug = "img-" + title.toLowerCase().replace(/[^a-z0-9]+/g, "-").substring(0, 36);
-      const media = await uploadMedia(illustrated, slug);
-      mediaId = media?.id ?? undefined;
-    }
+  console.log(`[pipeline] Ilustrando desde cuento...`);
+  const illustrated = await generateIllustrationFromText(title, story, apiKey);
+  if (illustrated) {
+    const slug = "img-" + title.toLowerCase().replace(/[^a-z0-9]+/g, "-").substring(0, 36);
+    const media = await uploadMedia(illustrated, slug);
+    mediaId = media?.id ?? undefined;
   }
 
   // 4. Crear borrador en WordPress
@@ -260,18 +258,14 @@ export async function runDailyPipeline(limit = 10): Promise<PipelineResult> {
       const newsText = `${article.title}\n\n${article.content}`;
       const { title, story } = await generateMunsStory(newsText, apiKey);
 
-      // 2. Ilustrar (solo si hay foto original — sin fallback a texto)
+      // 2. Ilustrar desde el cuento (no desde la foto original)
       let mediaId: number | undefined;
-      if (article.imageUrl) {
-        console.log(`[pipeline] Ilustrando desde imagen original...`);
-        const illustrated = await illustrateImage(article.imageUrl, apiKey);
-        if (illustrated) {
-          const slug = "img-" + title.toLowerCase().replace(/[^a-z0-9]+/g, "-").substring(0, 36);
-          const media = await uploadMedia(illustrated, slug);
-          mediaId = media?.id ?? undefined;
-        }
-      } else {
-        console.log(`[pipeline] Sin foto original, se omite ilustración`);
+      console.log(`[pipeline] Ilustrando desde cuento...`);
+      const illustrated = await generateIllustrationFromText(title, story, apiKey);
+      if (illustrated) {
+        const slug = "img-" + title.toLowerCase().replace(/[^a-z0-9]+/g, "-").substring(0, 36);
+        const media = await uploadMedia(illustrated, slug);
+        mediaId = media?.id ?? undefined;
       }
 
       // 3. Crear borrador en WordPress
