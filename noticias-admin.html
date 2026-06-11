@@ -10,7 +10,7 @@
 
   /* Login */
   #login-screen {
-    display: flex; align-items: center; justify-content: center;
+    display: none; align-items: center; justify-content: center;
     min-height: 100vh; flex-direction: column; gap: 16px;
   }
   #login-screen h1 { font-size: 1.5rem; color: #4464AD; }
@@ -319,7 +319,9 @@ async function apiFetch(path, opts = {}) {
   });
   if (res.status === 401) {
     localStorage.removeItem('noticias_admin_token');
-    location.reload();
+    token = '';
+    document.getElementById('main-screen').style.display = 'none';
+    document.getElementById('login-screen').style.display = 'flex';
     throw new Error('No autorizado');
   }
   if (!res.ok) {
