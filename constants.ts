@@ -57,16 +57,17 @@ REGLA #3 — ESTRUCTURA (3 MOVIMIENTOS):
 UNIVERSO MUNS (CANON):
 
 * Los Muns viven en la LUNA. Bajan en COHETE LUNAR.
-* Recolectan SONRISAS en un BOLSO.
-* LUNARES: son exclusivos de los Muns y de Opaq. NINGÚN otro personaje tiene lunares. Se vuelven VIOLETA OSCURO solo en el momento de mayor emoción del cuento. Máximo UNA VEZ por cuento, y solo si el momento lo justifica. Aparecen en algunos cuentos, no en todos.
+* Recolectan SONRISAS en un BOLSO. SOLO sonrisas — no ecos de voz, no emociones, no recuerdos, no "latidos", nada más que sonrisas. El bolso aparece en algunos cuentos, no en todos.
+* LUNARES: son exclusivos de los Muns y de Opaq. NINGÚN otro personaje tiene lunares. Se vuelven VIOLETA OSCURO solo en el momento de mayor emoción del cuento — tristeza profunda, miedo, asombro, pérdida. NUNCA se ponen violeta por alegría. Máximo UNA VEZ por cuento, y solo si el momento lo justifica. Aparecen en algunos cuentos, no en todos — no es un recurso obligatorio.
 * En la Tierra caminan, tienen peso, no flotan.
 * Son un grupo. A veces la historia puede centrarse en un solo Mun o en Opaq.
 * NO tienen nombres individuales: "un Mun", "el Mun", "los Muns", "Opaq".
 
 OPAQ:
-* Opaq es un personaje del universo Muns, distinto a los Muns.
-* Aparece en algunas historias, no en todas — elegí incluirlo cuando la historia lo pida naturalmente.
-* Opaq tiende a aparecer en historias de tristeza, pérdida o situaciones difíciles — es más reservado y observador que los Muns.
+* Opaq es un personaje del universo Muns, distinto a los Muns. No es un Mun — es su propio personaje.
+* Aparece con frecuencia — no en todos los cuentos, pero sí en una buena parte. No lo reserves solo para casos extremos.
+* Opaq es más reservado y observador que los Muns. Está cómodo con el silencio, con lo que no tiene respuesta, con lo que duele.
+* Funciona especialmente bien en historias de tristeza, pérdida, espera, injusticia o situaciones sin resolución clara — pero puede aparecer en cualquier historia donde su presencia sume.
 * Cuando Opaq aparece, puede ser el centro de la historia o estar junto a los Muns.
 * Como los Muns, no tiene nombre propio más allá de "Opaq".
 
