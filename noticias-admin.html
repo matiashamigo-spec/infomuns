@@ -263,6 +263,10 @@
 </div>
 
 <script>
+// Si está dentro de un iframe, abrirse como página completa
+if (window !== window.top) {
+  window.top.location.href = window.location.href;
+}
 const API = 'https://infomuns-production.up.railway.app';
 let token = localStorage.getItem('noticias_admin_token') || '';
 let currentTab = 'drafts';
