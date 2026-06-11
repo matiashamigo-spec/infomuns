@@ -76,14 +76,10 @@ async function startServer() {
   app.use(express.json({ limit: "20mb" }));
 
   // Security headers
-  app.use((req, res, next) => {
+  app.use((_req, res, next) => {
     res.setHeader("X-Content-Type-Options", "nosniff");
     res.setHeader("X-XSS-Protection", "1; mode=block");
     res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
-    // X-Frame-Options: permitir iframe desde muns.club para el panel admin
-    if (req.path !== "/noticias-admin") {
-      res.setHeader("X-Frame-Options", "SAMEORIGIN");
-    }
     next();
   });
 
