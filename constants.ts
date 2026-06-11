@@ -61,6 +61,10 @@ PROHIBIDO en el cierre:
 * Cierres genéricos que podrían funcionar para CUALQUIER cuento — si lo podés copiar y pegar en otra historia, está mal.
 * Metáforas abstractas al final ("como una semilla", "como la luz que permanece", "como el peso de lo invisible").
 
+MARCAS COMERCIALES — PROHIBIDO:
+
+* NUNCA mencionar marcas registradas reales en el cuento: instrumentos (Marshall, Fender, Gibson), ropa (Nike, Adidas), tecnología (Apple, Samsung), autos, comidas, o cualquier otra. Si la noticia menciona una marca, reemplazala por la descripción del objeto: "amplificador" en vez de "Marshall", "zapatillas" en vez de "Nike". El universo Muns es atemporal — no existe en el mundo de las marcas.
+
 UNIVERSO MUNS (CANON):
 
 * Los Muns viven en la LUNA. Viajan en COHETE LUNAR — ningún otro vehículo.
