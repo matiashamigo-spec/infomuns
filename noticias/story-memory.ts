@@ -18,6 +18,7 @@ export interface StoryMemoryEntry {
   title: string;
   symbol: string;
   resolution: string;
+  setting: string;
 }
 
 export function readStoryMemory(): StoryMemoryEntry[] {
@@ -30,12 +31,12 @@ export function readStoryMemory(): StoryMemoryEntry[] {
 }
 
 export function saveStoryToMemory(
-  entry: Omit<StoryMemoryEntry, "date">
+  entry: Omit<StoryMemoryEntry, "date"> & { setting?: string }
 ): void {
   try {
     if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
     const entries = readStoryMemory();
-    entries.unshift({ ...entry, date: new Date().toISOString() });
+    entries.unshift({ ...entry, setting: entry.setting || "", date: new Date().toISOString() });
     fs.writeFileSync(
       MEMORY_FILE,
       JSON.stringify(entries.slice(0, MAX_ENTRIES), null, 2)
@@ -52,12 +53,12 @@ export function getRecentPatternsPrompt(): string {
   const recent = entries.slice(0, 8);
   const lines = recent.map(
     (e, i) =>
-      `- ${e.resolution} | símbolo: "${e.symbol}" (hace ${i + 1} ${i === 0 ? "historia" : "historias"})`
+      `- ${e.resolution} | símbolo: "${e.symbol}" | escenario: "${e.setting || "?"}" (hace ${i + 1} ${i === 0 ? "historia" : "historias"})`
   );
 
   return (
     `\n\nMEMORIA ACTIVA — PROHIBIDO REPETIR:\n` +
     lines.join("\n") +
-    `\nElegí un ARQUETIPO DE RESOLUCIÓN diferente a todos los listados arriba y un SÍMBOLO PRINCIPAL que no aparezca en esta lista.`
+    `\nElegí un ARQUETIPO DE RESOLUCIÓN diferente a todos los listados arriba, un SÍMBOLO PRINCIPAL que no aparezca en esta lista, y un ESCENARIO distinto al de las últimas 3 historias.`
   );
 }

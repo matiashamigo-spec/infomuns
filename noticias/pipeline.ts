@@ -139,7 +139,7 @@ ${hopefulContext}
 ${endingContext}
 
 Con este contexto, creá una historia en el universo Muns. El corazón de la historia debe estar presente en el cuento — es lo que hace que esta noticia valga la pena contarse.
-Elegí uno de los ARQUETIPOS DE RESOLUCIÓN (A–H). Indicá en "resolution" la letra y nombre. Indicá en "symbol" el símbolo principal del cuento.${recentPatterns}`;
+Elegí uno de los ARQUETIPOS DE RESOLUCIÓN (A–H). Indicá en "resolution" la letra y nombre. Indicá en "symbol" el símbolo principal del cuento. Indicá en "setting" el escenario principal (ej: "tierra - Barcelona", "luna", "cohete lunar", "lado oscuro de la luna").${recentPatterns}`;
 
   const response = await ai.models.generateContent({
     model: "gemini-2.5-flash",
@@ -155,8 +155,9 @@ Elegí uno de los ARQUETIPOS DE RESOLUCIÓN (A–H). Indicá en "resolution" la 
           story: { type: Type.STRING },
           symbol: { type: Type.STRING },
           resolution: { type: Type.STRING },
+          setting: { type: Type.STRING },
         },
-        required: ["title", "story", "symbol", "resolution"],
+        required: ["title", "story", "symbol", "resolution", "setting"],
       },
     },
   });
@@ -172,6 +173,7 @@ Elegí uno de los ARQUETIPOS DE RESOLUCIÓN (A–H). Indicá en "resolution" la 
     title: result.title,
     symbol: result.symbol || "",
     resolution: result.resolution || "",
+    setting: result.setting || "",
   });
 
   return result;

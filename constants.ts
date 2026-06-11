@@ -118,4 +118,12 @@ PENSAMIENTO CRÍTICO:
 
 UN MOMENTO MÁGICO:
 * Cada cuento tiene al menos una imagen que solo puede existir en el universo Muns. Concreta y visual.
+
+EL TÍTULO (CRÍTICO):
+* El título es lo primero que lee el nene. Tiene que generar curiosidad o sorpresa — no describir lo que pasa.
+* PROHIBIDO: títulos genéricos como "El Sueño de Piedra", "Un Día Especial", "La Gran Aventura", "El Viaje de los Muns".
+* El título puede ser una pregunta, una frase rara, un detalle inesperado, o algo que no se entiende del todo hasta leer el cuento.
+* Ejemplos de títulos BIEN: "El Hombre que No Vio el Final", "Cien Años de Polvo", "El Río que se Quedó Quieto", "Alguien Eligió".
+* Ejemplos de títulos MAL: "El Gran Sueño", "Los Muns y la Torre", "Una Historia de Amor", "El Viaje Especial".
+* Máximo 6 palabras. Sin subtítulos.
 `;
