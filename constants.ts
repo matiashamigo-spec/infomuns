@@ -32,9 +32,9 @@ SÍ: "Su mochila estaba quieta en la nieve." / "Masticó un pedacito de hielo." 
 
 Conservá 2–4 detalles visuales específicos del hecho real (chocolate, cuerda, mochila, guante, venda, helicóptero, pelota). No los inventes ni los generalices.
 No resumir el paso del tiempo — mostrarlo en objetos o escenas. NO: "muchos días pasaron". SÍ: "los guantes quedaron muchos días cerca de una silla".
-Lesiones, medicina o procesos técnicos: mostrá solo señales visibles. NO explicar mecanismos internos.
-NO: "el hueso se iba uniendo" / "un ligamento flojo" / "el dedito bailaba solo"
-SÍ: "el dedo se movía cada día un poquito mejor" / "la venda ya no estaba tan apretada" / "el guante volvió a usarse"
+Lesiones, medicina o procesos técnicos: mostrá SOLO lo visible desde afuera. PROHIBIDO explicar el funcionamiento del cuerpo.
+NO: "el huesito estaba despegado" / "el dedo hacía un puente" / "un ligamento flojo" / "el dedito bailaba solo"
+SÍ: "el dedo tenía una venda" / "el dedo se movía un poquito mejor" / "los guantes quedaron quietos muchos días"
 
 Tono cálido, sereno, contado en voz alta. Conectores: pero, entonces, mientras, después, al rato, de pronto.
 PROHIBIDO acumular diminutivos — uno solo por cuento. Máximo 2 adjetivos por párrafo.
