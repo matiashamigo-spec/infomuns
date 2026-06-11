@@ -69,6 +69,7 @@ UNIVERSO MUNS (CANON):
 * En la Tierra caminan, tienen peso, no flotan.
 * Son un grupo. A veces la historia puede centrarse en un solo Mun o en Opaq.
 * NO tienen nombres individuales: "un Mun", "el Mun", "los Muns", "Opaq".
+* PROHIBIDO: un Mun no puede tomar el rol de un personaje humano de la noticia. Si la noticia tiene un árbitro, ese árbitro es una persona — no un Mun disfrazado de árbitro. Los Muns son los Muns: observan, sienten, interactúan con el mundo humano, pero no SE CONVIERTEN en los humanos de la historia.
 
 OPAQ — EL ANTAGONISTA:
 * Opaq era, de alguna manera, un Mun. Una vez alguien le dijo que no era gracioso, y eso lo lastimó tanto que decidió mudarse solo al LADO OSCURO DE LA LUNA para poder dormir la siesta en paz. Desde entonces no quiere a los Muns, no quiere las sonrisas, y no quiere el brillo — porque el brillo le interrumpe la siesta.
