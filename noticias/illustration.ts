@@ -13,8 +13,10 @@ STYLE — strict:
 - OUTLINES ONLY: shapes are drawn with a single wobbly crayon line — no fill, no shading, no solid blocks of color
 - If there is any color fill, it must be very sparse: a few loose scribble strokes inside the shape, leaving most of the interior white
 - Lines are shaky, uneven, clearly hand-drawn by a small child
-- People: circle head, rectangle body, stick arms and legs — nothing more
-- Faces: two dots for eyes, one curved line for mouth — that's all
+- People/humans: circle head, rectangle body, stick arms and legs — nothing more
+- Faces on humans: two dots for eyes, one curved line for mouth
+- Muns (if present): they are small, perfectly ROUND creatures — like a ball with tiny stick arms and legs. Cute and tender. Their body is one big circle, no separate head. Two dot eyes and a tiny curved smile. White with small grey dots (lunares) scattered on their round body. They look soft, chubby, adorable — like a friendly snowball. NOT humanoid, NOT tall, NOT scary.
+- Opaq (if present): same round shape as Muns but violet/purple colored with darker purple dots. Same cute, chubby, round appearance.
 - Objects: simplest possible outline shape — a house is a square and a triangle, a tree is a circle on a stick
 - Exactly 3 colors: deep blue (#4464AD), sky blue (#9FCFE2), warm beige (#CBBBA0)
 - Each color used sparingly — mostly outlines, almost no fill
@@ -67,12 +69,19 @@ export async function illustrateImage(imageUrl: string, apiKey: string): Promise
   }
 }
 
-async function generateSingleScene(scenePrompt: string, apiKey: string): Promise<string | null> {
+async function generateSingleScene(scenePrompt: string, apiKey: string, refImageBase64?: string, refImageMime?: string): Promise<string | null> {
   try {
+    const parts: any[] = [];
+    if (refImageBase64 && refImageMime) {
+      parts.push({ inlineData: { data: refImageBase64, mimeType: refImageMime } });
+      parts.push({ text: `This is the reference style for the Muns characters. Use this EXACT same drawing style, proportions and cuteness for any Muns or Opaq that appear in the scene.\n\n${scenePrompt}` });
+    } else {
+      parts.push({ text: scenePrompt });
+    }
     const res = await axios.post(
       `${API_BASE}${MODEL}:generateContent?key=${apiKey}`,
       {
-        contents: [{ parts: [{ text: scenePrompt }] }],
+        contents: [{ parts }],
         generationConfig: { responseModalities: ["TEXT", "IMAGE"] },
       },
       { timeout: 60000 }
@@ -87,6 +96,21 @@ async function generateSingleScene(scenePrompt: string, apiKey: string): Promise
     return null;
   } catch (err: any) {
     console.warn("[illustration] Error en escena:", err.message);
+    return null;
+  }
+}
+
+const MUN_REF_URL = "https://muns.club/wp-content/uploads/2026/06/mun-crayon.png";
+const OPAQ_REF_URL = "https://muns.club/wp-content/uploads/2026/06/Opaq-crayon.png";
+
+async function fetchRefImage(url: string): Promise<{ data: string; mime: string } | null> {
+  try {
+    const res = await axios.get(url, { responseType: "arraybuffer", timeout: 10000, headers: { "User-Agent": "Mozilla/5.0" } });
+    return {
+      data: Buffer.from(res.data).toString("base64"),
+      mime: (res.headers["content-type"] || "image/png").split(";")[0],
+    };
+  } catch {
     return null;
   }
 }
@@ -174,6 +198,17 @@ export async function generateIllustrationSet(title: string, story: string, apiK
 
   const descriptions = scenes.length >= 4 ? scenes : fallback;
 
+  // Detectar qué escena tiene personajes (label B) para pasarle la referencia
+  const characterSceneIdx = descriptions.findIndex(d => d.trimStart().startsWith("B)"));
+
+  // Fetchear imagen de referencia UNA SOLA VEZ (solo si hay escena con personajes)
+  let refImage: { data: string; mime: string } | null = null;
+  if (characterSceneIdx !== -1) {
+    const hasOpaq = story.toLowerCase().includes("opaq");
+    refImage = await fetchRefImage(hasOpaq ? OPAQ_REF_URL : MUN_REF_URL);
+    if (refImage) console.log(`[illustration] Referencia cargada para escena ${characterSceneIdx + 1}`);
+  }
+
   const prompts = descriptions.map((scene, i) => `Draw scene ${i + 1} of 4 from this children's story as a crayon drawing by a 4-year-old child.
 
 STORY TITLE: ${title}
@@ -185,7 +220,14 @@ This is ONE of 4 illustrations — it must look visually DIFFERENT from the othe
 
 ${PROMPT}`);
 
-  const results = await Promise.all(prompts.map(p => generateSingleScene(p, apiKey)));
+  const results = await Promise.all(
+    prompts.map((p, i) => {
+      if (i === characterSceneIdx && refImage) {
+        return generateSingleScene(p, apiKey, refImage.data, refImage.mime);
+      }
+      return generateSingleScene(p, apiKey);
+    })
+  );
   const valid = results.filter((r): r is string => r !== null);
   console.log(`[illustration] ${valid.length}/4 escenas generadas para "${title}"`);
   return valid;
