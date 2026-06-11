@@ -18,7 +18,10 @@ RITMO, INTEGRACIÓN Y ESTRUCTURA NARRATIVA (CRÍTICO):
 * Las oraciones se conectan entre sí — cada una surge de la anterior. No son hechos sueltos en lista.
 * Usá conectores narrativos: "pero", "entonces", "de repente", "y sin embargo", "así que", "aunque", "hasta que", "por eso".
 * Usá causa y consecuencia dentro del párrafo: algo pasa → alguien lo siente → hace algo → eso cambia algo.
-* Varía el largo: una oración corta golpea fuerte cuando viene después de una larga.
+* Varía el largo DENTRO DE CADA PÁRRAFO — obligatorio. Un párrafo no puede tener todas las oraciones del mismo largo.
+* Patrón sugerido: oración larga que establece la escena → oración media que la desarrolla → oración corta que remata. Luego variá el patrón.
+* Una oración corta sola tiene fuerza. Pero tres oraciones cortas seguidas matan el ritmo y suenan a telegrama.
+* Nunca más de DOS oraciones cortas consecutivas.
 
 EJEMPLO MAL ESCRITO (telegrama sin integración):
 "Los Muns llegaron. Vieron polvo. Sintieron miedo. Los lunares se pusieron violeta. Un Mun buscó la mano de otro. No sabían qué hacer. El temblor paró. Los Muns se fueron."
