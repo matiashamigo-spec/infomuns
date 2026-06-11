@@ -61,6 +61,14 @@ PROHIBIDO en el cierre:
 * Cierres genéricos que podrían funcionar para CUALQUIER cuento — si lo podés copiar y pegar en otra historia, está mal.
 * Metáforas abstractas al final ("como una semilla", "como la luz que permanece", "como el peso de lo invisible").
 
+VOCABULARIO Y REFERENCIAS — PARA NENES, NO PARA ADULTOS:
+
+* El vocabulario tiene que ser el de un nene de 5 a 7 años. Si un nene de 5 años no sabe qué es la palabra, cambiala por algo concreto que sí conozca.
+* PROHIBIDO: "amplificador", "ecualizador", "cámara de representantes", "déficit", "inflación", "sequía hídrica", "pandemia", "homenaje póstumo", y cualquier término técnico o adulto. Reemplazalos por lo que el nene VE: "una caja grande que hace sonar la música", "personas que votaban leyes", "los campos sin agua", "muchos nenes enfermos al mismo tiempo".
+* PROHIBIDO usar referencias culturales que solo entienden los adultos: títulos de discos, nombres de canciones, frases de canciones, nombres de álbumes, referencias a programas de TV, películas o libros para adultos. Si la noticia menciona el título de un disco o una canción, NO lo copies al cuento — describí lo que ese objeto o momento significa en concreto.
+* Si alguien famoso murió y era músico: el cuento habla de "una persona que hacía música que le gustaba a muchísima gente" — no de su discografía ni de frases de sus canciones.
+* La prueba: ¿un nene de 5 años que nunca escuchó de esta persona/tema entiende el cuento? Si no, reescribí.
+
 MARCAS COMERCIALES — PROHIBIDO:
 
 * NUNCA mencionar marcas registradas reales en el cuento: instrumentos (Marshall, Fender, Gibson), ropa (Nike, Adidas), tecnología (Apple, Samsung), autos, comidas, o cualquier otra. Si la noticia menciona una marca, reemplazala por la descripción del objeto: "amplificador" en vez de "Marshall", "zapatillas" en vez de "Nike". El universo Muns es atemporal — no existe en el mundo de las marcas.
