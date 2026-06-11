@@ -139,7 +139,9 @@ ${hopefulContext}
 ${endingContext}
 
 Con este contexto, creá una historia en el universo Muns. El corazón de la historia debe estar presente en el cuento — es lo que hace que esta noticia valga la pena contarse.
-Elegí uno de los ARQUETIPOS DE RESOLUCIÓN (A–H). Indicá en "resolution" la letra y nombre. Indicá en "symbol" el símbolo principal del cuento. Indicá en "setting" el escenario principal (ej: "tierra - Barcelona", "luna", "cohete lunar", "lado oscuro de la luna").${recentPatterns}`;
+Elegí uno de los ARQUETIPOS DE RESOLUCIÓN (A–H). Indicá en "resolution" la letra y nombre. Indicá en "symbol" el símbolo principal del cuento. Indicá en "setting" el escenario principal (ej: "tierra - Barcelona", "luna", "cohete lunar", "lado oscuro de la luna").
+En "opening_type" describí en 5-8 palabras cómo arranca el cuento (ej: "detalle concreto del lugar", "personaje en acción", "desde la luna con algo inusual").
+En "closing_image" describí en 5-10 palabras la imagen o acción concreta del cierre (ej: "suben al cohete en silencio", "dejan una sonrisa en el piso y se van", "Opaq mira hacia atrás una vez").${recentPatterns}`;
 
   const response = await ai.models.generateContent({
     model: "gemini-2.5-flash",
@@ -156,8 +158,10 @@ Elegí uno de los ARQUETIPOS DE RESOLUCIÓN (A–H). Indicá en "resolution" la 
           symbol: { type: Type.STRING },
           resolution: { type: Type.STRING },
           setting: { type: Type.STRING },
+          opening_type: { type: Type.STRING },
+          closing_image: { type: Type.STRING },
         },
-        required: ["title", "story", "symbol", "resolution", "setting"],
+        required: ["title", "story", "symbol", "resolution", "setting", "opening_type", "closing_image"],
       },
     },
   });
@@ -174,6 +178,8 @@ Elegí uno de los ARQUETIPOS DE RESOLUCIÓN (A–H). Indicá en "resolution" la 
     symbol: result.symbol || "",
     resolution: result.resolution || "",
     setting: result.setting || "",
+    opening_type: result.opening_type || "",
+    closing_image: result.closing_image || "",
   });
 
   return result;
