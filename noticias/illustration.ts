@@ -15,8 +15,6 @@ STYLE — strict:
 - Lines are shaky, uneven, clearly hand-drawn by a small child
 - People/humans: circle head, rectangle body, stick arms and legs — nothing more
 - Faces on humans: two dots for eyes, one simple line for mouth — the mouth shape reflects the emotion of the scene: curved up for happy, curved down for sad, straight for worried or uncertain. Tender, never exaggerated or scary.
-- Muns (if present): they are small, perfectly ROUND creatures — like a ball with tiny stick arms and legs. Cute and tender. Their body is one big circle, no separate head. Two dot eyes and a tiny curved smile. White with small grey dots (lunares) scattered on their round body. They look soft, chubby, adorable — like a friendly snowball. NOT humanoid, NOT tall, NOT scary.
-- Opaq (if present): same round shape as Muns but violet/purple colored with darker purple dots. Same cute, chubby, round appearance.
 - Objects: simplest possible outline shape — a house is a square and a triangle, a tree is a circle on a stick
 - Exactly 3 colors: deep blue (#4464AD), sky blue (#9FCFE2), warm beige (#CBBBA0)
 - Each color used sparingly — mostly outlines, almost no fill
@@ -74,7 +72,7 @@ async function generateSingleScene(scenePrompt: string, apiKey: string, refImage
     const parts: any[] = [];
     if (refImageBase64 && refImageMime) {
       parts.push({ inlineData: { data: refImageBase64, mimeType: refImageMime } });
-      parts.push({ text: `This is the reference style for the Muns characters. Use this EXACT same drawing style, proportions and cuteness for any Muns or Opaq that appear in the scene.\n\n${scenePrompt}` });
+      parts.push({ text: `The image above is the official character design reference. You MUST reproduce this character with EXACTLY the same design: same shape, same proportions, same colors, same style. The ONLY thing that can change is the pose or action the character is doing in the scene. Do not redesign, simplify further, or alter the character in any way.\n\n${scenePrompt}` });
     } else {
       parts.push({ text: scenePrompt });
     }
