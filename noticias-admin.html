@@ -528,16 +528,25 @@ async function regenerateImage(id, btn) {
   const title = card.querySelector('[data-field="title"]').value;
   const content = card.querySelector('[data-field="content"]').value;
   if (!title || !content) { setStatus('Esta noticia no tiene título o contenido', 'error'); return; }
-  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Generando 4 escenas...';
-  setStatus('Generando 4 imágenes desde el cuento, puede tardar 60-90 segundos...');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Generando...';
+  setStatus('Generando nueva imagen desde el cuento, puede tardar 30-60 segundos...');
   try {
     const result = await apiFetch(`/drafts/${id}/regenerate-image`, {
       method: 'POST',
       body: JSON.stringify({ title, content })
     });
-    btn.textContent = '✓ Listas'; btn.disabled = false;
-    setStatus(`4 imágenes generadas y subidas a la biblioteca. Usá 📸 Biblioteca para elegir cuál mostrar.`, 'success');
-    setTimeout(() => { btn.textContent = '🎨 Nueva imagen'; }, 5000);
+    // Actualizar imagen en la card si viene mediaUrl
+    if (result.mediaUrl) {
+      const existing = card.querySelector('.card-image, .card-image-placeholder');
+      if (existing) {
+        const img = document.createElement('img');
+        img.className = 'card-image'; img.src = result.mediaUrl; img.alt = ''; img.loading = 'lazy';
+        existing.replaceWith(img);
+      }
+    }
+    btn.textContent = '✓ Lista'; btn.disabled = false;
+    setStatus('Nueva imagen generada. Cliqueá de nuevo para obtener otra diferente.', 'success');
+    setTimeout(() => { btn.textContent = '🎨 Nueva imagen'; }, 4000);
   } catch (err) {
     btn.textContent = '🎨 Nueva imagen'; btn.disabled = false;
     setStatus('Error generando imagen: ' + err.message, 'error');

@@ -5,7 +5,7 @@ import { Router, Request, Response } from "express";
 import axios from "axios";
 import * as cheerio from "cheerio";
 import { runDailyPipeline, processSingleUrl } from "./pipeline.js";
-import { illustrateImage, generateIllustrationSet } from "./illustration.js";
+import { illustrateImage, generateIllustrationSet, generateSingleIllustration } from "./illustration.js";
 import { listDrafts, listPublished, updatePost, publishPostById, unpublishPost, deletePost, uploadMedia, setFeaturedPost, createDraft, listMedia } from "./wordpress.js";
 
 export function createNoticiasRouter(): Router {
@@ -117,7 +117,7 @@ export function createNoticiasRouter(): Router {
     }
   });
 
-  // POST /api/noticias/drafts/:id/regenerate-image — regenera 4 imágenes desde el cuento
+  // POST /api/noticias/drafts/:id/regenerate-image — genera 1 imagen nueva desde el cuento
   router.post("/drafts/:id/regenerate-image", requireAdmin, async (req: Request, res: Response) => {
     const id = parseInt(req.params.id as string);
     const { title, content } = req.body;
@@ -127,21 +127,16 @@ export function createNoticiasRouter(): Router {
 
       if (!title || !content) return res.status(400).json({ error: "Se requieren title y content del post" });
 
-      console.log(`[noticias] Regenerando 4 escenas desde cuento para post ${id}`);
-      const scenes = await generateIllustrationSet(title, content, apiKey);
-      if (!scenes.length) return res.status(500).json({ error: "Gemini no generó imágenes" });
+      console.log(`[noticias] Generando nueva imagen desde cuento para post ${id}`);
+      const image = await generateSingleIllustration(title, content, apiKey);
+      if (!image) return res.status(500).json({ error: "Gemini no generó imagen" });
 
-      const mediaIds: number[] = [];
-      for (let i = 0; i < scenes.length; i++) {
-        const slug = "img-" + (title || `post-${id}`).toLowerCase().replace(/[^a-z0-9]+/g, "-").substring(0, 30) + `-${i + 1}`;
-        const media = await uploadMedia(scenes[i], slug);
-        if (media) mediaIds.push(media.id);
-      }
+      const slug = "img-" + (title || `post-${id}`).toLowerCase().replace(/[^a-z0-9]+/g, "-").substring(0, 36) + `-regen`;
+      const media = await uploadMedia(image, slug);
+      if (!media) return res.status(500).json({ error: "No se pudo subir la imagen a WordPress" });
 
-      if (!mediaIds.length) return res.status(500).json({ error: "No se pudieron subir las imágenes a WordPress" });
-
-      await updatePost(id, { featuredMediaId: mediaIds[0] });
-      res.json({ ok: true, mediaIds, mediaUrl: null });
+      await updatePost(id, { featuredMediaId: media.id });
+      res.json({ ok: true, mediaId: media.id, mediaUrl: media.url });
     } catch (err: any) {
       res.status(500).json({ error: err.message });
     }

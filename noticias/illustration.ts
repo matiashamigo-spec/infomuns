@@ -1,4 +1,5 @@
 import axios from "axios";
+import { GoogleGenAI } from "@google/genai";
 
 const MODEL = "gemini-2.5-flash-image";
 const API_BASE = "https://generativelanguage.googleapis.com/v1beta/models/";
@@ -107,28 +108,69 @@ ${PROMPT}`;
   return result;
 }
 
-export async function generateIllustrationSet(title: string, story: string, apiKey: string): Promise<string[]> {
-  console.log(`[illustration] Generando 4 escenas para: "${title}"`);
+async function extractSceneDescriptions(title: string, story: string, apiKey: string): Promise<string[]> {
+  try {
+    const ai = new GoogleGenAI({ apiKey });
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: `Read this children's story and identify 4 visually distinct moments to illustrate as crayon drawings.
 
-  const storySummary = story.substring(0, 600);
-  const sceneDescriptions = [
-    `SCENE 1 — THE PLACE: Draw only the setting where the story happens. No characters. Just the location — a landscape, a building, a river, a street. One or two simple outline shapes maximum. Empty and sparse.`,
-    `SCENE 2 — THE CHARACTER(S): Draw only the Muns or main figure(s) in this story. No background, no setting. Just the character(s) standing or doing something simple. Stick figures with big round heads.`,
-    `SCENE 3 — THE KEY OBJECT: Draw only the one most important object from the story — the bolso, a broken thing, an animal, a door, whatever matters most. Just that object, centered, alone on white paper.`,
-    `SCENE 4 — THE ENDING MOMENT: Draw the final moment of the story — what the scene looks like when it ends. Could be a character leaving, something left behind, or an empty place. One simple image.`,
+STORY TITLE: ${title}
+STORY: ${story.substring(0, 800)}
+
+Return exactly 4 scene descriptions. Each must be visually and compositionally DIFFERENT from the others:
+- Scene 1: a wide establishing shot of the main location (no characters, just the place)
+- Scene 2: the key character(s) doing the most important action in the story
+- Scene 3: the single most important object in the story, alone, centered
+- Scene 4: the final moment — what's left when the story ends
+
+For each scene write ONE specific sentence: what is drawn, who or what is there, what are they doing. Be specific to THIS story — not generic descriptions.`,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: "object" as any,
+          properties: {
+            scenes: { type: "array" as any, items: { type: "string" as any } }
+          },
+          required: ["scenes"]
+        }
+      }
+    });
+    const text = response.text;
+    if (!text) return [];
+    const parsed = JSON.parse(text);
+    return Array.isArray(parsed.scenes) ? parsed.scenes.slice(0, 4) : [];
+  } catch (err: any) {
+    console.warn("[illustration] Error extrayendo escenas:", err.message);
+    return [];
+  }
+}
+
+export async function generateIllustrationSet(title: string, story: string, apiKey: string): Promise<string[]> {
+  console.log(`[illustration] Extrayendo 4 escenas específicas para: "${title}"`);
+
+  const scenes = await extractSceneDescriptions(title, story, apiKey);
+  if (scenes.length === 0) {
+    console.warn("[illustration] No se pudieron extraer escenas, usando descripciones genéricas");
+  }
+
+  const fallback = [
+    "Wide shot of the main location where the story happens — no characters, just the place.",
+    "The main character(s) doing the most important action in the story.",
+    "The single most important object from the story, alone and centered.",
+    "The final moment of the story — what remains when it ends.",
   ];
 
-  const prompts = sceneDescriptions.map((scene, i) => `Draw scene ${i + 1} of 4 from this children's story as a crayon drawing by a 4-year-old child.
+  const descriptions = scenes.length >= 4 ? scenes : fallback;
+
+  const prompts = descriptions.map((scene, i) => `Draw scene ${i + 1} of 4 from this children's story as a crayon drawing by a 4-year-old child.
 
 STORY TITLE: ${title}
 
-STORY SUMMARY:
-${storySummary}
-
-SCENE TO DRAW (scene ${i + 1} of 4):
+SCENE TO DRAW — be very specific to this description, do not mix with other scenes:
 ${scene}
 
-The drawing must illustrate THIS SPECIFIC MOMENT from the story above. Do not use any news photo as reference — draw from the story.
+This scene must look DIFFERENT from any other illustration of this story. Focus only on what this scene describes.
 
 ${PROMPT}`);
 
@@ -136,4 +178,25 @@ ${PROMPT}`);
   const valid = results.filter((r): r is string => r !== null);
   console.log(`[illustration] ${valid.length}/4 escenas generadas para "${title}"`);
   return valid;
+}
+
+export async function generateSingleIllustration(title: string, story: string, apiKey: string, exclude: number[] = []): Promise<string | null> {
+  console.log(`[illustration] Generando 1 escena nueva para: "${title}"`);
+  const scenes = await extractSceneDescriptions(title, story, apiKey);
+  if (scenes.length === 0) return null;
+
+  // Elegir una escena que no esté en los índices excluidos
+  const available = scenes.map((_, i) => i).filter(i => !exclude.includes(i));
+  const idx = available.length > 0
+    ? available[Math.floor(Math.random() * available.length)]
+    : Math.floor(Math.random() * scenes.length);
+
+  const prompt = `Draw this specific scene from a children's story as a crayon drawing by a 4-year-old child.
+
+STORY TITLE: ${title}
+SCENE TO DRAW: ${scenes[idx]}
+
+${PROMPT}`;
+
+  return generateSingleScene(prompt, apiKey);
 }
