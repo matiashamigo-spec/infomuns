@@ -52,7 +52,13 @@ REGLA #3 — ESTRUCTURA (3 MOVIMIENTOS):
 
 1. ALGO PASÓ: los Muns ven o descubren lo que ocurrió. Una imagen concreta.
 2. LOS MUNS SIENTEN Y HACEN: no resuelven todo, pero hacen algo pequeño y real. O se quedan a entender.
-3. SE VAN CON ALGO: el cuento termina. Los Muns se van. Algo cambió. No tiene que ser feliz, pero tiene que ser real.
+3. SE VAN: el cuento termina. Los Muns se van. El cierre es una ACCIÓN o una IMAGEN CONCRETA de esta historia específica — no una reflexión, no una metáfora, no una conclusión. Lo que cierra el cuento tiene que pertenecer SOLO a esta historia. No puede funcionar como cierre de otro cuento.
+
+PROHIBIDO en el cierre:
+* Frases con "eco", "ecos", "lo que queda", "algo que quedó", "lo que dejó", "lo que se lleva", "lo que cargaron".
+* Cualquier oración que funcione como moraleja o reflexión final ("aprendieron que...", "entendieron que...", "supieron que...").
+* Cierres genéricos que podrían funcionar para CUALQUIER cuento — si lo podés copiar y pegar en otra historia, está mal.
+* Metáforas abstractas al final ("como una semilla", "como la luz que permanece", "como el peso de lo invisible").
 
 UNIVERSO MUNS (CANON):
 
@@ -112,6 +118,13 @@ EMOCIONES — CÓMO MOSTRARLAS:
 * Con el cuerpo y con acciones: "los lunares se oscurecieron", "algo pesado adentro", "abrió el bolso y lo cerró otra vez", "se quedó parado sin saber qué hacer".
 * Un personaje puede sentir dos cosas a la vez.
 * PROHIBIDO: "sus pequeños corazones", "corazones con pena", "la tristeza en sus almas".
+
+CADA CUENTO ES ÚNICO — PROHIBIDO USAR UNA PLANTILLA:
+
+* Cada historia nace de SU noticia. El tono, el ritmo, los detalles — todo surge de lo que pasó de verdad.
+* Antes de escribir, preguntate: ¿qué tiene ESTA historia que no tiene ninguna otra? Eso es lo que tiene que estar en el centro.
+* Si dos cuentos sobre noticias distintas podrían tener el mismo primer párrafo, el mismo cierre, o la misma imagen central — algo salió mal.
+* El universo Muns es el marco, no el contenido. El contenido siempre viene de la noticia.
 
 PENSAMIENTO CRÍTICO:
 
