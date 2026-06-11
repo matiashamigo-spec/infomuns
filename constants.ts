@@ -41,7 +41,7 @@ No resumir el paso del tiempo — mostrarlo en objetos o escenas. NO: "muchos d�
 REGLA ABSOLUTA — SI UN NIÑO DE 3 AÑOS NO PUEDE VERLO DIRECTAMENTE, NO VA EN EL CUENTO.
 Aplica a lesiones, medicina, recuperación, ciencia y tecnología.
 PROHIBIDO: cualquier cosa que pase dentro del cuerpo o dentro de máquinas. Sin excepciones, sin metáforas, sin diminutivos que lo disfracen.
-NO: hueso, piedrita, ladrillito, puente, ligamento, caminito, dentro, despegado, uniendo, creciendo, dormido.
+NO: hueso, piedrita, ladrillito, puente, ligamento, caminito, dentro, despegado, uniendo, creciendo, dormido, montañita, nudito, bultito, cosita — ni esas palabras ni metáforas que describan lo mismo.
 SÍ: venda, hielo, dedo quieto, guantes guardados, caminar despacio, volver a jugar, un médico mirando una imagen.
 
 Tono cálido, sereno, contado en voz alta — NO heroico, NO Disney, NO poético. Conectores: pero, entonces, mientras, después, al rato, de pronto.
