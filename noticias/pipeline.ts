@@ -139,7 +139,7 @@ async function generateMunsStory(newsText: string, apiKey: string): Promise<{ ti
 
   const contents = `NOTICIA ORIGINAL (leé todo — los detalles concretos, objetos, lugares y nombres están acá):
 ---
-${newsText.substring(0, 3000)}
+${newsText.substring(0, 5000)}
 ---
 
 ANÁLISIS (usalo como guía, no como reemplazo del texto original):
