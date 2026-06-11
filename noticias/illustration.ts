@@ -1,38 +1,6 @@
 import axios from "axios";
 import { GoogleGenAI } from "@google/genai";
 
-const MUN_REF_URL = "https://muns.club/wp-content/uploads/2026/06/mun-crayon.png";
-const MUN_VIOLETA_REF_URL = "https://muns.club/wp-content/uploads/2026/06/mun-violeta-crayon.png";
-const OPAQ_REF_URL = "https://muns.club/wp-content/uploads/2026/06/Opaq-crayon.png";
-
-// Cache de imágenes de referencia en base64
-const refCache: Record<string, string> = {};
-
-async function fetchRefBase64(url: string): Promise<string | null> {
-  if (refCache[url]) return refCache[url];
-  try {
-    const res = await axios.get(url, { responseType: "arraybuffer", timeout: 10000 });
-    const b64 = Buffer.from(res.data).toString("base64");
-    refCache[url] = b64;
-    return b64;
-  } catch {
-    return null;
-  }
-}
-
-// Detecta qué personajes aparecen en el cuento y devuelve la URL de referencia correcta
-function detectCharacterRef(story: string): { url: string; label: string } | null {
-  const s = story.toLowerCase();
-  const hasMuns = /\blos muns\b|\bun mun\b|\bel mun\b|\blos muns\b/.test(s);
-  const hasOpaq = /\bopaq\b/.test(s);
-  const hasVioleta = /violeta/.test(s);
-
-  if (hasOpaq && !hasMuns) return { url: OPAQ_REF_URL, label: "Opaq" };
-  if (hasMuns && hasVioleta) return { url: MUN_VIOLETA_REF_URL, label: "a Mun with violet spots" };
-  if (hasMuns) return { url: MUN_REF_URL, label: "a Mun" };
-  return null;
-}
-
 const MODEL = "gemini-2.5-flash-image";
 const API_BASE = "https://generativelanguage.googleapis.com/v1beta/models/";
 
@@ -97,19 +65,12 @@ export async function illustrateImage(imageUrl: string, apiKey: string): Promise
   }
 }
 
-async function generateSingleScene(scenePrompt: string, apiKey: string, refImageBase64?: string): Promise<string | null> {
+async function generateSingleScene(scenePrompt: string, apiKey: string): Promise<string | null> {
   try {
-    const parts: any[] = [];
-    if (refImageBase64) {
-      parts.push({ inlineData: { data: refImageBase64, mimeType: "image/png" } });
-      parts.push({ text: "Use the character in the reference image above as the exact visual model. Keep its design identical — same shape, same colors, same spots. Only change its pose or action as described below. Do not add or remove any features.\n\n" + scenePrompt });
-    } else {
-      parts.push({ text: scenePrompt });
-    }
     const res = await axios.post(
       `${API_BASE}${MODEL}:generateContent?key=${apiKey}`,
       {
-        contents: [{ parts }],
+        contents: [{ parts: [{ text: scenePrompt }] }],
         generationConfig: { responseModalities: ["TEXT", "IMAGE"] },
       },
       { timeout: 60000 }
@@ -202,14 +163,6 @@ export async function generateIllustrationSet(title: string, story: string, apiK
 
   const descriptions = scenes.length >= 4 ? scenes : fallback;
 
-  // Detectar personaje y precargar referencia
-  const charRef = detectCharacterRef(story);
-  let refBase64: string | null = null;
-  if (charRef) {
-    refBase64 = await fetchRefBase64(charRef.url);
-    console.log(`[illustration] Referencia de personaje: ${charRef.label}`);
-  }
-
   const prompts = descriptions.map((scene, i) => `Draw scene ${i + 1} of 4 from this children's story as a crayon drawing by a 4-year-old child.
 
 STORY TITLE: ${title}
@@ -221,13 +174,7 @@ This scene must look DIFFERENT from any other illustration of this story. Focus 
 
 ${PROMPT}`);
 
-  const results = await Promise.all(
-    prompts.map((p, i) => {
-      // Escenas 1 y 3 son lugar/objeto — sin personaje. Escenas 2 y 4 llevan referencia si hay personaje
-      const useRef = refBase64 && (i === 1 || i === 3);
-      return generateSingleScene(p, apiKey, useRef ? refBase64! : undefined);
-    })
-  );
+  const results = await Promise.all(prompts.map(p => generateSingleScene(p, apiKey)));
   const valid = results.filter((r): r is string => r !== null);
   console.log(`[illustration] ${valid.length}/4 escenas generadas para "${title}"`);
   return valid;
@@ -238,14 +185,11 @@ export async function generateSingleIllustration(title: string, story: string, a
   const scenes = await extractSceneDescriptions(title, story, apiKey);
   if (scenes.length === 0) return null;
 
+  // Elegir una escena que no esté en los índices excluidos
   const available = scenes.map((_, i) => i).filter(i => !exclude.includes(i));
   const idx = available.length > 0
     ? available[Math.floor(Math.random() * available.length)]
     : Math.floor(Math.random() * scenes.length);
-
-  const charRef = detectCharacterRef(story);
-  let refBase64: string | null = null;
-  if (charRef) refBase64 = await fetchRefBase64(charRef.url);
 
   const prompt = `Draw this specific scene from a children's story as a crayon drawing by a 4-year-old child.
 
@@ -254,5 +198,5 @@ SCENE TO DRAW: ${scenes[idx]}
 
 ${PROMPT}`;
 
-  return generateSingleScene(prompt, apiKey, refBase64 || undefined);
+  return generateSingleScene(prompt, apiKey);
 }
