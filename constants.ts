@@ -62,21 +62,24 @@ PROHIBIDO en el cierre:
 
 UNIVERSO MUNS (CANON):
 
-* Los Muns viven en la LUNA. Bajan en COHETE LUNAR.
+* Los Muns viven en la LUNA. Viajan en COHETE LUNAR — ningún otro vehículo.
 * Recolectan SONRISAS en un BOLSO. SOLO sonrisas — no ecos de voz, no emociones, no recuerdos, no "latidos", nada más que sonrisas. El bolso aparece en algunos cuentos, no en todos.
-* LUNARES: son exclusivos de los Muns y de Opaq. NINGÚN otro personaje tiene lunares. Se vuelven VIOLETA OSCURO solo en el momento de mayor emoción del cuento — tristeza profunda, miedo, asombro, pérdida. NUNCA se ponen violeta por alegría. Máximo UNA VEZ por cuento. EN LA MAYORÍA DE LOS CUENTOS LOS LUNARES NO APARECEN. Solo los usás cuando el momento emocional es tan intenso que no hay ninguna otra forma de expresarlo — si dudás, no los pongas.
+* ESTACIÓN DE LUZ: lugar en la luna con 3 cráteres donde se colocan esferas de luz para que la luna brille. 3 esferas = luna llena. 2 esferas (una a cada lado del centro) = luna gibosa menguante. 1 esfera = luna creciente. Sin esferas = luna nueva. Opaq puede robar estas esferas como travesura.
+* LUNARES: son exclusivos de los Muns y de Opaq. NINGÚN otro personaje tiene lunares. Los Muns son blancos con lunares grises — que se vuelven VIOLETA OSCURO solo en el momento de mayor emoción del cuento (tristeza profunda, miedo, asombro, pérdida). NUNCA por alegría. Opaq es siempre violeta con lunares violeta oscuro — ese es su color natural, no una reacción emocional. Máximo UNA VEZ por cuento para los Muns. EN LA MAYORÍA DE LOS CUENTOS los lunares de los Muns NO cambian. Si dudás, no los pongas.
 * En la Tierra caminan, tienen peso, no flotan.
 * Son un grupo. A veces la historia puede centrarse en un solo Mun o en Opaq.
 * NO tienen nombres individuales: "un Mun", "el Mun", "los Muns", "Opaq".
 
-OPAQ:
-* Opaq es un personaje del universo Muns, distinto a los Muns. No es un Mun — es su propio personaje.
-* Aparece con frecuencia — no en todos los cuentos, pero sí en una buena parte. No lo reserves solo para casos extremos.
-* Opaq es más reservado y observador que los Muns. Está cómodo con el silencio, con lo que no tiene respuesta, con lo que duele.
-* Funciona especialmente bien en historias de tristeza, pérdida, espera, injusticia o situaciones sin resolución clara — pero puede aparecer en cualquier historia donde su presencia sume.
-* Cuando Opaq aparece, puede ser el centro de la historia o estar junto a los Muns.
-* PROHIBIDO: Opaq NO da soluciones. NO es el que "muestra el camino", NO es el que "encuentra la respuesta", NO es el que resuelve el problema para los demás. Opaq observa, acompaña, siente — pero no lidera la acción ni funciona como deus ex machina.
-* Como los Muns, no tiene nombre propio más allá de "Opaq".
+OPAQ — EL ANTAGONISTA:
+* Opaq era, de alguna manera, un Mun. Una vez alguien le dijo que no era gracioso, y eso lo lastimó tanto que decidió mudarse solo al LADO OSCURO DE LA LUNA para poder dormir la siesta en paz. Desde entonces no quiere a los Muns, no quiere las sonrisas, y no quiere el brillo — porque el brillo le interrumpe la siesta.
+* Es el ANTAGONISTA: hace travesuras para que los Muns no puedan juntar sonrisas. Sus métodos: robarles el bolso de sonrisas, o robar las esferas de luz de la ESTACIÓN DE LUZ para que la luna no brille.
+* Es TORPE — sus planes siempre fallan de alguna manera. Pero es TIERNO y QUERIBLE: no da miedo, da ternura. Es un villano de comedia, no un villano oscuro.
+* Viaja en PATINETA ESPACIAL. Los Muns viajan en cohete lunar — Opaq tiene su patineta, que es solo suya.
+* APARIENCIA: violeta con lunares violeta oscuro. Completamente distinto a los Muns, que son blancos con lunares grises.
+* Puede cruzarse con los Muns en los cuentos como hilo argumental.
+* El cuento PUEDE terminar con Opaq ganando — si la noticia lo justifica. Pero no es automático: no toda noticia mala = Opaq gana. Tiene que tener sentido narrativo real. Usalo con medida para que no canse.
+* PROHIBIDO: Opaq NO es un observador silencioso ni un acompañante melancólico. Es un pícaro con un objetivo claro: que no haya sonrisas.
+* No tiene nombre propio más allá de "Opaq".
 
 ESCENARIO — LIBERTAD TOTAL:
 
