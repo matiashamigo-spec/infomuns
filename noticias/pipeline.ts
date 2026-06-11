@@ -58,6 +58,7 @@ Reply with only one of these three words, nothing else.`,
 
 interface NewsAnalysis {
   what: string;
+  heart: string;
   human_choice: "daño" | "bien" | "ninguna" | "político";
   core_emotion: string;
   has_resolution: boolean;
@@ -74,6 +75,7 @@ Noticia: "${newsText.substring(0, 2000)}"
 
 Respondé:
 - what: qué pasó en UNA oración simple (para un adulto que va a escribir un cuento para niños)
+- heart: el dato más sorprendente, emotivo o humano de esta noticia — el que, si lo sacás, la historia pierde su razón de ser. Una oración. Ej: "El arquitecto murió atropellado como un indigente 100 años antes de que su obra se terminara." Si la noticia no tiene un dato así, describí la tensión emocional central.
 - human_choice: ¿cuál es la naturaleza del hecho? "daño" solo si hay una acción claramente dañina y no debatible (violencia, abuso, crimen). "bien" solo si hay un gesto claramente positivo y no debatible (rescate, donación, cuidado). "político" si involucra gobiernos, partidos, políticas públicas, movimientos sociales o cualquier tema donde distintas personas pueden tener opiniones legítimas distintas. "ninguna" si fue natural, accidental o estructural sin actor claro.
 - core_emotion: cuál es la emoción principal que un nene de 5 años sentiría al escuchar esto (una sola palabra: tristeza, bronca, miedo, alegría, orgullo, confusión, ternura, alivio)
 - has_resolution: true si el hecho ya tiene un final definitivo, false si la situación sigue abierta
@@ -85,12 +87,13 @@ Respondé:
         type: Type.OBJECT,
         properties: {
           what: { type: Type.STRING },
+          heart: { type: Type.STRING },
           human_choice: { type: Type.STRING },
           core_emotion: { type: Type.STRING },
           has_resolution: { type: Type.BOOLEAN },
           hopeful_actor: { type: Type.STRING },
         },
-        required: ["what", "human_choice", "core_emotion", "has_resolution", "hopeful_actor"],
+        required: ["what", "heart", "human_choice", "core_emotion", "has_resolution", "hopeful_actor"],
       },
     },
   });
@@ -129,12 +132,13 @@ async function generateMunsStory(newsText: string, apiKey: string): Promise<{ ti
     : `FINAL ABIERTO: la situación sigue sin resolverse. El cuento puede terminar con algo pendiente.`;
 
   const contents = `Lo que pasó: ${analysis.what}
+EL CORAZÓN DE ESTA HISTORIA (OBLIGATORIO — no podés ignorar esto): ${analysis.heart}
 Emoción central para un nene de 5 años: ${analysis.core_emotion}
 ${choiceContext}
 ${hopefulContext}
 ${endingContext}
 
-Con este contexto, creá una historia simbólica para niños en el universo Muns.
+Con este contexto, creá una historia en el universo Muns. El corazón de la historia debe estar presente en el cuento — es lo que hace que esta noticia valga la pena contarse.
 Elegí uno de los ARQUETIPOS DE RESOLUCIÓN (A–H). Indicá en "resolution" la letra y nombre. Indicá en "symbol" el símbolo principal del cuento.${recentPatterns}`;
 
   const response = await ai.models.generateContent({
