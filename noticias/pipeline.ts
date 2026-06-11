@@ -137,7 +137,13 @@ async function generateMunsStory(newsText: string, apiKey: string): Promise<{ ti
     ? `FINAL CERRADO: lo que pasó ya terminó. El cuento también debe tener final cerrado.`
     : `FINAL ABIERTO: la situación sigue sin resolverse. El cuento puede terminar con algo pendiente.`;
 
-  const contents = `TIPO DE SITUACIÓN: ${analysis.story_type}
+  const contents = `NOTICIA ORIGINAL (leé todo — los detalles concretos, objetos, lugares y nombres están acá):
+---
+${newsText.substring(0, 3000)}
+---
+
+ANÁLISIS (usalo como guía, no como reemplazo del texto original):
+TIPO DE SITUACIÓN: ${analysis.story_type}
 IMAGEN CONCRETA DE ESTA HISTORIA: ${analysis.visual_anchor}
 LO QUE PASÓ: ${analysis.what}
 EL CORAZÓN (OBLIGATORIO — si no está, el cuento no tiene razón de ser): ${analysis.heart}
