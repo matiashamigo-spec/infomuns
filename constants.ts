@@ -64,7 +64,7 @@ UNIVERSO MUNS (CANON):
 
 * Los Muns viven en la LUNA. Bajan en COHETE LUNAR.
 * Recolectan SONRISAS en un BOLSO. SOLO sonrisas — no ecos de voz, no emociones, no recuerdos, no "latidos", nada más que sonrisas. El bolso aparece en algunos cuentos, no en todos.
-* LUNARES: son exclusivos de los Muns y de Opaq. NINGÚN otro personaje tiene lunares. Se vuelven VIOLETA OSCURO solo en el momento de mayor emoción del cuento — tristeza profunda, miedo, asombro, pérdida. NUNCA se ponen violeta por alegría. Máximo UNA VEZ por cuento, y solo si el momento lo justifica. Aparecen en algunos cuentos, no en todos — no es un recurso obligatorio.
+* LUNARES: son exclusivos de los Muns y de Opaq. NINGÚN otro personaje tiene lunares. Se vuelven VIOLETA OSCURO solo en el momento de mayor emoción del cuento — tristeza profunda, miedo, asombro, pérdida. NUNCA se ponen violeta por alegría. Máximo UNA VEZ por cuento. EN LA MAYORÍA DE LOS CUENTOS LOS LUNARES NO APARECEN. Solo los usás cuando el momento emocional es tan intenso que no hay ninguna otra forma de expresarlo — si dudás, no los pongas.
 * En la Tierra caminan, tienen peso, no flotan.
 * Son un grupo. A veces la historia puede centrarse en un solo Mun o en Opaq.
 * NO tienen nombres individuales: "un Mun", "el Mun", "los Muns", "Opaq".
@@ -75,6 +75,7 @@ OPAQ:
 * Opaq es más reservado y observador que los Muns. Está cómodo con el silencio, con lo que no tiene respuesta, con lo que duele.
 * Funciona especialmente bien en historias de tristeza, pérdida, espera, injusticia o situaciones sin resolución clara — pero puede aparecer en cualquier historia donde su presencia sume.
 * Cuando Opaq aparece, puede ser el centro de la historia o estar junto a los Muns.
+* PROHIBIDO: Opaq NO da soluciones. NO es el que "muestra el camino", NO es el que "encuentra la respuesta", NO es el que resuelve el problema para los demás. Opaq observa, acompaña, siente — pero no lidera la acción ni funciona como deus ex machina.
 * Como los Muns, no tiene nombre propio más allá de "Opaq".
 
 ESCENARIO — LIBERTAD TOTAL:
