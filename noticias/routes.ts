@@ -5,7 +5,7 @@ import { Router, Request, Response } from "express";
 import axios from "axios";
 import * as cheerio from "cheerio";
 import { runDailyPipeline, processSingleUrl } from "./pipeline.js";
-import { illustrateImage } from "./illustration.js";
+import { illustrateImage, generateIllustrationSet } from "./illustration.js";
 import { listDrafts, listPublished, updatePost, publishPostById, unpublishPost, deletePost, uploadMedia, setFeaturedPost, createDraft, listMedia } from "./wordpress.js";
 
 export function createNoticiasRouter(): Router {
@@ -117,47 +117,31 @@ export function createNoticiasRouter(): Router {
     }
   });
 
-  // POST /api/noticias/drafts/:id/regenerate-image — regenera la imagen ilustrada
+  // POST /api/noticias/drafts/:id/regenerate-image — regenera 4 imágenes desde el cuento
   router.post("/drafts/:id/regenerate-image", requireAdmin, async (req: Request, res: Response) => {
     const id = parseInt(req.params.id as string);
-    const { title, imageUrl: providedImageUrl, articleUrl: providedArticleUrl } = req.body;
+    const { title, content } = req.body;
     try {
       const apiKey = process.env.GEMINI_API_KEY;
       if (!apiKey) return res.status(500).json({ error: "GEMINI_API_KEY no configurada" });
 
-      let imageUrl = providedImageUrl;
+      if (!title || !content) return res.status(400).json({ error: "Se requieren title y content del post" });
 
-      // Si no hay imageUrl directa, scrapear og:image del artículo fuente
-      if (!imageUrl && providedArticleUrl) {
-        const articleUrl = providedArticleUrl;
-        if (articleUrl) {
-          console.log(`[noticias] Scrapeando og:image de: ${articleUrl}`);
-          try {
-            const page = await axios.get(articleUrl, { timeout: 10000, headers: { "User-Agent": "Mozilla/5.0" } });
-            const $ = cheerio.load(page.data);
-            imageUrl = $('meta[property="og:image"]').attr("content")
-              || $('meta[name="twitter:image"]').attr("content")
-              || $('article img').first().attr("src")
-              || null;
-            console.log(`[noticias] og:image encontrada: ${imageUrl}`);
-          } catch (e: any) {
-            console.warn(`[noticias] Error scrapeando: ${e.message}`);
-          }
-        }
+      console.log(`[noticias] Regenerando 4 escenas desde cuento para post ${id}`);
+      const scenes = await generateIllustrationSet(title, content, apiKey);
+      if (!scenes.length) return res.status(500).json({ error: "Gemini no generó imágenes" });
+
+      const mediaIds: number[] = [];
+      for (let i = 0; i < scenes.length; i++) {
+        const slug = "img-" + (title || `post-${id}`).toLowerCase().replace(/[^a-z0-9]+/g, "-").substring(0, 30) + `-${i + 1}`;
+        const media = await uploadMedia(scenes[i], slug);
+        if (media) mediaIds.push(media.id);
       }
 
-      if (!imageUrl) return res.status(400).json({ error: "No se encontró foto para esta noticia" });
+      if (!mediaIds.length) return res.status(500).json({ error: "No se pudieron subir las imágenes a WordPress" });
 
-      console.log(`[noticias] Regenerando imagen para post ${id} desde ${imageUrl}`);
-      const illustrated = await illustrateImage(imageUrl, apiKey);
-      if (!illustrated) return res.status(500).json({ error: "Gemini no generó imagen" });
-
-      const slug = "img-" + (title || `post-${id}`).toLowerCase().replace(/[^a-z0-9]+/g, "-").substring(0, 36);
-      const media = await uploadMedia(illustrated, slug);
-      if (!media) return res.status(500).json({ error: "No se pudo subir la imagen a WordPress" });
-
-      await updatePost(id, { featuredMediaId: media.id });
-      res.json({ ok: true, mediaUrl: media.url });
+      await updatePost(id, { featuredMediaId: mediaIds[0] });
+      res.json({ ok: true, mediaIds, mediaUrl: null });
     } catch (err: any) {
       res.status(500).json({ error: err.message });
     }

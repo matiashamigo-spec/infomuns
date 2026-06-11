@@ -527,37 +527,17 @@ async function regenerateImage(id, btn) {
   const card = btn.closest('.draft-card');
   const title = card.querySelector('[data-field="title"]').value;
   const content = card.querySelector('[data-field="content"]').value;
-  // 1. Intentar source-image guardado
-  let imageUrl = (content.match(/<!--\s*source-image:\s*(\S+)\s*-->/) || [])[1] || null;
-  // 2. Si no hay, extraer el link del artículo fuente — formato: "Fuente original (SRC): https://..."
-  let articleUrl = null;
-  if (!imageUrl) {
-    articleUrl = (content.match(/Fuente original[^:]*:\s*(https?:\/\/\S+)/) || [])[1] || null;
-  }
-  if (!imageUrl && !articleUrl) {
-    setStatus('Esta noticia no tiene foto original guardada', 'error');
-    return;
-  }
-  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Generando...';
-  setStatus('Generando nueva imagen, puede tardar 30-60 segundos...');
+  if (!title || !content) { setStatus('Esta noticia no tiene título o contenido', 'error'); return; }
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Generando 4 escenas...';
+  setStatus('Generando 4 imágenes desde el cuento, puede tardar 60-90 segundos...');
   try {
     const result = await apiFetch(`/drafts/${id}/regenerate-image`, {
       method: 'POST',
-      body: JSON.stringify({ title, imageUrl, articleUrl })
+      body: JSON.stringify({ title, content })
     });
-    // Reemplazar imagen en la card
-    const existing = card.querySelector('.card-image, .card-image-placeholder');
-    if (existing && result.mediaUrl) {
-      const img = document.createElement('img');
-      img.className = 'card-image';
-      img.src = result.mediaUrl;
-      img.alt = '';
-      img.loading = 'lazy';
-      existing.replaceWith(img);
-    }
-    btn.textContent = '✓ Lista'; btn.disabled = false;
-    setStatus('Nueva imagen generada correctamente', 'success');
-    setTimeout(() => { btn.textContent = '🎨 Nueva imagen'; }, 3000);
+    btn.textContent = '✓ Listas'; btn.disabled = false;
+    setStatus(`4 imágenes generadas y subidas a la biblioteca. Usá 📸 Biblioteca para elegir cuál mostrar.`, 'success');
+    setTimeout(() => { btn.textContent = '🎨 Nueva imagen'; }, 5000);
   } catch (err) {
     btn.textContent = '🎨 Nueva imagen'; btn.disabled = false;
     setStatus('Error generando imagen: ' + err.message, 'error');
