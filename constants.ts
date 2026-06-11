@@ -61,13 +61,16 @@ PROHIBIDO en el cierre:
 * Cierres genéricos que podrían funcionar para CUALQUIER cuento — si lo podés copiar y pegar en otra historia, está mal.
 * Metáforas abstractas al final ("como una semilla", "como la luz que permanece", "como el peso de lo invisible").
 
-VOCABULARIO Y REFERENCIAS — PARA NENES, NO PARA ADULTOS:
+VOCABULARIO — PARA NENES, CON IMÁGENES CONCRETAS DE ESTA HISTORIA:
 
-* El vocabulario tiene que ser el de un nene de 5 a 7 años. Si un nene de 5 años no sabe qué es la palabra, cambiala por algo concreto que sí conozca.
-* PROHIBIDO: "amplificador", "ecualizador", "cámara de representantes", "déficit", "inflación", "sequía hídrica", "pandemia", "homenaje póstumo", y cualquier término técnico o adulto. Reemplazalos por lo que el nene VE: "una caja grande que hace sonar la música", "personas que votaban leyes", "los campos sin agua", "muchos nenes enfermos al mismo tiempo".
-* PROHIBIDO usar referencias culturales que solo entienden los adultos: títulos de discos, nombres de canciones, frases de canciones, nombres de álbumes, referencias a programas de TV, películas o libros para adultos. Si la noticia menciona el título de un disco o una canción, NO lo copies al cuento — describí lo que ese objeto o momento significa en concreto.
-* Si alguien famoso murió y era músico: el cuento habla de "una persona que hacía música que le gustaba a muchísima gente" — no de su discografía ni de frases de sus canciones.
-* La prueba: ¿un nene de 5 años que nunca escuchó de esta persona/tema entiende el cuento? Si no, reescribí.
+* El vocabulario tiene que ser el de un nene de 5 a 7 años. Pero la solución NO es traducir conceptos adultos a abstracciones genéricas — es encontrar la imagen CONCRETA Y ESPECÍFICA de ESTA historia que un nene pueda ver y entender sin necesitar el contexto adulto.
+* MAL: traducir "ataques militares" → "ruidos grandes" (sirve para CUALQUIER conflicto, no dice nada de ESTE)
+* MAL: traducir "acuerdo diplomático" → "mensaje brillante" (genérico, vacío)
+* BIEN: describir QUÉ pasó físicamente en esta historia particular — "alguien levantó un teléfono y dijo que no", "una pantalla mostraba que los cohetes iban a quedarse quietos", "dos personas se dieron la mano después de mucho tiempo sin hablarse"
+* PROHIBIDO: términos técnicos adultos sin traducción (amplificador, ecualizador, déficit, inflación, pandemia, homenaje póstumo). Reemplazalos con lo que se VE o TOCA en la escena concreta.
+* PROHIBIDO: referencias culturales para adultos (títulos de discos, letras de canciones, nombres de álbumes). Describí el objeto o momento en concreto.
+* PROHIBIDO: usar el mismo recurso de traducción en varios cuentos. "Ruidos grandes" para guerra, "mensajes brillantes" para noticias digitales, "el agua subió" para inundaciones — si ya se usó en otro cuento, este tiene que encontrar OTRA imagen. Cada historia tiene la suya.
+* La prueba: ¿un nene de 5 años que no sabe nada de este tema entiende QUÉ pasó en ESTA historia concreta? Si el cuento podría ser de otra noticia distinta, está mal.
 
 MARCAS COMERCIALES — PROHIBIDO:
 

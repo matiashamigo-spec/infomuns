@@ -21,6 +21,7 @@ export interface StoryMemoryEntry {
   setting: string;
   opening_type: string;
   closing_image: string;
+  key_metaphor: string;
 }
 
 export function readStoryMemory(): StoryMemoryEntry[] {
@@ -33,7 +34,7 @@ export function readStoryMemory(): StoryMemoryEntry[] {
 }
 
 export function saveStoryToMemory(
-  entry: Omit<StoryMemoryEntry, "date"> & { setting?: string; opening_type?: string; closing_image?: string }
+  entry: Omit<StoryMemoryEntry, "date"> & { setting?: string; opening_type?: string; closing_image?: string; key_metaphor?: string }
 ): void {
   try {
     if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -43,6 +44,7 @@ export function saveStoryToMemory(
       setting: entry.setting || "",
       opening_type: entry.opening_type || "",
       closing_image: entry.closing_image || "",
+      key_metaphor: entry.key_metaphor || "",
       date: new Date().toISOString(),
     });
     fs.writeFileSync(
@@ -63,12 +65,13 @@ export function getRecentPatternsPrompt(): string {
     const base = `- ${e.resolution} | símbolo: "${e.symbol}" | escenario: "${e.setting || "?"}"`;
     const opening = e.opening_type ? ` | arranque: "${e.opening_type}"` : "";
     const closing = e.closing_image ? ` | cierre: "${e.closing_image}"` : "";
-    return `${base}${opening}${closing} (hace ${i + 1} ${i === 0 ? "historia" : "historias"})`;
+    const metaphor = e.key_metaphor ? ` | metáfora/traducción usada: "${e.key_metaphor}"` : "";
+    return `${base}${opening}${closing}${metaphor} (hace ${i + 1} ${i === 0 ? "historia" : "historias"})`;
   });
 
   return (
     `\n\nMEMORIA ACTIVA — PROHIBIDO REPETIR:\n` +
     lines.join("\n") +
-    `\nElegí un ARQUETIPO DE RESOLUCIÓN diferente a todos los listados arriba, un SÍMBOLO PRINCIPAL que no aparezca en esta lista, y un ESCENARIO distinto al de las últimas 3 historias. El ARRANQUE y el CIERRE no pueden parecerse a ninguno de los listados — ni en estructura ni en imagen.`
+    `\nElegí un ARQUETIPO DE RESOLUCIÓN diferente a todos los listados arriba, un SÍMBOLO PRINCIPAL que no aparezca en esta lista, y un ESCENARIO distinto al de las últimas 3 historias. El ARRANQUE y el CIERRE no pueden parecerse a ninguno de los listados — ni en estructura ni en imagen. Las METÁFORAS Y TRADUCCIONES de conceptos adultos a lenguaje de nene no pueden repetirse — cada historia tiene que encontrar la suya propia.`
   );
 }
