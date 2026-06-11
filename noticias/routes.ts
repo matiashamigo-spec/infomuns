@@ -8,8 +8,44 @@ import { runDailyPipeline, processSingleUrl } from "./pipeline.js";
 import { illustrateImage, generateIllustrationSet, generateSingleIllustration } from "./illustration.js";
 import { listDrafts, listPublished, updatePost, publishPostById, unpublishPost, deletePost, uploadMedia, setFeaturedPost, createDraft, listMedia } from "./wordpress.js";
 
+// Valida que la URL sea pública (bloquea SSRF hacia IPs privadas/metadata)
+function isSafeUrl(raw: string): boolean {
+  try {
+    const u = new URL(raw);
+    if (u.protocol !== "http:" && u.protocol !== "https:") return false;
+    const h = u.hostname;
+    if (h === "localhost" || h === "127.0.0.1" || h === "::1") return false;
+    // Bloquear rangos privados y metadata cloud
+    if (/^10\./.test(h)) return false;
+    if (/^192\.168\./.test(h)) return false;
+    if (/^172\.(1[6-9]|2\d|3[01])\./.test(h)) return false;
+    if (h === "169.254.169.254") return false; // AWS/Railway metadata
+    if (h.endsWith(".internal") || h.endsWith(".local")) return false;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// Rate limiter simple en memoria para endpoints costosos
+const rateLimits = new Map<string, number>();
+function rateLimit(key: string, windowMs: number): boolean {
+  const now = Date.now();
+  const last = rateLimits.get(key) || 0;
+  if (now - last < windowMs) return false;
+  rateLimits.set(key, now);
+  return true;
+}
+
 export function createNoticiasRouter(): Router {
   const router = Router();
+
+  function safeError(err: any): string {
+    const msg: string = err?.message || "Error interno";
+    // No filtrar detalles de credenciales o rutas internas
+    if (/password|secret|key|token|credential/i.test(msg)) return "Error interno";
+    return msg.substring(0, 200);
+  }
 
   // Middleware de autenticación
   function requireAdmin(req: Request, res: Response, next: any) {
@@ -28,7 +64,7 @@ export function createNoticiasRouter(): Router {
       const featured = posts.find((p: any) => p.isFeatured) || posts[0] || null;
       res.json(featured);
     } catch (err: any) {
-      res.status(500).json({ error: err.message });
+      res.status(500).json({ error: safeError(err) });
     }
   });
 
@@ -36,6 +72,7 @@ export function createNoticiasRouter(): Router {
   router.post("/from-url", requireAdmin, async (req: Request, res: Response) => {
     const { url } = req.body;
     if (!url || typeof url !== "string") return res.status(400).json({ error: "Se requiere una URL válida" });
+    if (!isSafeUrl(url)) return res.status(400).json({ error: "URL no permitida" });
     try {
       const apiKey = process.env.GEMINI_API_KEY;
       if (!apiKey) return res.status(500).json({ error: "GEMINI_API_KEY no configurada" });
@@ -43,7 +80,7 @@ export function createNoticiasRouter(): Router {
       const draft = await processSingleUrl(url, apiKey);
       res.json({ ok: true, draft });
     } catch (err: any) {
-      res.status(500).json({ error: err.message });
+      res.status(500).json({ error: safeError(err) });
     }
   });
 
@@ -51,6 +88,7 @@ export function createNoticiasRouter(): Router {
   router.post("/from-manual", requireAdmin, async (req: Request, res: Response) => {
     const { title, content, imageUrl } = req.body;
     if (!title || !content || !imageUrl) return res.status(400).json({ error: "Se requieren título, cuento y URL de imagen" });
+    if (!isSafeUrl(imageUrl)) return res.status(400).json({ error: "URL de imagen no permitida" });
     try {
       const apiKey = process.env.GEMINI_API_KEY;
       if (!apiKey) return res.status(500).json({ error: "GEMINI_API_KEY no configurada" });
@@ -67,20 +105,23 @@ export function createNoticiasRouter(): Router {
       const draft = await createDraft(title, content, mediaId);
       res.json({ ok: true, draft });
     } catch (err: any) {
-      res.status(500).json({ error: err.message });
+      res.status(500).json({ error: safeError(err) });
     }
   });
 
   // POST /api/noticias/run — ejecuta el pipeline manualmente
   // Acepta body { limit: number } para limitar cantidad (útil para pruebas)
   router.post("/run", requireAdmin, async (req: Request, res: Response) => {
+    if (!rateLimit("pipeline", 5 * 60 * 1000)) {
+      return res.status(429).json({ error: "El pipeline ya se ejecutó recientemente. Esperá 5 minutos." });
+    }
     try {
       const limit = parseInt(req.body?.limit) || 10;
       console.log(`[noticias] Pipeline iniciado manualmente (limit=${limit})`);
       const result = await runDailyPipeline(limit);
       res.json({ ok: true, result });
     } catch (err: any) {
-      res.status(500).json({ error: err.message });
+      res.status(500).json({ error: safeError(err) });
     }
   });
 
@@ -90,7 +131,7 @@ export function createNoticiasRouter(): Router {
       const drafts = await listDrafts();
       res.json(drafts);
     } catch (err: any) {
-      res.status(500).json({ error: err.message });
+      res.status(500).json({ error: safeError(err) });
     }
   });
 
@@ -102,7 +143,7 @@ export function createNoticiasRouter(): Router {
       const updated = await updatePost(id, { title, content });
       res.json(updated);
     } catch (err: any) {
-      res.status(500).json({ error: err.message });
+      res.status(500).json({ error: safeError(err) });
     }
   });
 
@@ -113,7 +154,7 @@ export function createNoticiasRouter(): Router {
       const published = await publishPostById(id);
       res.json(published);
     } catch (err: any) {
-      res.status(500).json({ error: err.message });
+      res.status(500).json({ error: safeError(err) });
     }
   });
 
@@ -138,7 +179,7 @@ export function createNoticiasRouter(): Router {
       await updatePost(id, { featuredMediaId: media.id });
       res.json({ ok: true, mediaId: media.id, mediaUrl: media.url });
     } catch (err: any) {
-      res.status(500).json({ error: err.message });
+      res.status(500).json({ error: safeError(err) });
     }
   });
 
@@ -151,7 +192,7 @@ export function createNoticiasRouter(): Router {
       await updatePost(id, { featuredMediaId: mediaId });
       res.json({ ok: true, mediaUrl });
     } catch (err: any) {
-      res.status(500).json({ error: err.message });
+      res.status(500).json({ error: safeError(err) });
     }
   });
 
@@ -162,7 +203,7 @@ export function createNoticiasRouter(): Router {
       await deletePost(id);
       res.json({ ok: true });
     } catch (err: any) {
-      res.status(500).json({ error: err.message });
+      res.status(500).json({ error: safeError(err) });
     }
   });
 
@@ -172,7 +213,7 @@ export function createNoticiasRouter(): Router {
       const posts = await listPublished();
       res.json(posts);
     } catch (err: any) {
-      res.status(500).json({ error: err.message });
+      res.status(500).json({ error: safeError(err) });
     }
   });
 
@@ -184,7 +225,7 @@ export function createNoticiasRouter(): Router {
       const updated = await updatePost(id, { title, content });
       res.json(updated);
     } catch (err: any) {
-      res.status(500).json({ error: err.message });
+      res.status(500).json({ error: safeError(err) });
     }
   });
 
@@ -195,7 +236,7 @@ export function createNoticiasRouter(): Router {
       const post = await unpublishPost(id);
       res.json(post);
     } catch (err: any) {
-      res.status(500).json({ error: err.message });
+      res.status(500).json({ error: safeError(err) });
     }
   });
 
@@ -206,7 +247,7 @@ export function createNoticiasRouter(): Router {
       await setFeaturedPost(id);
       res.json({ ok: true });
     } catch (err: any) {
-      res.status(500).json({ error: err.message });
+      res.status(500).json({ error: safeError(err) });
     }
   });
 
@@ -219,7 +260,7 @@ export function createNoticiasRouter(): Router {
       await updatePost(id, { featuredMediaId: mediaId });
       res.json({ ok: true, mediaUrl });
     } catch (err: any) {
-      res.status(500).json({ error: err.message });
+      res.status(500).json({ error: safeError(err) });
     }
   });
 
@@ -230,7 +271,7 @@ export function createNoticiasRouter(): Router {
       const items = await listMedia(page);
       res.json(items);
     } catch (err: any) {
-      res.status(500).json({ error: err.message });
+      res.status(500).json({ error: safeError(err) });
     }
   });
 
@@ -241,7 +282,7 @@ export function createNoticiasRouter(): Router {
       await deletePost(id);
       res.json({ ok: true });
     } catch (err: any) {
-      res.status(500).json({ error: err.message });
+      res.status(500).json({ error: safeError(err) });
     }
   });
 
