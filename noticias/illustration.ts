@@ -118,14 +118,22 @@ async function extractSceneDescriptions(title: string, story: string, apiKey: st
 STORY TITLE: ${title}
 STORY: ${story.substring(0, 800)}
 
-Return exactly 4 scene descriptions following these strict rules:
+Return exactly 4 scene descriptions. Each must have a DIFFERENT composition and framing — no two scenes can look similar.
 
-- Scene 1 — WIDE ESTABLISHING SHOT: the main location of the story, seen from far away. NO characters. Just the place, the environment, the atmosphere. Describe exactly what's in this specific location (buildings, objects, landscape).
-- Scene 2 — CHARACTER CLOSE-UP: one or more Muns (small round white creatures with grey spots) OR Opaq (round violet creature with dark violet spots) reacting to what's happening in the story. Show their expression or body language. This MUST include Muns or Opaq as the main subject.
-- Scene 3 — SINGLE OBJECT, EXTREME CLOSE-UP: the single most important object from this specific story, alone, centered, filling most of the frame. No characters, no background — just the object.
-- Scene 4 — FINAL MOMENT, MEDIUM SHOT: the last image of the story — what's happening or what remains. Can include characters or just the scene. Must feel like an ending.
+Rules:
+Use these 4 composition types, assigned in whatever order best fits the story's narrative flow:
+  A) WIDE SHOT — the main location from far away, no characters, just the environment
+  B) CHARACTER PRESENCE — Muns (small round white creatures with grey spots) OR Opaq (round violet creature with dark violet spots) present in the scene. They don't have to be the center — they can be off to the side, small in the frame, watching. They accompany the scene, they don't dominate it. Pick whichever character appears in this story.
+  C) OBJECT CLOSE-UP — the most important object of the story, alone, filling the frame, no characters
+  D) FINAL IMAGE — the last moment of the story, whatever framing fits best
 
-CRITICAL: Each scene must be compositionally DIFFERENT (different framing, different subject, different distance). Be very specific to THIS story — use concrete details from the story, not generic descriptions. Write ONE sentence per scene.`,
+Rules:
+- Assign A, B, C, D to scenes 1–4 in the order that feels most natural for THIS story's flow. Vary the order between stories.
+- Exactly one scene includes Muns or Opaq (type B). The other three have no characters.
+- Each scene must look visually different from the others: different distance, different subject, different framing.
+- Be specific to THIS story — use concrete details from the text, not generic descriptions.
+- Start each scene description with its type label: "A)", "B)", "C)" or "D)".
+- Write ONE sentence per scene after the label.`,
       config: {
         responseMimeType: "application/json",
         responseSchema: {
@@ -164,13 +172,6 @@ export async function generateIllustrationSet(title: string, story: string, apiK
 
   const descriptions = scenes.length >= 4 ? scenes : fallback;
 
-  const compositions = [
-    "COMPOSITION: wide shot, landscape framing, no characters — only the place and its objects.",
-    "COMPOSITION: close-up or medium shot centered on the character(s) — Muns or Opaq must be the main subject, large in the frame.",
-    "COMPOSITION: extreme close-up of a single object, centered, filling most of the image — no characters, minimal or no background.",
-    "COMPOSITION: medium shot showing the final state of the scene — can include characters or just the environment.",
-  ];
-
   const prompts = descriptions.map((scene, i) => `Draw scene ${i + 1} of 4 from this children's story as a crayon drawing by a 4-year-old child.
 
 STORY TITLE: ${title}
@@ -178,9 +179,7 @@ STORY TITLE: ${title}
 SCENE TO DRAW:
 ${scene}
 
-${compositions[i]}
-
-This is ONE of 4 illustrations — it must look visually DIFFERENT from the others in framing, subject and distance. Draw ONLY what this scene describes.
+This is ONE of 4 illustrations — it must look visually DIFFERENT from the others in framing, subject and distance. Follow the composition type indicated in the scene label (A/B/C/D). Draw ONLY what this scene describes.
 
 ${PROMPT}`);
 
