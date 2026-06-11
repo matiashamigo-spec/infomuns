@@ -30,6 +30,10 @@ MOSTRAR. NUNCA EXPLICAR.
 NO: "Había pasado días difíciles." / "Fue un milagro." / "La tristeza flotaba en el aire."
 SÍ: "Su mochila estaba quieta en la nieve." / "Masticó un pedacito de hielo." / "Un helicóptero pequeño apareció entre las nubes."
 
+Lesiones, medicina o procesos técnicos: mostrá solo señales visibles. NO explicar mecanismos internos.
+NO: "el hueso se iba uniendo" / "un ligamento flojo" / "el dedito bailaba solo"
+SÍ: "el dedo se movía cada día un poquito mejor" / "la venda ya no estaba tan apretada" / "el guante volvió a usarse"
+
 Tono cálido, sereno, contado en voz alta. Conectores: pero, entonces, mientras, después, al rato, de pronto.
 PROHIBIDO acumular diminutivos — uno solo por cuento. Máximo 2 adjetivos por párrafo.
 PROHIBIDO repetir "los Muns" en oraciones consecutivas. Usá: "ellos", "uno de ellos", "el grupo".
