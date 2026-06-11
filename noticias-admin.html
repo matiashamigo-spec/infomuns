@@ -370,7 +370,6 @@ async function publishDraft(id, btn) {
     await apiFetch(`/drafts/${id}`, { method: 'PUT', body: JSON.stringify({ title, content }) });
     btn.innerHTML = '<span class="spinner"></span>Publicando...';
     const post = await apiFetch(`/drafts/${id}/publish`, { method: 'POST' });
-    const card = btn.closest('.draft-card');
     card.style.opacity = '0.4'; card.style.pointerEvents = 'none';
     setStatus(`✓ Publicado: "${post.title}"`, 'success');
     setTimeout(() => card.remove(), 1500);
