@@ -113,18 +113,19 @@ async function extractSceneDescriptions(title: string, story: string, apiKey: st
     const ai = new GoogleGenAI({ apiKey });
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
-      contents: `Read this children's story and identify 4 visually distinct moments to illustrate as crayon drawings.
+      contents: `Read this children's story and identify 4 visually distinct moments to illustrate as crayon drawings. Each scene MUST have a different composition and framing — no two scenes can look similar.
 
 STORY TITLE: ${title}
 STORY: ${story.substring(0, 800)}
 
-Return exactly 4 scene descriptions. Each must be visually and compositionally DIFFERENT from the others:
-- Scene 1: a wide establishing shot of the main location (no characters, just the place)
-- Scene 2: the key character(s) doing the most important action in the story
-- Scene 3: the single most important object in the story, alone, centered
-- Scene 4: the final moment — what's left when the story ends
+Return exactly 4 scene descriptions following these strict rules:
 
-For each scene write ONE specific sentence: what is drawn, who or what is there, what are they doing. Be specific to THIS story — not generic descriptions.`,
+- Scene 1 — WIDE ESTABLISHING SHOT: the main location of the story, seen from far away. NO characters. Just the place, the environment, the atmosphere. Describe exactly what's in this specific location (buildings, objects, landscape).
+- Scene 2 — CHARACTER CLOSE-UP: one or more Muns (small round white creatures with grey spots) OR Opaq (round violet creature with dark violet spots) reacting to what's happening in the story. Show their expression or body language. This MUST include Muns or Opaq as the main subject.
+- Scene 3 — SINGLE OBJECT, EXTREME CLOSE-UP: the single most important object from this specific story, alone, centered, filling most of the frame. No characters, no background — just the object.
+- Scene 4 — FINAL MOMENT, MEDIUM SHOT: the last image of the story — what's happening or what remains. Can include characters or just the scene. Must feel like an ending.
+
+CRITICAL: Each scene must be compositionally DIFFERENT (different framing, different subject, different distance). Be very specific to THIS story — use concrete details from the story, not generic descriptions. Write ONE sentence per scene.`,
       config: {
         responseMimeType: "application/json",
         responseSchema: {
@@ -155,22 +156,31 @@ export async function generateIllustrationSet(title: string, story: string, apiK
   }
 
   const fallback = [
-    "Wide shot of the main location where the story happens — no characters, just the place.",
-    "The main character(s) doing the most important action in the story.",
-    "The single most important object from the story, alone and centered.",
-    "The final moment of the story — what remains when it ends.",
+    "Wide establishing shot of the main location — no characters, just the environment and objects in the scene.",
+    "A Mun (small round white creature with grey spots) standing and looking at what happened, seen up close, their expression showing curiosity or sadness.",
+    "The single most important object from this story, alone, centered, filling most of the frame — no characters, no background.",
+    "The final moment of the story — the place or characters as the story ends, medium shot.",
   ];
 
   const descriptions = scenes.length >= 4 ? scenes : fallback;
+
+  const compositions = [
+    "COMPOSITION: wide shot, landscape framing, no characters — only the place and its objects.",
+    "COMPOSITION: close-up or medium shot centered on the character(s) — Muns or Opaq must be the main subject, large in the frame.",
+    "COMPOSITION: extreme close-up of a single object, centered, filling most of the image — no characters, minimal or no background.",
+    "COMPOSITION: medium shot showing the final state of the scene — can include characters or just the environment.",
+  ];
 
   const prompts = descriptions.map((scene, i) => `Draw scene ${i + 1} of 4 from this children's story as a crayon drawing by a 4-year-old child.
 
 STORY TITLE: ${title}
 
-SCENE TO DRAW — be very specific to this description, do not mix with other scenes:
+SCENE TO DRAW:
 ${scene}
 
-This scene must look DIFFERENT from any other illustration of this story. Focus only on what this scene describes.
+${compositions[i]}
+
+This is ONE of 4 illustrations — it must look visually DIFFERENT from the others in framing, subject and distance. Draw ONLY what this scene describes.
 
 ${PROMPT}`);
 
