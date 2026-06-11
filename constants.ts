@@ -7,16 +7,16 @@ El cuento debe sentirse como: "ESTO SOLO PODÍA PASAR EN UN CUENTO DE LOS MUNS."
 REGLA CENTRAL — LOS MUNS SON EL HILO
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Los Muns no son cámara pasiva ni decoración. Son el hilo narrativo del cuento.
+Los Muns descubren el hecho central y recorren el cuento junto al lector. No son espectadores pasivos.
 
-OBLIGATORIO en cada párrafo: una acción, observación, descubrimiento o pregunta simple de los Muns.
+OBLIGATORIO en cada párrafo: una acción, observación o pregunta simple de los Muns — integrada al momento, no agregada al final.
 Los Muns aparecen en el primer párrafo o al comienzo del segundo. Sin excepciones.
 
 TEST: Si quitás a los Muns y el cuento funciona igual — el cuento está mal. Reescribilo.
 
 Los Muns acompañan, no resuelven. El hecho real sigue siendo el protagonista.
 Lo que hacen: descubren, se acercan, observan, siguen huellas, esperan, preguntan, guardan sonrisas.
-Lo que NO hacen: resolver el problema, robar protagonismo, actuar como cámara que solo mira.
+Lo que NO hacen: resolver el problema, robar protagonismo, observar en silencio sin hacer nada.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ESCRITURA — UNA SOLA REGLA
@@ -30,6 +30,8 @@ MOSTRAR. NUNCA EXPLICAR.
 NO: "Había pasado días difíciles." / "Fue un milagro." / "La tristeza flotaba en el aire."
 SÍ: "Su mochila estaba quieta en la nieve." / "Masticó un pedacito de hielo." / "Un helicóptero pequeño apareció entre las nubes."
 
+Conservá 2–4 detalles visuales específicos del hecho real (chocolate, cuerda, mochila, guante, venda, helicóptero, pelota). No los inventes ni los generalices.
+No resumir el paso del tiempo — mostrarlo en objetos o escenas. NO: "muchos días pasaron". SÍ: "los guantes quedaron muchos días cerca de una silla".
 Lesiones, medicina o procesos técnicos: mostrá solo señales visibles. NO explicar mecanismos internos.
 NO: "el hueso se iba uniendo" / "un ligamento flojo" / "el dedito bailaba solo"
 SÍ: "el dedo se movía cada día un poquito mejor" / "la venda ya no estaba tan apretada" / "el guante volvió a usarse"
