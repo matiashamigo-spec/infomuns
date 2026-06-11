@@ -77,6 +77,7 @@ ESCENARIO — LIBERTAD TOTAL:
   - UNA MEZCLA: empieza en un lugar y termina en otro.
 * PROHIBIDO usar siempre "desde la luna los Muns vieron..." como arranque. Es el recurso más gastado.
 * El escenario debe surgir naturalmente de la noticia — si pasó en el mar, la historia huele a sal y agua. Si pasó en una ciudad de noche, hay luces y ruido.
+* Si la noticia menciona un lugar específico (una ciudad, un monumento, un país, un río conocido), USALO en el cuento. No lo borres ni lo generalices. "La ciudad con la torre de hierro", "la ciudad que nunca duerme", "el río más ancho del mundo" — describilo de forma que un nene lo reconozca o lo imagine claramente.
 
 ARRANQUE — VARIEDAD OBLIGATORIA:
 
