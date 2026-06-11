@@ -4,27 +4,35 @@ import { GoogleGenAI } from "@google/genai";
 const MODEL = "gemini-2.5-flash-image";
 const API_BASE = "https://generativelanguage.googleapis.com/v1beta/models/";
 
-const PROMPT = `Draw this as a very basic crayon sketch made by a 4-year-old child on plain white paper. The image must be horizontal, 16:9 widescreen format.
+const PROMPT = `This must look EXACTLY like a real drawing made by a 4-year-old child with crayons on plain white paper. Not a professional illustration styled to look childish. An actual child drew this.
 
-ABSOLUTE RULE — NO TEXT WHATSOEVER: Do not include any letters, words, numbers, symbols, signs, labels, captions, or writing of any kind anywhere in the image. Not on objects, not in the background, not floating. Zero text. A 4-year-old cannot write.
+ABSOLUTE RULE — NO TEXT WHATSOEVER: No letters, words, numbers, symbols, signs or writing anywhere. Zero text.
 
-STYLE — strict:
-- Plain WHITE background — pure white, nothing else, no gradients, no texture
-- OUTLINES ONLY: shapes are drawn with a single wobbly crayon line — no fill, no shading, no solid blocks of color
-- If there is any color fill, it must be very sparse: a few loose scribble strokes inside the shape, leaving most of the interior white
-- Lines are shaky, uneven, clearly hand-drawn by a small child
-- People/humans: circle head, rectangle body, stick arms and legs — nothing more
-- Faces on humans: two dots for eyes, one simple line for mouth — the mouth shape reflects the emotion of the scene: curved up for happy, curved down for sad, straight for worried or uncertain. Tender, never exaggerated or scary.
-- Objects: simplest possible outline shape — a house is a square and a triangle, a tree is a circle on a stick
-- Exactly 3 colors: deep blue (#4464AD), sky blue (#9FCFE2), warm beige (#CBBBA0)
-- Each color used sparingly — mostly outlines, almost no fill
-- The drawing looks unfinished and sparse, like a child who drew quickly and got bored halfway through
+WHAT MAKES IT LOOK LIKE A REAL CHILD DREW IT:
+- Lines are wobbly, shaky, uneven — they don't close properly, corners overshoot, circles aren't round
+- Proportions are wrong: heads too big, bodies too small, arms coming from the wrong place
+- Objects are flat, front-facing, floating — no perspective, no depth, no shadows
+- The drawing is sparse and unfinished — a child gets bored and stops. Large empty white areas.
+- NO clean lines. NO smooth curves. NO professional composition. NO centered layout.
 
-CONTENT RULES:
+COLORS — exactly 3, used like a child would (scribble strokes, not fills):
+- Deep blue (#4464AD)
+- Sky blue (#9FCFE2)
+- Warm beige (#CBBBA0)
+Mostly outlines. If any fill, it's loose scribble strokes leaving most of the interior white.
+
+BACKGROUND: Plain WHITE — pure white, nothing else.
+
+SHAPES:
+- People: circle head (too big), rectangle body (too small), stick arms and legs
+- Faces: two dots for eyes, one wobbly line for mouth matching the scene's emotion
+- Objects: the simplest possible shape a child would draw
+
+CONTENT:
+- Maximum 2–3 elements total — do not crowd
 - Anonymous figures only, no recognizable characters or IP
-- Maximum 2–3 elements total in the scene — do not crowd the drawing
-- No text, labels or captions
-- No violence, weapons, blood or dark content`;
+- No violence, weapons, blood or dark content
+- Horizontal 16:9 format`;
 
 export async function illustrateImage(imageUrl: string, apiKey: string): Promise<string | null> {
   console.log(`[illustration] Procesando: ${imageUrl}`);
