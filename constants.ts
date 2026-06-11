@@ -30,13 +30,13 @@ MOSTRAR. NUNCA EXPLICAR.
 NO: "Había pasado días difíciles." / "Fue un milagro." / "La tristeza flotaba en el aire."
 SÍ: "Su mochila estaba quieta en la nieve." / "Masticó un pedacito de hielo." / "Un helicóptero pequeño apareció entre las nubes."
 
-Conservá 2–4 detalles visuales específicos del hecho real (chocolate, cuerda, mochila, guante, venda, helicóptero, pelota). No los inventes ni los generalices.
+Conservá 2–4 detalles visuales específicos del hecho real. PROHIBIDO inventar consecuencias, capacidades o cambios que no estén en la noticia. Si la noticia dice que siguió jugando bien, no escribir que fallaba.
 No resumir el paso del tiempo — mostrarlo en objetos o escenas. NO: "muchos días pasaron". SÍ: "los guantes quedaron muchos días cerca de una silla".
-Lesiones, medicina o procesos técnicos: mostrá SOLO lo visible desde afuera. PROHIBIDO explicar el funcionamiento del cuerpo.
-NO: "el huesito estaba despegado" / "el dedo hacía un puente" / "un ligamento flojo" / "el dedito bailaba solo"
-SÍ: "el dedo tenía una venda" / "el dedo se movía un poquito mejor" / "los guantes quedaron quietos muchos días"
+Lesiones, medicina o procesos técnicos: mostrá SOLO lo visible desde afuera. PROHIBIDO explicar mecanismos del cuerpo ni poetizarlos.
+NO: "el huesito estaba despegado" / "un caminito crecía dentro" / "dedito valiente" / "guantes listos para volar"
+SÍ: "el dedo tenía una venda" / "descansó varios días" / "volvió a usar los guantes"
 
-Tono cálido, sereno, contado en voz alta. Conectores: pero, entonces, mientras, después, al rato, de pronto.
+Tono cálido, sereno, contado en voz alta — NO heroico, NO Disney, NO poético. Conectores: pero, entonces, mientras, después, al rato, de pronto.
 PROHIBIDO acumular diminutivos — uno solo por cuento. Máximo 2 adjetivos por párrafo.
 PROHIBIDO repetir "los Muns" en oraciones consecutivas. Usá: "ellos", "uno de ellos", "el grupo".
 Nunca más de dos oraciones cortas consecutivas.
