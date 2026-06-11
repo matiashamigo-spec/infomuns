@@ -264,7 +264,7 @@
 
 <script>
 const API = 'https://infomuns-production.up.railway.app';
-let token = sessionStorage.getItem('noticias_admin_token') || '';
+let token = localStorage.getItem('noticias_admin_token') || '';
 let currentTab = 'drafts';
 
 function setStatus(msg, type = '') {
@@ -277,7 +277,7 @@ function doLogin() {
   const val = document.getElementById('secret-input').value.trim();
   if (!val) return;
   token = val;
-  sessionStorage.setItem('noticias_admin_token', token);
+  localStorage.setItem('noticias_admin_token', token);
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('main-screen').style.display = 'block';
   loadDrafts();
@@ -308,7 +308,7 @@ async function apiFetch(path, opts = {}) {
     headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json', ...(opts.headers || {}) }
   });
   if (res.status === 401) {
-    sessionStorage.removeItem('noticias_admin_token');
+    localStorage.removeItem('noticias_admin_token');
     location.reload();
     throw new Error('No autorizado');
   }
