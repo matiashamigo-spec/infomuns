@@ -6,6 +6,8 @@ const API_BASE = "https://generativelanguage.googleapis.com/v1beta/models/";
 
 const PROMPT = `Draw this as a very basic crayon sketch made by a 4-year-old child on plain white paper. The image must be horizontal, 16:9 widescreen format.
 
+ABSOLUTE RULE — NO TEXT WHATSOEVER: Do not include any letters, words, numbers, symbols, signs, labels, captions, or writing of any kind anywhere in the image. Not on objects, not in the background, not floating. Zero text. A 4-year-old cannot write.
+
 STYLE — strict:
 - Plain WHITE background — pure white, nothing else, no gradients, no texture
 - OUTLINES ONLY: shapes are drawn with a single wobbly crayon line — no fill, no shading, no solid blocks of color
