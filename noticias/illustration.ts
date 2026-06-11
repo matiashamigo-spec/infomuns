@@ -43,7 +43,7 @@ export async function illustrateImage(imageUrl: string, apiKey: string): Promise
             { text: PROMPT },
           ],
         }],
-        generationConfig: { responseModalities: ["TEXT", "IMAGE"], aspectRatio: "16:9" },
+        generationConfig: { responseModalities: ["TEXT", "IMAGE"] },
       },
       { timeout: 60000 }
     );
@@ -70,7 +70,7 @@ async function generateSingleScene(scenePrompt: string, apiKey: string): Promise
       `${API_BASE}${MODEL}:generateContent?key=${apiKey}`,
       {
         contents: [{ parts: [{ text: scenePrompt }] }],
-        generationConfig: { responseModalities: ["TEXT", "IMAGE"], aspectRatio: "16:9" },
+        generationConfig: { responseModalities: ["TEXT", "IMAGE"] },
       },
       { timeout: 60000 }
     );
