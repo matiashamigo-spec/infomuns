@@ -38,9 +38,11 @@ SÍ: "Su mochila estaba quieta en la nieve." / "Masticó un pedacito de hielo." 
 
 Conservá 2–4 detalles visuales específicos del hecho real. PROHIBIDO inventar consecuencias, capacidades o cambios que no estén en la noticia. Si la noticia dice que siguió jugando bien, no escribir que fallaba.
 No resumir el paso del tiempo — mostrarlo en objetos o escenas. NO: "muchos días pasaron". SÍ: "los guantes quedaron muchos días cerca de una silla".
-Lesiones, medicina o procesos técnicos: mostrá SOLO lo visible desde afuera. PROHIBIDO explicar mecanismos del cuerpo ni poetizarlos.
-NO: "el huesito estaba despegado" / "un caminito crecía dentro" / "dedito valiente" / "guantes listos para volar"
-SÍ: "el dedo tenía una venda" / "descansó varios días" / "volvió a usar los guantes"
+REGLA ABSOLUTA — SI UN NIÑO DE 3 AÑOS NO PUEDE VERLO DIRECTAMENTE, NO VA EN EL CUENTO.
+Aplica a lesiones, medicina, recuperación, ciencia y tecnología.
+PROHIBIDO: cualquier cosa que pase dentro del cuerpo o dentro de máquinas. Sin excepciones, sin metáforas, sin diminutivos que lo disfracen.
+NO: hueso, piedrita, ladrillito, puente, ligamento, caminito, dentro, despegado, uniendo, creciendo, dormido.
+SÍ: venda, hielo, dedo quieto, guantes guardados, caminar despacio, volver a jugar, un médico mirando una imagen.
 
 Tono cálido, sereno, contado en voz alta — NO heroico, NO Disney, NO poético. Conectores: pero, entonces, mientras, después, al rato, de pronto.
 PROHIBIDO acumular diminutivos — uno solo por cuento. Máximo 2 adjetivos por párrafo.
