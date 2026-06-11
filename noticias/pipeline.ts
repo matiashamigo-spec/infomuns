@@ -71,7 +71,7 @@ async function analyzeNews(newsText: string, apiKey: string): Promise<NewsAnalys
     model: "gemini-2.5-flash",
     contents: `Analizá esta noticia para preparar un cuento infantil. Respondé en JSON.
 
-Noticia: "${newsText.substring(0, 2000)}"
+Noticia: "${newsText.substring(0, 4000)}"
 
 Respondé:
 - what: qué pasó en UNA oración simple (para un adulto que va a escribir un cuento para niños)
