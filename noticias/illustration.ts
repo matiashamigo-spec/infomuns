@@ -3,10 +3,10 @@ import axios from "axios";
 const MODEL = "gemini-2.5-flash-image";
 const API_BASE = "https://generativelanguage.googleapis.com/v1beta/models/";
 
-const PROMPT = `Draw this as a very basic crayon sketch made by a 4-year-old child on plain white paper.
+const PROMPT = `Draw this as a very basic crayon sketch made by a 4-year-old child on plain white paper. The image must be horizontal, 16:9 widescreen format.
 
 STYLE — strict:
-- Plain white background, nothing else
+- Plain WHITE background — pure white, nothing else, no gradients, no texture
 - OUTLINES ONLY: shapes are drawn with a single wobbly crayon line — no fill, no shading, no solid blocks of color
 - If there is any color fill, it must be very sparse: a few loose scribble strokes inside the shape, leaving most of the interior white
 - Lines are shaky, uneven, clearly hand-drawn by a small child
@@ -43,7 +43,7 @@ export async function illustrateImage(imageUrl: string, apiKey: string): Promise
             { text: PROMPT },
           ],
         }],
-        generationConfig: { responseModalities: ["TEXT", "IMAGE"] },
+        generationConfig: { responseModalities: ["TEXT", "IMAGE"], aspectRatio: "16:9" },
       },
       { timeout: 60000 }
     );
@@ -70,7 +70,7 @@ async function generateSingleScene(scenePrompt: string, apiKey: string): Promise
       `${API_BASE}${MODEL}:generateContent?key=${apiKey}`,
       {
         contents: [{ parts: [{ text: scenePrompt }] }],
-        generationConfig: { responseModalities: ["TEXT", "IMAGE"] },
+        generationConfig: { responseModalities: ["TEXT", "IMAGE"], aspectRatio: "16:9" },
       },
       { timeout: 60000 }
     );
