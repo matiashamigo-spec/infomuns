@@ -59,6 +59,8 @@ Reply with only one of these three words, nothing else.`,
 interface NewsAnalysis {
   what: string;
   heart: string;
+  visual_anchor: string;
+  story_type: string;
   human_choice: "daño" | "bien" | "ninguna" | "político";
   core_emotion: string;
   has_resolution: boolean;
@@ -76,6 +78,8 @@ Noticia: "${newsText.substring(0, 4000)}"
 Respondé:
 - what: qué pasó en UNA oración simple (para un adulto que va a escribir un cuento para niños)
 - heart: el dato más sorprendente, emotivo o humano de esta noticia — el que, si lo sacás, la historia pierde su razón de ser. Una oración. Ej: "El arquitecto murió atropellado como un indigente 100 años antes de que su obra se terminara." Si la noticia no tiene un dato así, describí la tensión emocional central.
+- visual_anchor: la imagen más concreta y física de esta noticia — un objeto, un gesto, un lugar específico, una acción que ocurrió. NO una emoción, NO un concepto, NO una atmósfera. Algo que se puede VER o TOCAR. Ej: "una tiza dibujando una línea en una pizarra de jardín", "un bote de goma con 40 personas aferradas a los costados", "una pila de papeles sin firmar en una mesa vacía". Una frase corta.
+- story_type: qué tipo de situación narrativa es esta — en UNA o DOS palabras que describan la estructura de la historia, no el tema. Ej: "espera larga", "acuerdo difícil", "pérdida irreversible", "descubrimiento tardío", "gesto pequeño enorme", "alguien eligió el daño", "algo que nadie vio venir", "el que estaba solo encontró ayuda".
 - human_choice: ¿cuál es la naturaleza del hecho? "daño" solo si hay una acción claramente dañina y no debatible (violencia, abuso, crimen). "bien" solo si hay un gesto claramente positivo y no debatible (rescate, donación, cuidado). "político" si involucra gobiernos, partidos, políticas públicas, movimientos sociales o cualquier tema donde distintas personas pueden tener opiniones legítimas distintas. "ninguna" si fue natural, accidental o estructural sin actor claro.
 - core_emotion: cuál es la emoción principal que un nene de 5 años sentiría al escuchar esto (una sola palabra: tristeza, bronca, miedo, alegría, orgullo, confusión, ternura, alivio)
 - has_resolution: true si el hecho ya tiene un final definitivo, false si la situación sigue abierta
@@ -88,12 +92,14 @@ Respondé:
         properties: {
           what: { type: Type.STRING },
           heart: { type: Type.STRING },
+          visual_anchor: { type: Type.STRING },
+          story_type: { type: Type.STRING },
           human_choice: { type: Type.STRING },
           core_emotion: { type: Type.STRING },
           has_resolution: { type: Type.BOOLEAN },
           hopeful_actor: { type: Type.STRING },
         },
-        required: ["what", "heart", "human_choice", "core_emotion", "has_resolution", "hopeful_actor"],
+        required: ["what", "heart", "visual_anchor", "story_type", "human_choice", "core_emotion", "has_resolution", "hopeful_actor"],
       },
     },
   });
@@ -131,14 +137,23 @@ async function generateMunsStory(newsText: string, apiKey: string): Promise<{ ti
     ? `FINAL CERRADO: lo que pasó ya terminó. El cuento también debe tener final cerrado.`
     : `FINAL ABIERTO: la situación sigue sin resolverse. El cuento puede terminar con algo pendiente.`;
 
-  const contents = `Lo que pasó: ${analysis.what}
-EL CORAZÓN DE ESTA HISTORIA (OBLIGATORIO — no podés ignorar esto): ${analysis.heart}
-Emoción central para un nene de 5 años: ${analysis.core_emotion}
+  const contents = `TIPO DE SITUACIÓN: ${analysis.story_type}
+IMAGEN CONCRETA DE ESTA HISTORIA: ${analysis.visual_anchor}
+LO QUE PASÓ: ${analysis.what}
+EL CORAZÓN (OBLIGATORIO — si no está, el cuento no tiene razón de ser): ${analysis.heart}
+EMOCIÓN CENTRAL: ${analysis.core_emotion}
 ${choiceContext}
 ${hopefulContext}
 ${endingContext}
 
-Con este contexto, creá una historia en el universo Muns. El corazón de la historia debe estar presente en el cuento — es lo que hace que esta noticia valga la pena contarse.
+ANTES DE ESCRIBIR — hacé este ejercicio mental (no lo incluyas en el output):
+1. Esta es una historia de "${analysis.story_type}". ¿Qué ritmo, qué forma, qué estructura le corresponde a ESE tipo de situación?
+2. La imagen concreta es "${analysis.visual_anchor}". El cuento nace de ahí — esa imagen es la puerta de entrada.
+3. ¿Qué tiene ESTA situación específica que no tiene ninguna otra en el mundo? Ese detalle único va en el centro.
+4. ¿Qué no vas a hacer? (el recurso fácil, el clima genérico, la metáfora que funcionaría para cualquier cuento)
+
+AHORA escribí el cuento. La forma surge del contenido — una historia de espera tiene otro ritmo que una de pérdida, que otra de descubrimiento. Dejá que ESTA situación te diga cómo contarla.
+
 Elegí uno de los ARQUETIPOS DE RESOLUCIÓN (A–H). Indicá en "resolution" la letra y nombre. Indicá en "symbol" el símbolo principal del cuento. Indicá en "setting" el escenario principal (ej: "tierra - Barcelona", "luna", "cohete lunar", "lado oscuro de la luna").
 En "opening_type" describí en 5-8 palabras cómo arranca el cuento (ej: "detalle concreto del lugar", "personaje en acción", "desde la luna con algo inusual").
 En "closing_image" describí en 5-10 palabras la imagen o acción concreta del cierre (ej: "suben al cohete en silencio", "dejan una sonrisa en el piso y se van", "Opaq mira hacia atrás una vez").${recentPatterns}`;

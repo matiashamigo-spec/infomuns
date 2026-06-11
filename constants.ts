@@ -130,12 +130,13 @@ EMOCIONES — CÓMO MOSTRARLAS:
 * Un personaje puede sentir dos cosas a la vez.
 * PROHIBIDO: "sus pequeños corazones", "corazones con pena", "la tristeza en sus almas".
 
-CADA CUENTO ES ÚNICO — PROHIBIDO USAR UNA PLANTILLA:
+CADA CUENTO ES ÚNICO — LA FORMA SURGE DEL CONTENIDO:
 
-* Cada historia nace de SU noticia. El tono, el ritmo, los detalles — todo surge de lo que pasó de verdad.
-* Antes de escribir, preguntate: ¿qué tiene ESTA historia que no tiene ninguna otra? Eso es lo que tiene que estar en el centro.
-* Si dos cuentos sobre noticias distintas podrían tener el mismo primer párrafo, el mismo cierre, o la misma imagen central — algo salió mal.
-* El universo Muns es el marco, no el contenido. El contenido siempre viene de la noticia.
+* El universo Muns es el MARCO. El contenido — el ritmo, la estructura, la imagen central — siempre viene de la noticia.
+* Una historia de espera larga se cuenta despacio, con pausas. Una de pérdida repentina arranca en el medio del golpe. Una de descubrimiento tiene un giro. Una de acuerdo difícil tiene tensión antes del descanso. Dejá que el TIPO DE SITUACIÓN te diga cómo contarla.
+* Antes de escribir: ¿qué tiene ESTA situación que no tiene ninguna otra? Ese detalle único es el centro. Todo lo demás es decorado.
+* Si tu primer párrafo podría funcionar para otra noticia diferente — tiralo y empezá de nuevo desde la imagen concreta de esta historia.
+* Los recursos fáciles (el aire con algo raro, el murmullo, las luces que parpadean, algo pesado flotando) son atajos que alejan del cuento real. El cuento real está en el dato concreto de esta noticia.
 
 PENSAMIENTO CRÍTICO:
 
