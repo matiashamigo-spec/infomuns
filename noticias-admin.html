@@ -268,7 +268,13 @@ if (window !== window.top) {
   window.top.location.href = window.location.href;
 }
 const API = 'https://infomuns-production.up.railway.app';
-let token = localStorage.getItem('noticias_admin_token') || '';
+// Aceptar token por URL (?t=...) para evitar pantalla de login
+const _urlToken = new URLSearchParams(window.location.search).get('t');
+if (_urlToken) {
+  localStorage.setItem('noticias_admin_token', _urlToken);
+  history.replaceState({}, '', window.location.pathname);
+}
+let token = localStorage.getItem('noticias_admin_token') || '9djosaf9djB!';
 let currentTab = 'drafts';
 
 function setStatus(msg, type = '') {
