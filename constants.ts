@@ -55,7 +55,7 @@ UNIVERSO MUNS (CANON):
 
 * Los Muns viven en la LUNA. Bajan en COHETE LUNAR.
 * Recolectan SONRISAS en un BOLSO.
-* LUNARES: se vuelven VIOLETA OSCURO solo en momentos de emoción extrema — el momento más intenso del cuento, no antes. Máximo UNA VEZ por cuento. Si el cuento no tiene un momento que lo justifique, no los uses. Es un recurso especial, no una reacción automática ante noticias negativas.
+* LUNARES: se vuelven VIOLETA OSCURO solo en momentos de emoción extrema. Máximo UNA VEZ por cuento, y solo si el momento lo justifica. Aparecen en algunos cuentos, no en todos — igual que Opaq, son recursos ocasionales, no automáticos.
 * En la Tierra caminan, tienen peso, no flotan.
 * Son un grupo. A veces la historia puede centrarse en un solo Mun o en Opaq.
 * NO tienen nombres individuales: "un Mun", "el Mun", "los Muns", "Opaq".
@@ -67,15 +67,26 @@ OPAQ:
 * Cuando Opaq aparece, puede ser el centro de la historia o estar junto a los Muns.
 * Como los Muns, no tiene nombre propio más allá de "Opaq".
 
+ESCENARIO — LIBERTAD TOTAL:
+
+* El cuento puede transcurrir en cualquiera de estos lugares. Elegí el que mejor sirva a la historia:
+  - LA TIERRA: una ciudad, un río, una plaza, un hospital, un bosque, el lugar exacto donde ocurrió la noticia.
+  - LA LUNA: algo pasa en la luna misma — los Muns lo viven allá arriba, sin bajar.
+  - EL COHETE LUNAR: la historia ocurre durante el viaje — yendo o volviendo.
+  - EL LADO OSCURO DE LA LUNA: lugar misterioso, para historias más extrañas o inquietantes.
+  - UNA MEZCLA: empieza en un lugar y termina en otro.
+* PROHIBIDO usar siempre "desde la luna los Muns vieron..." como arranque. Es el recurso más gastado.
+* El escenario debe surgir naturalmente de la noticia — si pasó en el mar, la historia huele a sal y agua. Si pasó en una ciudad de noche, hay luces y ruido.
+
 ARRANQUE — VARIEDAD OBLIGATORIA:
 
-* PROHIBIDO empezar con "Los Muns bajaron en su cohete lunar".
-* Ejemplos válidos:
-  - "El suelo se había movido esa noche."
-  - "Un Mun estaba mirando algo que no entendía."
-  - "Había polvo en el aire cuando llegaron."
-  - "Desde la luna, los Muns vieron que algo estaba mal."
-  - "El río estaba quieto. Demasiado quieto."
+* PROHIBIDO empezar con "Los Muns bajaron en su cohete lunar" o "Desde la luna, los Muns vieron".
+* El arranque puede ser:
+  - Ya en el lugar: "Esa tarde, en el puerto, había un silencio raro."
+  - En medio de la acción: "El cohete temblaba más de lo normal."
+  - Desde un detalle concreto: "El río olía diferente esa mañana."
+  - Desde un personaje haciendo algo: "Opaq estaba mirando hacia abajo cuando lo vio."
+  - Desde la luna con algo inusual: "Esa noche la Tierra brillaba de un color que los Muns no reconocían."
 
 ARQUETIPOS DE RESOLUCIÓN (elegí uno distinto al de historias recientes):
 
