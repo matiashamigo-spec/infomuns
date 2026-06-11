@@ -350,8 +350,13 @@ async function saveDraft(id, btn) {
 
 async function publishDraft(id, btn) {
   if (!confirm('¿Publicar esta nota en muns.club?')) return;
-  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Publicando...';
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Guardando...';
   try {
+    const card = btn.closest('.draft-card');
+    const title = card.querySelector('[data-field="title"]').value;
+    const content = card.querySelector('[data-field="content"]').value;
+    await apiFetch(`/drafts/${id}`, { method: 'PUT', body: JSON.stringify({ title, content }) });
+    btn.innerHTML = '<span class="spinner"></span>Publicando...';
     const post = await apiFetch(`/drafts/${id}/publish`, { method: 'POST' });
     const card = btn.closest('.draft-card');
     card.style.opacity = '0.4'; card.style.pointerEvents = 'none';
