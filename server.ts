@@ -75,6 +75,15 @@ async function startServer() {
 
   app.use(express.json({ limit: "20mb" }));
 
+  // Security headers
+  app.use((_req, res, next) => {
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.setHeader("X-Frame-Options", "DENY");
+    res.setHeader("X-XSS-Protection", "1; mode=block");
+    res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+    next();
+  });
+
   // CORS
   app.use((req, res, next) => {
     const allowed = [
@@ -85,8 +94,8 @@ async function startServer() {
     const origin = req.headers.origin || "";
     if (allowed.includes(origin) || process.env.NODE_ENV !== "production") {
       res.setHeader("Access-Control-Allow-Origin", origin || "*");
-      res.setHeader("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
-      res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+      res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+      res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
     }
     if (req.method === "OPTIONS") return res.sendStatus(204);
     next();
