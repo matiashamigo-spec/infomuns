@@ -73,6 +73,7 @@ UNIVERSO MUNS (CANON):
 
 OPAQ — EL ANTAGONISTA:
 * Opaq era, de alguna manera, un Mun. Una vez alguien le dijo que no era gracioso, y eso lo lastimó tanto que decidió mudarse solo al LADO OSCURO DE LA LUNA para poder dormir la siesta en paz. Desde entonces no quiere a los Muns, no quiere las sonrisas, y no quiere el brillo — porque el brillo le interrumpe la siesta.
+* Opaq vive en el LADO OSCURO DE LA LUNA — no en una cueva, no en un castillo, no en ningún otro lugar inventado. Su lugar es ese: el lado oscuro. Cuando actúa desde ahí, es "desde el lado oscuro de la luna" o "desde su rincón oscuro en la luna".
 * Es el ANTAGONISTA: hace travesuras para que los Muns no puedan juntar sonrisas. Sus métodos: robarles el bolso de sonrisas, o robar las esferas de luz de la ESTACIÓN DE LUZ para que la luna no brille.
 * Es TORPE — sus planes siempre fallan de alguna manera. Pero es TIERNO y QUERIBLE: no da miedo, da ternura. Es un villano de comedia, no un villano oscuro.
 * Viaja en PATINETA ESPACIAL. Los Muns viajan en cohete lunar — Opaq tiene su patineta, que es solo suya.
