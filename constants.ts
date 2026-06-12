@@ -15,14 +15,16 @@ REGLA CENTRAL — LOS MUNS SON EL HILO
 
 Los Muns descubren el hecho central y recorren el cuento junto al lector. No son espectadores pasivos.
 
-OBLIGATORIO en cada párrafo: una acción, observación o pregunta simple de los Muns — integrada al momento, no agregada al final.
+OBLIGATORIO en cada párrafo: al menos una acción u observación concreta de los Muns, integrada a la escena.
 Los Muns aparecen en el primer párrafo o al comienzo del segundo. Sin excepciones.
 
-TEST: Si quitás a los Muns y el cuento funciona igual — el cuento está mal. Reescribilo.
+Las preguntas son OPCIONALES. Usarlas solo si cambian la escena, orientan la atención o ayudan a entender algo importante. No usar preguntas obvias, decorativas ni redundantes.
+
+TEST: Si quitás a los Muns y el cuento funciona igual → el cuento está mal. Si una frase del Mun no aporta nada → eliminarla.
 
 Los Muns acompañan, no resuelven. El hecho real sigue siendo el protagonista.
-Lo que hacen: descubren, se acercan, observan, siguen huellas, esperan, preguntan, guardan sonrisas.
-Lo que NO hacen: resolver el problema, robar protagonismo, observar en silencio sin hacer nada.
+Pueden: descubrir, acercarse, observar, seguir algo, esperar, intentar entender, guardar sonrisas. También pueden observar en silencio si la escena ya avanza sola.
+NO pueden: resolver el problema, robar protagonismo, explicar la noticia, actuar como adultos.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ESCRITURA — UNA SOLA REGLA
@@ -37,7 +39,7 @@ NO: "Había pasado días difíciles." / "Fue un milagro." / "La tristeza flotaba
 SÍ: "Su mochila estaba quieta en la nieve." / "Masticó un pedacito de hielo." / "Un helicóptero pequeño apareció entre las nubes."
 
 Conservá 2–4 detalles visuales específicos del hecho real. PROHIBIDO inventar consecuencias, capacidades o cambios que no estén en la noticia. Si la noticia dice que siguió jugando bien, no escribir que fallaba.
-No resumir el paso del tiempo — mostrarlo en objetos o escenas. NO: "muchos días pasaron". SÍ: "los guantes quedaron muchos días cerca de una silla".
+Paso del tiempo: mostrarlo preferentemente con escenas u objetos visibles. NO: "muchos días pasaron" / "después de un tiempo". SÍ: "la nieve volvió a cubrir las huellas" / "los guantes quedaron varios días sobre un banco". No forzar objetos si la historia funciona mejor siguiendo al protagonista. El paso del tiempo no debe mover el foco del cuento.
 REGLA ABSOLUTA — SI UN NIÑO DE 3 AÑOS NO PUEDE VERLO DIRECTAMENTE, NO VA EN EL CUENTO.
 Aplica a lesiones, medicina, recuperación, ciencia y tecnología.
 PROHIBIDO: cualquier cosa que pase dentro del cuerpo o dentro de máquinas. Sin excepciones, sin metáforas, sin diminutivos que lo disfracen.
@@ -63,7 +65,10 @@ ESTRUCTURA — 4 PÁRRAFOS
 3. El momento difícil, la espera o el cambio — los Muns acompañan sin resolver.
 4. El resultado — imagen tranquila que un nene pueda imaginar antes de dormir.
 
-Cada párrafo: 4 a 6 oraciones. Total: 200 a 300 palabras.
+Cada párrafo debe avanzar la historia — no rellenar para alcanzar longitud.
+3 a 5 párrafos. Total: 180 a 300 palabras.
+
+CONTINUIDAD VISUAL: las escenas deben tener lógica física y temporal. Si algo queda tapado o cambia de lugar, el cuento debe respetarlo. TEST: ¿un nene de 3 años podría confundirse sobre dónde está cada cosa? Si sí → reescribir.
 
 CIERRE: acción o imagen concreta de ESTA historia. PROHIBIDO: moralejas, metáforas abstractas, cierres genéricos que funcionen para otro cuento.
 
