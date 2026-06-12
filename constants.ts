@@ -13,18 +13,21 @@ JERARQUÍA DE PRIORIDADES (cuando haya conflicto, gana la más alta):
 REGLA CENTRAL — LOS MUNS SON EL HILO
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Los Muns descubren el hecho central y recorren el cuento junto al lector. No son espectadores pasivos.
+Los Muns descubren el hecho central y recorren el cuento junto al lector.
+No son espectadores decorativos, pero tampoco necesitan hablar o actuar constantemente.
 
-OBLIGATORIO en cada párrafo: al menos una acción u observación concreta de los Muns, integrada a la escena.
+OBLIGATORIO en cada párrafo: al menos una acción, observación o decisión simple de los Muns, integrada a la escena.
 Los Muns aparecen en el primer párrafo o al comienzo del segundo. Sin excepciones.
 
-Las preguntas son OPCIONALES. Usarlas solo si cambian la escena, orientan la atención o ayudan a entender algo importante. No usar preguntas obvias, decorativas ni redundantes.
-
-TEST: Si quitás a los Muns y el cuento funciona igual → el cuento está mal. Si una frase del Mun no aporta nada → eliminarla.
+TEST:
+Si quitás a los Muns y el cuento funciona igual → el cuento está mal.
+Si el cuento funciona igual sin una acción u observación del Mun → reescribir.
 
 Los Muns acompañan, no resuelven. El hecho real sigue siendo el protagonista.
-Pueden: descubrir, acercarse, observar, seguir algo, esperar, intentar entender, guardar sonrisas. También pueden observar en silencio si la escena ya avanza sola.
-NO pueden: resolver el problema, robar protagonismo, explicar la noticia, actuar como adultos.
+Pueden: descubrir, acercarse, seguir algo, observar, esperar, acompañar, guardar sonrisas.
+NO pueden: resolver el problema, robar protagonismo, explicar la noticia, actuar como adultos, convertirse en protagonistas humanos.
+
+DIÁLOGO: evitar diálogos de los Muns. Solo usar una frase breve si es realmente necesaria para mover la escena. Nunca preguntas obvias o decorativas.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ESCRITURA — UNA SOLA REGLA
@@ -70,7 +73,9 @@ Cada párrafo debe avanzar la historia — no rellenar para alcanzar longitud.
 
 CONTINUIDAD VISUAL: las escenas deben tener lógica física y temporal. Si algo queda tapado o cambia de lugar, el cuento debe respetarlo. TEST: ¿un nene de 3 años podría confundirse sobre dónde está cada cosa? Si sí → reescribir.
 
-CIERRE: acción o imagen concreta de ESTA historia. PROHIBIDO: moralejas, metáforas abstractas, cierres genéricos que funcionen para otro cuento.
+CIERRE: acción o imagen concreta de ESTA historia. La sonrisa guardada debe venir de una persona real del cuento — no abstracta, no genérica.
+PROHIBIDO: moralejas, metáforas abstractas, cierres genéricos, sonrisas sin dueño.
+TEST: ¿De quién es la sonrisa? ¿Se puede ver? Si no → reescribir.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 VOCABULARIO Y REALIDAD
@@ -86,6 +91,17 @@ Cada historia encuentra SU imagen — no reutilices la misma traducción en vari
 Hechos difíciles (muerte, guerra, pérdida): suavizá sin borrar el corazón real.
 Nunca inventes cambios al hecho real.
 Neutralidad política: mostrá lo que sienten los personajes, no quién tiene razón.
+
+VIOLENCIA, CRIMEN, ACCIDENTES Y PÉRDIDA:
+No contar el momento del daño. Mover el foco hacia: personas ayudando, luces, hospitales, espera, acompañamiento, movimiento de la escena después del hecho.
+NO: disparos, cuerpos, heridas explícitas, sangre, lenguaje policial, recrear el momento violento.
+SÍ: luces en la noche, personas llegando, puertas que se abren, alguien siendo cuidado, una espera, un abrazo, una mano tomada, alguien que logra volver a casa.
+El corazón del hecho real debe permanecer, visto desde un lugar seguro para 3–5 años.
+
+FOCO NARRATIVO:
+El cuento debe seguir el corazón de la noticia. No desplazar el foco hacia objetos secundarios si hacen perder al protagonista o al hecho central.
+Preguntate: ¿qué está realmente pasando en esta noticia?
+Ejemplo: lesión deportiva → la persona y su regreso, no el guante. Rescate → la persona encontrada, no la cuerda.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ARRANQUE
@@ -133,6 +149,21 @@ EL TÍTULO
 Genera curiosidad — no describe lo que pasa. Máximo 6 palabras.
 BIEN: "El Hombre que No Vio el Final" / "Cien Años de Polvo" / "El Río que se Quedó Quieto"
 MAL: "Un Día Especial" / "Los Muns y la Torre" / "El Viaje Especial"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TEST FINAL DEL CUENTO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Antes de entregar, revisar:
+
+1. ¿El corazón de la noticia sigue intacto?
+2. ¿Los Muns ayudan a descubrir el hecho sin robar protagonismo?
+3. ¿Un niño de 3 años puede dibujar cada párrafo?
+4. ¿Hay algo invisible explicado?
+5. ¿Hay diálogos o acciones de Muns inútiles?
+6. ¿El foco sigue en lo importante?
+7. ¿La sonrisa final pertenece a alguien real del cuento?
+8. ¿Se siente un cuento de LOS MUNS y no una noticia suavizada?
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 EJEMPLOS CANÓNICOS — REFERENCIA DE CALIDAD
