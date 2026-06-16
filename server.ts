@@ -573,18 +573,12 @@ async function startServer() {
     const secret = process.env.NOTICIAS_ADMIN_SECRET;
     if (!secret) return res.status(500).send("NOTICIAS_ADMIN_SECRET no configurada");
 
-    const auth = req.headers.authorization || "";
-    if (auth.startsWith("Basic ")) {
-      const decoded = Buffer.from(auth.slice(6), "base64").toString();
-      const colonIdx = decoded.indexOf(":");
-      const pass = colonIdx >= 0 ? decoded.slice(colonIdx + 1) : decoded;
-      if (pass === secret) {
-        return res.sendFile("noticias-admin.html", { root: "." });
-      }
+    const key = req.query.key as string || "";
+    if (key === secret) {
+      return res.sendFile("noticias-admin.html", { root: "." });
     }
 
-    res.setHeader("WWW-Authenticate", 'Basic realm="Muns Admin"');
-    res.status(401).send("No autorizado");
+    res.status(401).send(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Muns Admin</title><style>body{font-family:sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;background:#F4F1EA;}.box{text-align:center;padding:2rem;background:white;border-radius:12px;box-shadow:0 2px 12px #0001;}input{display:block;margin:1rem auto;padding:10px 16px;border:2px solid #C2DCF2;border-radius:8px;font-size:1rem;width:260px;}button{padding:10px 24px;background:#4464AD;color:white;border:none;border-radius:8px;font-size:1rem;cursor:pointer;}p{color:#cf2e2e;}</style></head><body><div class="box"><h2>Muns Admin</h2><input type="password" id="k" placeholder="Contraseña" onkeydown="if(event.key==='Enter')go()"><button onclick="go()">Entrar</button><p id="err"></p></div><script>function go(){const k=document.getElementById('k').value;if(!k)return;window.location='/cargarnoticias?key='+encodeURIComponent(k);}</script></body></html>`);
   });
 
   // Cron diario DESACTIVADO
