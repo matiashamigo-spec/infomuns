@@ -563,9 +563,28 @@ async function startServer() {
   // ── Noticias Muns ─────────────────────────────────────────────────────────
   app.use("/api/noticias", createNoticiasRouter());
 
-  // Panel admin — servido ANTES del catch-all del frontend
+  // Panel admin — protegido con HTTP Basic Auth, servido ANTES del catch-all del frontend
+  // /noticias-admin redirige a /cargarnoticias para no exponer la URL vieja
   app.get("/noticias-admin", (req, res) => {
-    res.sendFile("noticias-admin.html", { root: "." });
+    res.redirect(301, "/cargarnoticias");
+  });
+
+  app.get("/cargarnoticias", (req, res) => {
+    const secret = process.env.NOTICIAS_ADMIN_SECRET;
+    if (!secret) return res.status(500).send("NOTICIAS_ADMIN_SECRET no configurada");
+
+    const auth = req.headers.authorization || "";
+    if (auth.startsWith("Basic ")) {
+      const decoded = Buffer.from(auth.slice(6), "base64").toString();
+      const colonIdx = decoded.indexOf(":");
+      const pass = colonIdx >= 0 ? decoded.slice(colonIdx + 1) : decoded;
+      if (pass === secret) {
+        return res.sendFile("noticias-admin.html", { root: "." });
+      }
+    }
+
+    res.setHeader("WWW-Authenticate", 'Basic realm="Muns Admin"');
+    res.status(401).send("No autorizado");
   });
 
   // Cron diario DESACTIVADO
