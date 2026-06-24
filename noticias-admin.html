@@ -425,10 +425,16 @@ async function loadPublished() {
 async function savePublished(id, btn) {
   const card = btn.closest('.draft-card');
   const title = card.querySelector('[data-field="title"]').value;
-  const content = card.querySelector('[data-field="content"]').value;
+  const contentField = card.querySelector('[data-field="content"]');
+  const contextField = card.querySelector('[data-field="context"]');
+  const context = contextField.value.trim();
+  const content = context
+    ? contentField.value + `\n<p><em>${context}</em></p>`
+    : contentField.value;
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Guardando...';
   try {
     await apiFetch(`/published/${id}`, { method: 'PUT', body: JSON.stringify({ title, content }) });
+    if (context) { contextField.value = ''; contentField.value = content; }
     btn.textContent = '✓ Guardado';
     setTimeout(() => { btn.textContent = 'Guardar'; btn.disabled = false; }, 2000);
     setStatus('Guardado correctamente', 'success');
