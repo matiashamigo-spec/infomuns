@@ -353,10 +353,16 @@ async function loadDrafts() {
 async function saveDraft(id, btn) {
   const card = btn.closest('.draft-card');
   const title = card.querySelector('[data-field="title"]').value;
-  const content = card.querySelector('[data-field="content"]').value;
+  const contentField = card.querySelector('[data-field="content"]');
+  const contextField = card.querySelector('[data-field="context"]');
+  const context = contextField.value.trim();
+  const content = context
+    ? contentField.value + `\n<p><em>${context}</em></p>`
+    : contentField.value;
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Guardando...';
   try {
     await apiFetch(`/drafts/${id}`, { method: 'PUT', body: JSON.stringify({ title, content }) });
+    if (context) { contextField.value = ''; contentField.value = content; }
     btn.textContent = '✓ Guardado';
     setTimeout(() => { btn.textContent = 'Guardar'; btn.disabled = false; }, 2000);
     setStatus('Guardado correctamente', 'success');
@@ -372,7 +378,12 @@ async function publishDraft(id, btn) {
   try {
     const card = btn.closest('.draft-card');
     const title = card.querySelector('[data-field="title"]').value;
-    const content = card.querySelector('[data-field="content"]').value;
+    const contentField = card.querySelector('[data-field="content"]');
+    const contextField = card.querySelector('[data-field="context"]');
+    const context = contextField.value.trim();
+    const content = context
+      ? contentField.value + `\n<p><em>${context}</em></p>`
+      : contentField.value;
     await apiFetch(`/drafts/${id}`, { method: 'PUT', body: JSON.stringify({ title, content }) });
     btn.innerHTML = '<span class="spinner"></span>Publicando...';
     const post = await apiFetch(`/drafts/${id}/publish`, { method: 'POST' });
@@ -536,6 +547,7 @@ function renderCards(posts, gridId, emptyId, type) {
       <div class="card-body">
         <textarea class="card-title-input" rows="2" data-field="title">${escapeHtml(post.title)}</textarea>
         <textarea class="card-content-textarea" data-field="content">${escapeHtml(cleanContent)}</textarea>
+        <textarea class="card-content-textarea" data-field="context" placeholder="Contexto opcional: explicá la noticia y qué tema busca trabajar el cuento (se agrega al pie al guardar)." style="min-height:50px; margin-top:6px; font-size:0.8rem; color:#888;"></textarea>
         <div class="card-meta">📅 ${new Date(post.date).toLocaleDateString('es-AR')}</div>
         ${linkHtml}
         <div class="card-actions">${actionsHtml}</div>
