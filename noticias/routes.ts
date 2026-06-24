@@ -70,14 +70,14 @@ export function createNoticiasRouter(): Router {
 
   // POST /api/noticias/from-url — procesa una URL manual y crea un borrador
   router.post("/from-url", requireAdmin, async (req: Request, res: Response) => {
-    const { url } = req.body;
+    const { url, context } = req.body;
     if (!url || typeof url !== "string") return res.status(400).json({ error: "Se requiere una URL válida" });
     if (!isSafeUrl(url)) return res.status(400).json({ error: "URL no permitida" });
     try {
       const apiKey = process.env.GEMINI_API_KEY;
       if (!apiKey) return res.status(500).json({ error: "GEMINI_API_KEY no configurada" });
       console.log(`[noticias] Procesando URL manual: ${url}`);
-      const draft = await processSingleUrl(url, apiKey);
+      const draft = await processSingleUrl(url, apiKey, context);
       res.json({ ok: true, draft });
     } catch (err: any) {
       res.status(500).json({ error: safeError(err) });

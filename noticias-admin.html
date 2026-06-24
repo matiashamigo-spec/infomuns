@@ -194,12 +194,18 @@
   </header>
 
   <!-- Cargar URL manual -->
-  <div id="url-section" style="display:flex; gap:10px; align-items:center; padding:12px 24px; background:#EDE6D4; border-bottom:1px solid #C2DCF2;">
-    <input id="url-input" type="url" placeholder="Pegá la URL de la noticia que querés publicar..."
-      style="flex:1; padding:10px 14px; border:2px solid #C2DCF2; border-radius:8px; font-size:0.9rem; outline:none; font-family:inherit; background:white; color:#4464AD;"
+  <div id="url-section" style="display:flex; flex-direction:column; gap:8px; padding:12px 24px; background:#EDE6D4; border-bottom:1px solid #C2DCF2;">
+    <div style="display:flex; gap:10px; align-items:center;">
+      <input id="url-input" type="url" placeholder="Pegá la URL de la noticia que querés publicar..."
+        style="flex:1; padding:10px 14px; border:2px solid #C2DCF2; border-radius:8px; font-size:0.9rem; outline:none; font-family:inherit; background:white; color:#4464AD;"
+        onfocus="this.style.borderColor='#4464AD'" onblur="this.style.borderColor='#C2DCF2'"
+      />
+      <button class="btn btn-publish" id="url-btn" onclick="processUrl()">📰 Procesar URL</button>
+    </div>
+    <textarea id="url-context" placeholder="Contexto opcional: explicá brevemente la noticia y qué tema busca trabajar el cuento (aparece al pie del borrador)."
+      style="width:100%; padding:10px 14px; border:2px solid #C2DCF2; border-radius:8px; font-size:0.85rem; outline:none; font-family:inherit; background:white; color:#4464AD; resize:vertical; min-height:60px; box-sizing:border-box;"
       onfocus="this.style.borderColor='#4464AD'" onblur="this.style.borderColor='#C2DCF2'"
-    />
-    <button class="btn btn-publish" id="url-btn" onclick="processUrl()">📰 Procesar URL</button>
+    ></textarea>
   </div>
 
   <!-- Cargar cuento manual -->
@@ -703,8 +709,11 @@ async function processUrl() {
   setStatus('Procesando la noticia... puede tardar 30-60 segundos.');
 
   try {
-    const result = await apiFetch('/from-url', { method: 'POST', body: JSON.stringify({ url }) });
+    const contextInput = document.getElementById('url-context');
+    const context = contextInput.value.trim() || undefined;
+    const result = await apiFetch('/from-url', { method: 'POST', body: JSON.stringify({ url, context }) });
     input.value = '';
+    contextInput.value = '';
     btn.textContent = '✓ Listo';
     setStatus(`✓ Borrador creado: "${result.draft.title}"`, 'success');
     setTimeout(() => { btn.textContent = '📰 Procesar URL'; btn.disabled = false; }, 2000);

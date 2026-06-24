@@ -216,7 +216,7 @@ export interface PipelineResult {
   errors: string[];
 }
 
-export async function processSingleUrl(url: string, apiKey: string): Promise<{ id: number; title: string }> {
+export async function processSingleUrl(url: string, apiKey: string, context?: string): Promise<{ id: number; title: string }> {
   console.log(`[pipeline] Procesando URL manual: ${url}`);
 
   // 1. Scrapear el artículo
@@ -261,8 +261,11 @@ export async function processSingleUrl(url: string, apiKey: string): Promise<{ i
   const sourceImageComment = imageUrl ? `<!-- source-image: ${imageUrl} -->\n` : "";
   const extraMediaComment = "";
   const cleanStory = story.toUpperCase().replace(/«/g, '"').replace(/»/g, '"');
+  const contextBlock = context?.trim()
+    ? `\n<p><em>${context.trim()}</em></p>`
+    : "";
   const content = `${sourceImageComment}${extraMediaComment}<p>${cleanStory.replace(/\n/g, "</p><p>")}</p>
-<p><small>Fuente original (<a href="${url}" target="_blank" rel="noopener">${siteName}</a>): ${url}</small></p>`;
+<p><small>Fuente original (<a href="${url}" target="_blank" rel="noopener">${siteName}</a>): ${url}</small></p>${contextBlock}`;
 
   const draft = await createDraft(title, content, mediaId);
   console.log(`[pipeline] ✓ Borrador manual creado: "${title}"`);
