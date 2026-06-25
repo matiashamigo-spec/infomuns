@@ -337,6 +337,15 @@ async function apiFetch(path, opts = {}) {
   return res.json();
 }
 
+function contextToHtml(context) {
+  return context
+    .split(/\n\n+/)
+    .map(p => p.replace(/\n/g, ' ').trim())
+    .filter(Boolean)
+    .map(p => `<p><em>${p}</em></p>`)
+    .join('\n');
+}
+
 // ── BORRADORES ──
 
 async function loadDrafts() {
@@ -357,7 +366,7 @@ async function saveDraft(id, btn) {
   const contextField = card.querySelector('[data-field="context"]');
   const context = contextField.value.trim();
   const content = context
-    ? contentField.value + `\n<p><em>${context}</em></p>`
+    ? contentField.value + '\n' + contextToHtml(context)
     : contentField.value;
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Guardando...';
   try {
@@ -382,7 +391,7 @@ async function publishDraft(id, btn) {
     const contextField = card.querySelector('[data-field="context"]');
     const context = contextField.value.trim();
     const content = context
-      ? contentField.value + `\n<p><em>${context}</em></p>`
+      ? contentField.value + '\n' + contextToHtml(context)
       : contentField.value;
     await apiFetch(`/drafts/${id}`, { method: 'PUT', body: JSON.stringify({ title, content }) });
     btn.innerHTML = '<span class="spinner"></span>Publicando...';
@@ -429,7 +438,7 @@ async function savePublished(id, btn) {
   const contextField = card.querySelector('[data-field="context"]');
   const context = contextField.value.trim();
   const content = context
-    ? contentField.value + `\n<p><em>${context}</em></p>`
+    ? contentField.value + '\n' + contextToHtml(context)
     : contentField.value;
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Guardando...';
   try {
