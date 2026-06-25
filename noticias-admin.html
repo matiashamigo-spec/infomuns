@@ -536,7 +536,13 @@ function renderCards(posts, gridId, emptyId, type) {
     card.className = 'draft-card';
     card.dataset.id = post.id;
 
-    const cleanContent = stripHtml(post.content);
+    const contextBlocks = [];
+    const contentWithoutContext = post.content.replace(/<p><em>([\s\S]*?)<\/em><\/p>/gi, (_, text) => {
+      contextBlocks.push(text.trim());
+      return '';
+    });
+    const cleanContent = stripHtml(contentWithoutContext).trim();
+    const existingContext = contextBlocks.join('\n\n');
     const imageHtml = post.featuredMediaUrl
       ? `<img class="card-image" src="${post.featuredMediaUrl}" alt="" loading="lazy" />`
       : `<div class="card-image-placeholder">🌙</div>`;
@@ -562,7 +568,7 @@ function renderCards(posts, gridId, emptyId, type) {
       <div class="card-body">
         <textarea class="card-title-input" rows="2" data-field="title">${escapeHtml(post.title)}</textarea>
         <textarea class="card-content-textarea" data-field="content">${escapeHtml(cleanContent)}</textarea>
-        <textarea class="card-content-textarea" data-field="context" placeholder="Contexto opcional: explicá la noticia y qué tema busca trabajar el cuento (se agrega al pie al guardar)." style="min-height:50px; margin-top:6px; font-size:0.8rem; color:#888;"></textarea>
+        <textarea class="card-content-textarea" data-field="context" placeholder="Contexto opcional: explicá la noticia y qué tema busca trabajar el cuento (se agrega al pie al guardar)." style="min-height:50px; margin-top:6px; font-size:0.8rem; color:#888;">${escapeHtml(existingContext)}</textarea>
         <div class="card-meta">📅 ${new Date(post.date).toLocaleDateString('es-AR')}</div>
         ${linkHtml}
         <div class="card-actions">${actionsHtml}</div>
