@@ -75,6 +75,14 @@ async function startServer() {
 
   app.use(express.json({ limit: "20mb" }));
 
+  // Security headers
+  app.use((_req, res, next) => {
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.setHeader("X-XSS-Protection", "1; mode=block");
+    res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+    next();
+  });
+
   // CORS
   app.use((req, res, next) => {
     const allowed = [
@@ -85,8 +93,8 @@ async function startServer() {
     const origin = req.headers.origin || "";
     if (allowed.includes(origin) || process.env.NODE_ENV !== "production") {
       res.setHeader("Access-Control-Allow-Origin", origin || "*");
-      res.setHeader("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
-      res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+      res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+      res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
     }
     if (req.method === "OPTIONS") return res.sendStatus(204);
     next();
@@ -210,7 +218,8 @@ async function startServer() {
         model: "gemini-2.5-flash",
         contents: `Crea una historia simbólica para niños basada en esta noticia: "${newsText}".
       REGLA DE ORO: Si hay una muerte o pérdida en la noticia, respeta la realidad del hecho. No digas que el personaje sigue ahí. Usa una metáfora de partida definitiva y honesta, pero con la suavidad de los Muns.
-      Sigue la estructura Pixar (Emoción, Grieta, Elección con costo, Consecuencia parcial).`,
+      Sigue la estructura Pixar (Emoción, Grieta, Elección con costo, Consecuencia parcial).
+      PROHIBIDO usar "luz" como símbolo principal del cuento. Elegí otro símbolo (el bolso de sonrisas, el cohete, el viento, semillas, huellas, colores, objetos pequeños, etc.).`,
         config: {
           systemInstruction: MUNS_SYSTEM_INSTRUCTION,
           temperature: 0.8,
@@ -257,7 +266,7 @@ async function startServer() {
         contents: [{
           parts: [
             { inlineData: { data: imageBase64, mimeType: imageMime } },
-            { text: "Analice la imagen con suma atención. Responda únicamente con una de estas categorías:\n- 'MULTIPLE_PEOPLE' si se observan dos o más personas.\n- 'HUG_TWO' si hay una sola persona con los brazos extendidos para un abrazo.\n- 'TONGUE_OUT' si hay una sola persona con la lengua fuera.\n- 'SAD' si hay una sola persona con expresión de angustia o tristeza.\n- 'HAPPY_NEUTRAL' en cualquier otro caso." }
+            { text: "Analice la imagen con suma atención. Responda únicamente con una de estas categorías:\n- 'MULTIPLE_PEOPLE' si se observan dos o más personas.\n- 'HUG_TWO' si hay una sola persona con los brazos extendidos para un abrazo.\n- 'TONGUE_OUT' si hay una sola persona sacando la lengua.\n- 'SAD' si hay una sola persona con expresión negativa: tristeza, llanto, angustia, enojo, bronca, frustración, miedo o decepción.\n- 'HAPPY_NEUTRAL' en cualquier otro caso (feliz, neutral, sonriendo, pensativo, etc.)." }
           ]
         }],
         generationConfig: { responseMimeType: "text/plain" }
@@ -281,7 +290,7 @@ async function startServer() {
         SAD:             { useMun: false, useOpaq: true  },
         HUG_TWO:         { useMun: true,  useOpaq: false },
         TONGUE_OUT:      { useMun: true,  useOpaq: true  },
-        MULTIPLE_PEOPLE: { useMun: true,  useOpaq: false }
+        MULTIPLE_PEOPLE: { useMun: true,  useOpaq: true  }
       };
 
       const cfg = EMOTION_ACTIONS[emotion] || EMOTION_ACTIONS.HAPPY_NEUTRAL;
@@ -291,7 +300,7 @@ async function startServer() {
       if (emotion === "TONGUE_OUT") {
         specificAction = "La persona realiza un gesto ameno sacando la lengua. Mun y Opaq se posicionan de forma juguetona junto a ella; uno puede estar asomándose y el otro intentando subirse 'a cocochito' (piggyback) o apoyándose en su hombro de forma cariñosa.";
       } else if (emotion === "MULTIPLE_PEOPLE") {
-        specificAction = "Se observa un grupo de personas. Mun se integra de forma natural, quizás apoyándose suavemente en el hombro de alguien o asomándose desde atrás con mucha confianza y afecto.";
+        specificAction = "Se observa un grupo de personas. Mun se integra de forma natural asomándose entre la gente o apoyándose en el hombro de alguien. Opaq aparece del otro lado del grupo, también integrado naturalmente, abrazando o asomándose junto a otra persona. Ambos están presentes en la foto, uno a cada lado o entre las personas del grupo.";
       } else if (emotion === "HUG_TWO") {
         specificAction = "La persona ofrece un abrazo. Mun responde de forma activa: puede estar abrazando a la persona, apoyando su cabeza en su hombro o intentando trepar suavemente para un abrazo más cercano.";
       } else if (emotion === "SAD") {
@@ -316,6 +325,7 @@ async function startServer() {
         "4. LA FOTO ORIGINAL ES SAGRADA — PROHIBIDO INVENTAR CONTENIDO: Cada píxel de la fotografía original (personas, ropa, fondo, objetos, iluminación) debe quedar IDÉNTICO. Está terminantemente prohibido: agregar personas, modificar personas existentes, cambiar ropa, extender extremidades humanas, alterar el fondo, cambiar colores, o generar cualquier contenido nuevo que no sea el personaje animado. La foto no se recorta ni se reencuadra. Solo se añade el personaje animado.\n\n" +
         "5. CUERPO ÍNTEGRO Y CONECTADO: El personaje es un cuerpo único. Cada brazo nace del hombro y termina en una mano. Cada pierna nace de la cadera y termina en un pie. NINGUNA parte del cuerpo puede aparecer flotando, separada, ni superpuesta sobre otra parte del propio cuerpo. Una mano no puede aparecer por encima del torso ni del hombro. Si un brazo abraza, nace del hombro y rodea hacia afuera — nunca cruza por encima de la cabeza ni del propio cuerpo del personaje. Exactamente 2 brazos y 2 piernas, siempre.\n\n" +
         "ACCIÓN: " + specificAction + "\n\n" +
+        "ADAPTACIÓN FÍSICA AL ENTORNO (CRÍTICO): El personaje SIEMPRE debe adaptarse a la posición y postura real de las personas en la foto. Si están sentadas, el personaje se apoya a la altura del hombro o sobre su regazo. Si están paradas, se ubica junto a sus pies, sube al hombro o se asoma a su lado. Si están agachadas o en el piso, el personaje está a su nivel. El personaje nunca flota en el aire ni aparece desconectado de la escena — siempre hay contacto físico o proximidad natural con alguna persona u objeto de la foto.\n\n" +
         "RESULTADO: La foto original sin ninguna modificación, con un pequeño personaje animado integrado naturalmente junto a la persona.";
 
       const composeParts: any[] = [
@@ -445,7 +455,7 @@ async function startServer() {
     if (/youtube\.com|youtu\.be/.test(url)) return 'youtube';
     if (/tiktok\.com/.test(url)) return 'tiktok';
     if (/drive\.google\.com/.test(url)) return 'drive';
-    if (/open\.spotify\.com/.test(url)) return 'spotify';
+    if (/spotify\.com|spotifycreators-web\.app\.link/.test(url)) return 'spotify';
     return 'image';
   }
 
@@ -455,7 +465,7 @@ async function startServer() {
   // CORS abierto para ScanMuns (datos públicos)
   app.use(['/api/scanmuns', '/minds', '/images'], (req: any, res: any, next: any) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
     if (req.method === 'OPTIONS') return res.sendStatus(204);
     next();
@@ -521,6 +531,23 @@ async function startServer() {
     res.json(readCards());
   });
 
+  // Actualizar overlayUrl/name/aspectRatio de una card sin subir archivos
+  app.patch('/api/scanmuns/card/:slug', (req: any, res: any) => {
+    const cards = readCards();
+    const idx = cards.findIndex(c => c.slug === req.params.slug);
+    if (idx < 0) return res.status(404).json({ error: 'Card no encontrada' });
+    const { overlayUrl, name, aspectRatio } = req.body;
+    if (overlayUrl) {
+      cards[idx].overlayUrl = overlayUrl;
+      cards[idx].overlayType = detectOverlayType(overlayUrl);
+    }
+    if (name) cards[idx].name = name;
+    if (aspectRatio) cards[idx].aspectRatio = aspectRatio;
+    cards[idx].updatedAt = new Date().toISOString();
+    saveCards(cards);
+    res.json({ success: true, card: cards[idx] });
+  });
+
   // Eliminar una card (el cliente debe recompilar y subir nuevo combined.mind)
   app.delete('/api/scanmuns/card/:slug', (req: any, res: any) => {
     const cards = readCards();
@@ -536,12 +563,26 @@ async function startServer() {
   // ── Noticias Muns ─────────────────────────────────────────────────────────
   app.use("/api/noticias", createNoticiasRouter());
 
-  // Panel admin — servido ANTES del catch-all del frontend
+  // Panel admin — protegido con HTTP Basic Auth, servido ANTES del catch-all del frontend
+  // /noticias-admin redirige a /cargarnoticias para no exponer la URL vieja
   app.get("/noticias-admin", (req, res) => {
-    res.sendFile("noticias-admin.html", { root: "." });
+    res.redirect(301, "/cargarnoticias");
   });
 
-  // Cron diario: 8am hora Argentina (UTC-3) = 11:00 UTC
+  app.get("/cargarnoticias", (req, res) => {
+    const secret = process.env.NOTICIAS_ADMIN_SECRET;
+    if (!secret) return res.status(500).send("NOTICIAS_ADMIN_SECRET no configurada");
+
+    const key = req.query.key as string || "";
+    if (key === secret) {
+      return res.sendFile("noticias-admin.html", { root: "." });
+    }
+
+    res.status(401).send(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Muns Admin</title><style>body{font-family:sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;background:#F4F1EA;}.box{text-align:center;padding:2rem;background:white;border-radius:12px;box-shadow:0 2px 12px #0001;}input{display:block;margin:1rem auto;padding:10px 16px;border:2px solid #C2DCF2;border-radius:8px;font-size:1rem;width:260px;}button{padding:10px 24px;background:#4464AD;color:white;border:none;border-radius:8px;font-size:1rem;cursor:pointer;}p{color:#cf2e2e;}</style></head><body><div class="box"><h2>Muns Admin</h2><input type="password" id="k" placeholder="Contraseña" onkeydown="if(event.key==='Enter')go()"><button onclick="go()">Entrar</button><p id="err"></p></div><script>function go(){const k=document.getElementById('k').value;if(!k)return;window.location='/cargarnoticias?key='+encodeURIComponent(k);}</script></body></html>`);
+  });
+
+  // Cron diario DESACTIVADO
+  /* // Cron diario: 8am hora Argentina (UTC-3) = 11:00 UTC
   cron.schedule("0 11 * * *", async () => {
     console.log("[cron] Iniciando pipeline diario de noticias...");
     try {
@@ -549,7 +590,7 @@ async function startServer() {
     } catch (err: any) {
       console.error("[cron] Error en pipeline diario:", err.message);
     }
-  }, { timezone: "America/Argentina/Buenos_Aires" });
+  }, { timezone: "America/Argentina/Buenos_Aires" }); */
 
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {

@@ -47,6 +47,9 @@ export async function uploadMedia(imageDataUrl: string, filename: string): Promi
   }
 }
 
+// Neutraliza el drop cap que aplica el tema de WordPress al primer párrafo
+const DROP_CAP_RESET = `<style>.entry-content p:first-of-type::first-letter,.post-content p:first-of-type::first-letter{font-size:inherit!important;float:none!important;color:inherit!important;font-weight:inherit!important;line-height:inherit!important;margin:0!important;padding:0!important;text-transform:none!important}.entry-content p:first-of-type::first-line,.post-content p:first-of-type::first-line{text-transform:none!important;font-variant:normal!important;font-weight:inherit!important;color:inherit!important}</style>`;
+
 // Crea un post como borrador
 export async function createDraft(
   title: string,
@@ -56,7 +59,7 @@ export async function createDraft(
   const { url, key } = getWpConfig();
   const res = await axios.post(
     `${BASE(url)}/drafts`,
-    { title, content, featured_media: featuredMediaId },
+    { title, content: DROP_CAP_RESET + content, featured_media: featuredMediaId },
     { headers: { "X-Noticias-Key": key } }
   );
   return res.data;

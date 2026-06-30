@@ -6,9 +6,10 @@ import fs from "fs";
 import path from "path";
 import { GoogleGenAI, Type } from "@google/genai";
 import { fetchAllFeeds, findTopStories } from "./rss.js";
-import { illustrateImage, generateIllustrationFromText } from "./illustration.js";
+import { illustrateImage, generateIllustrationFromText, generateSingleIllustration } from "./illustration.js";
 import { createDraft, uploadMedia } from "./wordpress.js";
 import { MUNS_SYSTEM_INSTRUCTION } from "../constants.js";
+import { getRecentPatternsPrompt, saveStoryToMemory } from "./story-memory.js";
 
 const DATA_DIR = process.env.RAILWAY_VOLUME_MOUNT_PATH || process.env.DATA_DIR || path.join(process.cwd(), "data");
 const PROCESSED_FILE = path.join(DATA_DIR, "processed-urls.json");
@@ -35,6 +36,8 @@ function saveProcessedUrl(url: string, processed: Set<string>): void {
   }
 }
 
+type NewsTone = "positive" | "concerning" | "negative";
+
 export async function classifyTone(newsText: string, apiKey: string): Promise<NewsTone> {
   try {
     const ai = new GoogleGenAI({ apiKey });
@@ -53,24 +56,135 @@ Reply with only one of these three words, nothing else.`,
   }
 }
 
-async function generateMunsStory(newsText: string, apiKey: string): Promise<{ title: string; story: string }> {
+interface NewsAnalysis {
+  what: string;
+  heart: string;
+  visual_anchor: string;
+  story_type: string;
+  human_choice: "daño" | "bien" | "ninguna" | "político";
+  core_emotion: string;
+  has_resolution: boolean;
+  hopeful_actor: string;
+}
+
+async function analyzeNews(newsText: string, apiKey: string): Promise<NewsAnalysis> {
   const ai = new GoogleGenAI({ apiKey });
   const response = await ai.models.generateContent({
     model: "gemini-2.5-flash",
-    contents: `Crea una historia simbólica para niños basada en esta noticia: "${newsText}".
-REGLA DE ORO: Si hay una muerte o pérdida en la noticia, respeta la realidad del hecho. No digas que el personaje sigue ahí. Usa una metáfora de partida definitiva y honesta, pero con la suavidad de los Muns.
-Sigue la estructura Pixar (Emoción, Grieta, Elección con costo, Consecuencia parcial).`,
+    contents: `Analizá esta noticia para preparar un cuento infantil. Respondé en JSON.
+
+Noticia: "${newsText.substring(0, 4000)}"
+
+Respondé:
+- what: qué pasó en UNA oración simple (para un adulto que va a escribir un cuento para niños)
+- heart: el dato más sorprendente, emotivo o humano de esta noticia — el que, si lo sacás, la historia pierde su razón de ser. Una oración. Ej: "El arquitecto murió atropellado como un indigente 100 años antes de que su obra se terminara." Si la noticia no tiene un dato así, describí la tensión emocional central.
+- visual_anchor: la imagen más concreta y física de esta noticia — un objeto, un gesto, un lugar específico, una acción que ocurrió. NO una emoción, NO un concepto, NO una atmósfera. Algo que se puede VER o TOCAR. Ej: "una tiza dibujando una línea en una pizarra de jardín", "un bote de goma con 40 personas aferradas a los costados", "una pila de papeles sin firmar en una mesa vacía". Una frase corta.
+- story_type: qué tipo de situación narrativa es esta — en UNA o DOS palabras que describan la estructura de la historia, no el tema. Ej: "espera larga", "acuerdo difícil", "pérdida irreversible", "descubrimiento tardío", "gesto pequeño enorme", "alguien eligió el daño", "algo que nadie vio venir", "el que estaba solo encontró ayuda".
+- human_choice: ¿cuál es la naturaleza del hecho? "daño" solo si hay una acción claramente dañina y no debatible (violencia, abuso, crimen). "bien" solo si hay un gesto claramente positivo y no debatible (rescate, donación, cuidado). "político" si involucra gobiernos, partidos, políticas públicas, movimientos sociales o cualquier tema donde distintas personas pueden tener opiniones legítimas distintas. "ninguna" si fue natural, accidental o estructural sin actor claro.
+- core_emotion: cuál es la emoción principal que un nene de 5 años sentiría al escuchar esto (una sola palabra: tristeza, bronca, miedo, alegría, orgullo, confusión, ternura, alivio)
+- has_resolution: true si el hecho ya tiene un final definitivo, false si la situación sigue abierta
+- hopeful_actor: si hay alguien que denunció, ayudó, cuidó o habló en esta noticia, describilo en una frase. Si no hay nadie así, dejalo vacío.`,
+    config: {
+      temperature: 0.2,
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          what: { type: Type.STRING },
+          heart: { type: Type.STRING },
+          visual_anchor: { type: Type.STRING },
+          story_type: { type: Type.STRING },
+          human_choice: { type: Type.STRING },
+          core_emotion: { type: Type.STRING },
+          has_resolution: { type: Type.BOOLEAN },
+          hopeful_actor: { type: Type.STRING },
+        },
+        required: ["what", "heart", "visual_anchor", "story_type", "human_choice", "core_emotion", "has_resolution", "hopeful_actor"],
+      },
+    },
+  });
+
+  const text = response.text;
+  if (!text) throw new Error("Gemini no devolvió análisis");
+  const start = text.indexOf("{");
+  const end = text.lastIndexOf("}");
+  const json = start !== -1 && end > start ? text.substring(start, end + 1) : text;
+  return JSON.parse(json);
+}
+
+async function generateMunsStory(newsText: string, apiKey: string): Promise<{ title: string; story: string }> {
+  const ai = new GoogleGenAI({ apiKey });
+
+  // Paso 1: analizar la noticia
+  const analysis = await analyzeNews(newsText, apiKey);
+  console.log(`[pipeline] Análisis: ${JSON.stringify(analysis)}`);
+
+  // Paso 2: construir contexto para el cuento
+  const recentPatterns = getRecentPatternsPrompt();
+  const choiceContext = analysis.human_choice === "daño"
+    ? `IMPORTANTE: En esta noticia alguien eligió hacer daño. El cuento debe reflejar que existió esa elección — sin nombrar al culpable, pero sin borrarlo. "Alguien decidió" es distinto a "algo pasó solo".`
+    : analysis.human_choice === "bien"
+    ? `IMPORTANTE: En esta noticia alguien eligió hacer algo bueno (ayudar, cuidar, hablar). Ese gesto es el momento clave del cuento.`
+    : analysis.human_choice === "político"
+    ? `IMPORTANTE: Esta noticia involucra un tema político o social donde distintas personas pueden tener opiniones legítimas distintas. El cuento NO toma partido. Muestra lo que sienten los personajes, no quién tiene razón. Ningún bando es el malo ni el bueno.`
+    : "";
+
+  const hopefulContext = analysis.hopeful_actor
+    ? `ACTOR ESPERANZADOR: ${analysis.hopeful_actor}. Incluirlo en el cuento como el gesto que vale.`
+    : "";
+
+  const endingContext = analysis.has_resolution
+    ? `FINAL CERRADO: lo que pasó ya terminó. El cuento también debe tener final cerrado.`
+    : `FINAL ABIERTO: la situación sigue sin resolverse. El cuento puede terminar con algo pendiente.`;
+
+  const contents = `NOTICIA ORIGINAL (leé todo — los detalles concretos, objetos, lugares y nombres están acá):
+---
+${newsText.substring(0, 5000)}
+---
+
+ANÁLISIS (usalo como guía, no como reemplazo del texto original):
+TIPO DE SITUACIÓN: ${analysis.story_type}
+IMAGEN CONCRETA DE ESTA HISTORIA: ${analysis.visual_anchor}
+LO QUE PASÓ: ${analysis.what}
+EL CORAZÓN (OBLIGATORIO — si no está, el cuento no tiene razón de ser): ${analysis.heart}
+EMOCIÓN CENTRAL: ${analysis.core_emotion}
+${choiceContext}
+${hopefulContext}
+${endingContext}
+
+ANTES DE ESCRIBIR — hacé este ejercicio mental (no lo incluyas en el output):
+1. Esta es una historia de "${analysis.story_type}". ¿Qué ritmo, qué forma, qué estructura le corresponde a ESE tipo de situación?
+2. La imagen concreta es "${analysis.visual_anchor}". El cuento nace de ahí — esa imagen es la puerta de entrada.
+3. ¿Qué tiene ESTA situación específica que no tiene ninguna otra en el mundo? Ese detalle único va en el centro.
+4. ¿Qué no vas a hacer? (el recurso fácil, el clima genérico, la metáfora que funcionaría para cualquier cuento)
+
+AHORA escribí el cuento. La forma surge del contenido — una historia de espera tiene otro ritmo que una de pérdida, que otra de descubrimiento. Dejá que ESTA situación te diga cómo contarla.
+
+Elegí uno de los ARQUETIPOS DE RESOLUCIÓN (A–H). Indicá en "resolution" la letra y nombre. Indicá en "symbol" el símbolo principal del cuento. Indicá en "setting" el escenario principal (ej: "tierra - Barcelona", "luna", "cohete lunar", "lado oscuro de la luna").
+En "opening_type" describí en 5-8 palabras cómo arranca el cuento (ej: "detalle concreto del lugar", "personaje en acción", "desde la luna con algo inusual").
+En "closing_image" describí en 5-10 palabras la imagen o acción concreta del cierre (ej: "suben al cohete en silencio", "dejan una sonrisa en el piso y se van", "Opaq mira hacia atrás una vez").
+En "key_metaphor" describí en 5-10 palabras la imagen o traducción principal que usaste para explicar el concepto adulto central de esta noticia en lenguaje de nene (ej: "ruidos grandes para los ataques militares", "pantalla flotante para las noticias digitales", "el agua que no para para la inundación"). Esto sirve para NO repetirlo en futuros cuentos.${recentPatterns}`;
+
+  const response = await ai.models.generateContent({
+    model: "gemini-2.5-flash",
+    contents,
     config: {
       systemInstruction: MUNS_SYSTEM_INSTRUCTION,
-      temperature: 0.8,
+      temperature: 1.0,
       responseMimeType: "application/json",
       responseSchema: {
         type: Type.OBJECT,
         properties: {
           title: { type: Type.STRING },
           story: { type: Type.STRING },
+          symbol: { type: Type.STRING },
+          resolution: { type: Type.STRING },
+          setting: { type: Type.STRING },
+          opening_type: { type: Type.STRING },
+          closing_image: { type: Type.STRING },
+          key_metaphor: { type: Type.STRING },
         },
-        required: ["title", "story"],
+        required: ["title", "story", "symbol", "resolution", "setting", "opening_type", "closing_image", "key_metaphor"],
       },
     },
   });
@@ -80,7 +194,19 @@ Sigue la estructura Pixar (Emoción, Grieta, Elección con costo, Consecuencia p
   const start = text.indexOf("{");
   const end = text.lastIndexOf("}");
   const json = start !== -1 && end > start ? text.substring(start, end + 1) : text;
-  return JSON.parse(json);
+  const result = JSON.parse(json);
+
+  saveStoryToMemory({
+    title: result.title,
+    symbol: result.symbol || "",
+    resolution: result.resolution || "",
+    setting: result.setting || "",
+    opening_type: result.opening_type || "",
+    closing_image: result.closing_image || "",
+    key_metaphor: result.key_metaphor || "",
+  });
+
+  return result;
 }
 
 export interface PipelineResult {
@@ -90,7 +216,7 @@ export interface PipelineResult {
   errors: string[];
 }
 
-export async function processSingleUrl(url: string, apiKey: string): Promise<{ id: number; title: string }> {
+export async function processSingleUrl(url: string, apiKey: string, context?: string): Promise<{ id: number; title: string }> {
   console.log(`[pipeline] Procesando URL manual: ${url}`);
 
   // 1. Scrapear el artículo
@@ -129,9 +255,13 @@ export async function processSingleUrl(url: string, apiKey: string): Promise<{ i
 
   // 4. Crear borrador en WordPress
   const sourceImageComment = imageUrl ? `<!-- source-image: ${imageUrl} -->\n` : "";
+  const extraMediaComment = "";
   const cleanStory = story.toUpperCase().replace(/«/g, '"').replace(/»/g, '"');
-  const content = `${sourceImageComment}<p>${cleanStory.replace(/\n/g, "</p><p>")}</p>
-<p><small>Fuente original (<a href="${url}" target="_blank" rel="noopener">${siteName}</a>): ${url}</small></p>`;
+  const contextBlock = context?.trim()
+    ? `\n<p><em>${context.trim()}</em></p>`
+    : "";
+  const content = `${sourceImageComment}${extraMediaComment}<p>${cleanStory.replace(/\n/g, "</p><p>")}</p>
+<p><small>Fuente original (<a href="${url}" target="_blank" rel="noopener">${siteName}</a>): ${url}</small></p>${contextBlock}`;
 
   const draft = await createDraft(title, content, mediaId);
   console.log(`[pipeline] ✓ Borrador manual creado: "${title}"`);
@@ -173,15 +303,15 @@ export async function runDailyPipeline(limit = 10): Promise<PipelineResult> {
       }
 
       // 3. Crear borrador en WordPress
-      // Guardar URL de foto original como comentario oculto para poder regenerar imagen después
       const sourceImageComment = article.imageUrl
         ? `<!-- source-image: ${article.imageUrl} -->\n`
         : "";
+      const extraMediaComment = "";
       const cleanStory = story
         .toUpperCase()
         .replace(/«/g, '"')
         .replace(/»/g, '"');
-      const content = `${sourceImageComment}<p>${cleanStory.replace(/\n/g, "</p><p>")}</p>
+      const content = `${sourceImageComment}${extraMediaComment}<p>${cleanStory.replace(/\n/g, "</p><p>")}</p>
 <p><small>Fuente original (<a href="${article.link}" target="_blank" rel="noopener">${article.source}</a>): ${article.link}</small></p>`;
 
       await createDraft(title, content, mediaId);
