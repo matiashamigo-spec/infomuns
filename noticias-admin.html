@@ -346,6 +346,47 @@ function contextToHtml(context) {
     .join('\n');
 }
 
+// Convierte texto plano (párrafos separados por línea en blanco) de vuelta a <p>...</p>
+function plainToHtml(text) {
+  return text
+    .split(/\n\n+/)
+    .map(p => p.replace(/\n/g, '<br>').trim())
+    .filter(Boolean)
+    .map(p => `<p>${p}</p>`)
+    .join('\n');
+}
+
+// Extrae el bloque de Fuente (con o sin el link roto de versiones viejas) y devuelve
+// {url, site, contentWithoutFuente} para reconstruirlo siempre igual al guardar.
+function extractFuente(content) {
+  // Formato correcto: <p><small>Fuente original (<a href="URL">SITE</a>): URL</small></p>
+  let m = content.match(/<p><small>Fuente original \(<a[^>]*href="([^"]+)"[^>]*>([^<]*)<\/a>\):\s*[^<]*<\/small><\/p>/i);
+  if (m) return { url: m[1], site: m[2], contentWithoutFuente: content.replace(m[0], '').trim() };
+  // Formato roto/legacy: texto plano "Fuente original (SITE): URL" sin link ni estilo
+  m = content.match(/(<br\s*\/?>|<p>)?\s*Fuente original\s*\(([^)]+)\):\s*(https?:\/\/[^\s<]+)\s*(<\/p>)?/i);
+  if (m) return { url: m[3], site: m[2], contentWithoutFuente: content.replace(m[0], '').trim() };
+  return { url: null, site: null, contentWithoutFuente: content };
+}
+
+function buildFuenteHtml(site, url) {
+  if (!url) return '';
+  let hostname = site;
+  try { if (!hostname) hostname = new URL(url).hostname; } catch {}
+  return `<p><small>Fuente original (<a href="${url}" target="_blank" rel="noopener">${escapeHtml(hostname)}</a>): ${url}</small></p>`;
+}
+
+// Arma el content final a guardar: cuerpo (reconstruido en <p>) + fuente (siempre con link) + contexto opcional
+function buildContentForSave(card) {
+  const contentField = card.querySelector('[data-field="content"]');
+  const contextField = card.querySelector('[data-field="context"]');
+  const context = contextField.value.trim();
+  let html = plainToHtml(contentField.value);
+  const fuenteHtml = buildFuenteHtml(card.dataset.fuenteSite, card.dataset.fuenteUrl);
+  if (fuenteHtml) html += '\n' + fuenteHtml;
+  if (context) html += '\n' + contextToHtml(context);
+  return { content: html, context };
+}
+
 // ── BORRADORES ──
 
 async function loadDrafts() {
@@ -362,16 +403,11 @@ async function loadDrafts() {
 async function saveDraft(id, btn) {
   const card = btn.closest('.draft-card');
   const title = card.querySelector('[data-field="title"]').value;
-  const contentField = card.querySelector('[data-field="content"]');
-  const contextField = card.querySelector('[data-field="context"]');
-  const context = contextField.value.trim();
-  const content = context
-    ? contentField.value + '\n' + contextToHtml(context)
-    : contentField.value;
+  const { content, context } = buildContentForSave(card);
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Guardando...';
   try {
     await apiFetch(`/drafts/${id}`, { method: 'PUT', body: JSON.stringify({ title, content }) });
-    if (context) { contextField.value = ''; contentField.value = content; }
+    if (context) { card.querySelector('[data-field="context"]').value = ''; }
     btn.textContent = '✓ Guardado';
     setTimeout(() => { btn.textContent = 'Guardar'; btn.disabled = false; }, 2000);
     setStatus('Guardado correctamente', 'success');
@@ -387,12 +423,7 @@ async function publishDraft(id, btn) {
   try {
     const card = btn.closest('.draft-card');
     const title = card.querySelector('[data-field="title"]').value;
-    const contentField = card.querySelector('[data-field="content"]');
-    const contextField = card.querySelector('[data-field="context"]');
-    const context = contextField.value.trim();
-    const content = context
-      ? contentField.value + '\n' + contextToHtml(context)
-      : contentField.value;
+    const { content } = buildContentForSave(card);
     await apiFetch(`/drafts/${id}`, { method: 'PUT', body: JSON.stringify({ title, content }) });
     btn.innerHTML = '<span class="spinner"></span>Publicando...';
     const post = await apiFetch(`/drafts/${id}/publish`, { method: 'POST' });
@@ -434,16 +465,11 @@ async function loadPublished() {
 async function savePublished(id, btn) {
   const card = btn.closest('.draft-card');
   const title = card.querySelector('[data-field="title"]').value;
-  const contentField = card.querySelector('[data-field="content"]');
-  const contextField = card.querySelector('[data-field="context"]');
-  const context = contextField.value.trim();
-  const content = context
-    ? contentField.value + '\n' + contextToHtml(context)
-    : contentField.value;
+  const { content, context } = buildContentForSave(card);
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Guardando...';
   try {
     await apiFetch(`/published/${id}`, { method: 'PUT', body: JSON.stringify({ title, content }) });
-    if (context) { contextField.value = ''; contentField.value = content; }
+    if (context) { card.querySelector('[data-field="context"]').value = ''; }
     btn.textContent = '✓ Guardado';
     setTimeout(() => { btn.textContent = 'Guardar'; btn.disabled = false; }, 2000);
     setStatus('Guardado correctamente', 'success');
@@ -502,10 +528,16 @@ async function deletePublished(id, btn) {
 
 // ── RENDER ──
 
-function stripHtml(html) {
+// Convierte HTML a texto plano PRESERVANDO saltos de párrafo (a diferencia de textContent, que los pega todos juntos)
+function htmlToPlainParagraphs(html) {
+  const normalized = html
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/p>\s*<p[^>]*>/gi, '\n\n')
+    .replace(/^\s*<p[^>]*>/i, '')
+    .replace(/<\/p>\s*$/i, '');
   const div = document.createElement('div');
-  div.innerHTML = html;
-  return div.textContent || div.innerText || '';
+  div.innerHTML = normalized;
+  return (div.textContent || '').trim();
 }
 
 function escapeHtml(str) {
@@ -541,8 +573,13 @@ function renderCards(posts, gridId, emptyId, type) {
       contextBlocks.push(text.trim());
       return '';
     });
-    const cleanContent = stripHtml(contentWithoutContext).trim();
     const existingContext = contextBlocks.join('\n\n');
+
+    const fuente = extractFuente(contentWithoutContext);
+    card.dataset.fuenteUrl = fuente.url || '';
+    card.dataset.fuenteSite = fuente.site || '';
+
+    const cleanContent = htmlToPlainParagraphs(fuente.contentWithoutFuente);
     const imageHtml = post.featuredMediaUrl
       ? `<img class="card-image" src="${post.featuredMediaUrl}" alt="" loading="lazy" />`
       : `<div class="card-image-placeholder">🌙</div>`;

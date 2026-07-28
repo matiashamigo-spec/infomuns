@@ -209,6 +209,27 @@ En "key_metaphor" describí en 5-10 palabras la imagen o traducción principal q
   return result;
 }
 
+// Descarga la imagen original de la noticia y la sube a WordPress como foto principal
+async function uploadSourceImageAsFeatured(imageUrl: string, title: string): Promise<number | undefined> {
+  try {
+    const res = await axios.get(imageUrl, {
+      responseType: "arraybuffer",
+      timeout: 15000,
+      headers: { "User-Agent": "Mozilla/5.0" },
+    });
+    const mime = (res.headers["content-type"] || "image/jpeg").split(";")[0];
+    const b64 = Buffer.from(res.data).toString("base64");
+    const dataUrl = `data:${mime};base64,${b64}`;
+    const ext = mime.includes("png") ? "png" : mime.includes("webp") ? "webp" : "jpg";
+    const slug = title.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").slice(0, 40);
+    const media = await uploadMedia(dataUrl, `source-${slug}.${ext}`);
+    return media?.id;
+  } catch (e: any) {
+    console.warn(`[pipeline] No se pudo subir la imagen de la fuente (${imageUrl}):`, e.message);
+    return undefined;
+  }
+}
+
 export interface PipelineResult {
   total: number;
   succeeded: number;
@@ -247,20 +268,18 @@ export async function processSingleUrl(url: string, apiKey: string, context?: st
   const newsText = `${rawTitle}\n\n${bodyText || description}`;
   const { title, story } = await generateMunsStory(newsText, apiKey);
 
-  // 3. Ilustración desactivada para reducir costos de Gemini API
+  // 3. Subir la imagen de la fuente como foto principal (reemplaza la ilustración IA, desactivada por costos)
   let mediaId: number | undefined;
   if (imageUrl) {
-    console.log(`[pipeline] Ilustración desactivada — se omite generación de imagen`);
+    mediaId = await uploadSourceImageAsFeatured(imageUrl, title);
   }
 
   // 4. Crear borrador en WordPress
-  const sourceImageComment = imageUrl ? `<!-- source-image: ${imageUrl} -->\n` : "";
-  const extraMediaComment = "";
   const cleanStory = story.toUpperCase().replace(/«/g, '"').replace(/»/g, '"');
   const contextBlock = context?.trim()
     ? `\n<p><em>${context.trim()}</em></p>`
     : "";
-  const content = `${sourceImageComment}${extraMediaComment}<p>${cleanStory.replace(/\n/g, "</p><p>")}</p>
+  const content = `<p>${cleanStory.replace(/\n/g, "</p><p>")}</p>
 <p><small>Fuente original (<a href="${url}" target="_blank" rel="noopener">${siteName}</a>): ${url}</small></p>${contextBlock}`;
 
   const draft = await createDraft(title, content, mediaId);
@@ -296,22 +315,18 @@ export async function runDailyPipeline(limit = 10): Promise<PipelineResult> {
       const newsText = `${article.title}\n\n${article.content}`;
       const { title, story } = await generateMunsStory(newsText, apiKey);
 
-      // 2. Ilustración desactivada para reducir costos de Gemini API
+      // 2. Subir la imagen de la fuente como foto principal (reemplaza la ilustración IA, desactivada por costos)
       let mediaId: number | undefined;
       if (article.imageUrl) {
-        console.log(`[pipeline] Ilustración desactivada — se omite generación de imagen`);
+        mediaId = await uploadSourceImageAsFeatured(article.imageUrl, title);
       }
 
       // 3. Crear borrador en WordPress
-      const sourceImageComment = article.imageUrl
-        ? `<!-- source-image: ${article.imageUrl} -->\n`
-        : "";
-      const extraMediaComment = "";
       const cleanStory = story
         .toUpperCase()
         .replace(/«/g, '"')
         .replace(/»/g, '"');
-      const content = `${sourceImageComment}${extraMediaComment}<p>${cleanStory.replace(/\n/g, "</p><p>")}</p>
+      const content = `<p>${cleanStory.replace(/\n/g, "</p><p>")}</p>
 <p><small>Fuente original (<a href="${article.link}" target="_blank" rel="noopener">${article.source}</a>): ${article.link}</small></p>`;
 
       await createDraft(title, content, mediaId);
