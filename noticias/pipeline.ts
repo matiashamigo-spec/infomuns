@@ -227,7 +227,7 @@ EMOCIÓN CENTRAL: ${analysis.core_emotion}
 
 Necesito dos párrafos cortos, en español neutro, tono cálido y editorial (no periodístico):
 1. "inspired": arranca EXACTAMENTE con "Esta historia está inspirada en" y resume en 1-2 oraciones lo que pasó en la noticia real, con los datos concretos (lugar, qué ocurrió), sin opinar.
-2. "conversation": arranca EXACTAMENTE con "Este cuento busca abrir una conversación sobre" y describe en 1 oración el tema humano/emocional de fondo que el cuento invita a charlar con los chicos.`,
+2. "conversation": en 1 oración, con arranque LIBRE Y VARIADO (no repitas la misma fórmula de nota a nota, como "Este cuento busca..."), describe el tema humano/emocional de fondo que el cuento invita a charlar con los chicos.`,
     config: {
       temperature: 0.7,
       responseMimeType: "application/json",
