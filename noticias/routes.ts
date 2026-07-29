@@ -4,7 +4,7 @@
 import { Router, Request, Response } from "express";
 import axios from "axios";
 import * as cheerio from "cheerio";
-import { runDailyPipeline, processSingleUrl } from "./pipeline.js";
+import { runDailyPipeline, processSingleUrl, generateStoryFromUrl } from "./pipeline.js";
 import { illustrateImage, generateIllustrationSet, generateSingleIllustration } from "./illustration.js";
 import { listDrafts, listPublished, updatePost, publishPostById, unpublishPost, deletePost, uploadMedia, setFeaturedPost, createDraft, listMedia } from "./wordpress.js";
 
@@ -79,6 +79,23 @@ export function createNoticiasRouter(): Router {
       console.log(`[noticias] Procesando URL manual: ${url}`);
       const draft = await processSingleUrl(url, apiKey, context);
       res.json({ ok: true, draft });
+    } catch (err: any) {
+      res.status(500).json({ error: safeError(err) });
+    }
+  });
+
+  // POST /api/noticias/generate-from-url — genera título/contenido desde una URL SIN publicar
+  // (usado por el editor de info.muns.club para revisar antes de guardar)
+  router.post("/generate-from-url", requireAdmin, async (req: Request, res: Response) => {
+    const { url, context } = req.body;
+    if (!url || typeof url !== "string") return res.status(400).json({ error: "Se requiere una URL válida" });
+    if (!isSafeUrl(url)) return res.status(400).json({ error: "URL no permitida" });
+    try {
+      const apiKey = process.env.GEMINI_API_KEY;
+      if (!apiKey) return res.status(500).json({ error: "GEMINI_API_KEY no configurada" });
+      console.log(`[noticias] Generando (sin publicar) desde URL: ${url}`);
+      const generated = await generateStoryFromUrl(url, apiKey, context);
+      res.json({ ok: true, ...generated });
     } catch (err: any) {
       res.status(500).json({ error: safeError(err) });
     }

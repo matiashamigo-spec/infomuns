@@ -237,8 +237,19 @@ export interface PipelineResult {
   errors: string[];
 }
 
-export async function processSingleUrl(url: string, apiKey: string, context?: string): Promise<{ id: number; title: string }> {
-  console.log(`[pipeline] Procesando URL manual: ${url}`);
+export interface GeneratedStory {
+  title: string;
+  content: string;
+  imageUrl: string | null;
+  siteName: string;
+  sourceUrl: string;
+}
+
+// Scrapea la URL y genera el cuento Muns, SIN publicar nada en WordPress.
+// Usado tanto por processSingleUrl (que sí publica) como por el endpoint
+// /generate-from-url (que solo devuelve el resultado para revisión manual).
+export async function generateStoryFromUrl(url: string, apiKey: string, context?: string): Promise<GeneratedStory> {
+  console.log(`[pipeline] Generando cuento desde URL: ${url}`);
 
   // 1. Scrapear el artículo
   const page = await axios.get(url, {
@@ -268,13 +279,6 @@ export async function processSingleUrl(url: string, apiKey: string, context?: st
   const newsText = `${rawTitle}\n\n${bodyText || description}`;
   const { title, story } = await generateMunsStory(newsText, apiKey);
 
-  // 3. Subir la imagen de la fuente como foto principal (reemplaza la ilustración IA, desactivada por costos)
-  let mediaId: number | undefined;
-  if (imageUrl) {
-    mediaId = await uploadSourceImageAsFeatured(imageUrl, title);
-  }
-
-  // 4. Crear borrador en WordPress
   const cleanStory = story.toUpperCase().replace(/«/g, '"').replace(/»/g, '"');
   const contextBlock = context?.trim()
     ? `\n<p><em>${context.trim()}</em></p>`
@@ -282,9 +286,21 @@ export async function processSingleUrl(url: string, apiKey: string, context?: st
   const content = `<p>${cleanStory.replace(/\n/g, "</p><p>")}</p>
 <p><small>Fuente original (<a href="${url}" target="_blank" rel="noopener">${siteName}</a>): ${url}</small></p>${contextBlock}`;
 
-  const draft = await createDraft(title, content, mediaId);
-  console.log(`[pipeline] ✓ Borrador manual creado: "${title}"`);
-  return { id: (draft as any).id, title };
+  return { title, content, imageUrl, siteName, sourceUrl: url };
+}
+
+export async function processSingleUrl(url: string, apiKey: string, context?: string): Promise<{ id: number; title: string }> {
+  const generated = await generateStoryFromUrl(url, apiKey, context);
+
+  // Subir la imagen de la fuente como foto principal (reemplaza la ilustración IA, desactivada por costos)
+  let mediaId: number | undefined;
+  if (generated.imageUrl) {
+    mediaId = await uploadSourceImageAsFeatured(generated.imageUrl, generated.title);
+  }
+
+  const draft = await createDraft(generated.title, generated.content, mediaId);
+  console.log(`[pipeline] ✓ Borrador manual creado: "${generated.title}"`);
+  return { id: (draft as any).id, title: generated.title };
 }
 
 export async function runDailyPipeline(limit = 10): Promise<PipelineResult> {
