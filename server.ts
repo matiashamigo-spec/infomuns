@@ -89,6 +89,7 @@ async function startServer() {
       "https://muns.club",
       "https://www.muns.club",
       "https://munsmood.vercel.app",
+      "https://info.muns.club",
     ];
     const origin = req.headers.origin || "";
     if (allowed.includes(origin) || process.env.NODE_ENV !== "production") {
