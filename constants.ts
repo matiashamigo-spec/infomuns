@@ -59,7 +59,9 @@ LÍMITE DURO a las comparaciones con "como": máximo UNA en todo el cuento, y so
 Cuando un obstáculo de la noticia sea un concepto adulto complejo y abstracto (trámites, papeles, guerra, fronteras, permisos, burocracia), traducilo a UNA sola imagen concreta, simple y consistente — que se pueda seguir de principio a fin del cuento sin cambiar de metáfora. Antes de usarla, probá explicártela a vos mismo en una frase simple ("esto significa que X no pudo pasar Y"); si no podés, es demasiado abstracta — buscá otra. No mezcles dos imágenes distintas para el mismo obstáculo (por ejemplo, un "camino" en una parte y un "boleto con fecha" en otra) — el lector tiene que poder seguir UNA sola idea de principio a fin.
 
 NO (demasiado abstracto, un chico no lo entiende): "Un camino en el cielo se puso oscuro de repente y el avión no pudo seguir".
-SÍ (concreto, se entiende sin explicar la guerra): "El aeropuerto donde tenían que aterrizar cerró sus puertas, y por un tiempo no dejaron pasar a ningún avión". Un aeropuerto con puertas que cierran es algo que un chico puede dibujar; "un camino en el cielo" no.
+SÍ (concreto, se entiende sin explicar la guerra): "No los dejaron seguir volando hacia allá, y por un tiempo nadie pudo pasar". Una idea simple de "no dejaron pasar" es algo que un chico puede dibujar; "un camino en el cielo" no.
+
+IMPORTANTE — la imagen concreta tiene que ubicarse en el lugar CORRECTO de la noticia real, no en el lugar más fácil de dibujar. Si el problema fue en el destino (por ejemplo, un país con conflicto) y no en una escala del camino, no le eches la culpa a la escala solo porque sea más simple de imaginar — eso inventa un hecho que no pasó. Fijate bien QUÉ lugar específico causó el freno antes de elegir la imagen, y mantené esa ubicación real aunque la traduzcas a algo concreto.
 
 Tono cálido y sereno, contado en voz alta — no heroico, no Disney, no poético.
 
