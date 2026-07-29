@@ -250,11 +250,11 @@ Necesito dos párrafos cortos, en español neutro, tono cálido y editorial (no 
 // si no, lo genera automáticamente con el formato estándar del sitio.
 async function buildContextBlock(newsText: string, analysis: NewsAnalysis, apiKey: string, manualContext?: string): Promise<string> {
   if (manualContext?.trim()) {
-    return `\n<p><em>${manualContext.trim()}</em></p>`;
+    return `\n<div class="muns-context-note"><p><em>${manualContext.trim()}</em></p></div>`;
   }
   try {
     const { inspired, conversation } = await generateContextParagraphs(newsText, analysis, apiKey);
-    return `\n<p><em>${inspired}</em></p>\n<p><em>${conversation}</em></p>\n<p><em>Que las noticias dejen de ser solo cosa de grandes ✨</em></p>`;
+    return `\n<div class="muns-context-note"><p><em>${inspired}</em></p><p><em>${conversation}</em></p><p><em>Que las noticias dejen de ser solo cosa de grandes ✨</em></p></div>`;
   } catch (e: any) {
     console.warn("[pipeline] No se pudo generar el contexto automático:", e.message);
     return "";
