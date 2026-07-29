@@ -17,7 +17,7 @@ TEST: si le leyeras esto en voz alta a un chico de 5 años sin haberlo escrito a
 LOS MUNS — PRESENCIA EXPLÍCITA, NUNCA UNA FÓRMULA
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Los Muns: criaturas pequeñas que guardan sonrisas en un bolso.
+Los Muns: criaturas pequeñas que buscan sonrisas.
 
 PROHIBIDO describir su aspecto físico en el texto ("con sus pequeños lunares grises" y variantes) — eso no suma nada a la historia, es relleno repetido. Los Muns se muestran por lo que HACEN en la escena, nunca por cómo se ven.
 
@@ -25,7 +25,7 @@ OBLIGATORIO: los Muns aparecen COMO PERSONAJES en la escena, al menos una vez po
 
 PROHIBIDO que aparezcan siempre de la misma manera. Nada de fórmulas repetidas entre cuentos ("justo pasaban por ahí", "andaban buscando historias", o cualquier apertura calcable a cualquier historia). Cada cuento encuentra su propia forma de que lleguen a la escena y su propia forma de que reaccionen — variá el verbo, la acción, el ángulo desde el que miran. No hace falta explicar CÓMO llegaron ni de dónde vienen — ya están ahí, mirando.
 
-Son testigos, no protagonistas — la historia no depende de ellos. Pueden: descubrir, acercarse, seguir algo con la mirada, esperar, acompañar en silencio, guardar una sonrisa. NO pueden: resolver el problema, cambiar el resultado, explicarle nada a nadie, tomar el rol humano de la noticia. TEST: si le sacás toda mención de los Muns, la historia real (los hechos, las personas) tiene que seguir funcionando exactamente igual — ellos acompañan, no protagonizan.
+Son testigos, no protagonistas — la historia no depende de ellos. Pueden: descubrir, acercarse, seguir algo con la mirada, esperar, acompañar en silencio, encontrar una sonrisa. NO pueden: resolver el problema, cambiar el resultado, explicarle nada a nadie, tomar el rol humano de la noticia. TEST: si le sacás toda mención de los Muns, la historia real (los hechos, las personas) tiene que seguir funcionando exactamente igual — ellos acompañan, no protagonizan.
 
 En la Tierra caminan, tienen peso, no flotan. Sin nombres individuales: "un Mun", "los Muns", "uno de ellos" (no repitas "los Muns" en oraciones consecutivas). No cambian de color ni tienen poderes especiales.
 
@@ -75,7 +75,7 @@ ESTRUCTURA
 2. Una situación que el niño pueda comprender: un deseo, un problema, algo inesperado.
 3. Una secuencia clara de lo que ocurrió, con lógica física y temporal.
 4. Un giro, espera o resolución — fiel a lo que realmente pasó.
-5. Un final con una imagen concreta y tranquila. La sonrisa final pertenece a alguien real del cuento, nunca es abstracta ni sin dueño.
+5. Un final con una imagen concreta y tranquila. La sonrisa final pertenece a alguien real del cuento, nunca es abstracta ni sin dueño — y tiene que ser una sonrisa que el cuento mostró de verdad (la persona sonriendo, relajada, tranquila) en algún momento anterior del texto, nunca una que se inventa recién en el cierre.
 
 FORMATO OBLIGATORIO: el campo "story" tiene que tener 4 a 6 párrafos SEPARADOS por un salto de línea doble (\n\n) entre cada uno — nunca todo junto en un solo bloque de texto. Cada uno de los 5 puntos de arriba es, como mínimo, un párrafo propio.
 
