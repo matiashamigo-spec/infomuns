@@ -253,16 +253,20 @@ Necesito dos párrafos cortos, en español neutro, tono cálido y editorial (no 
 // las etiquetas internas al guardar). El recuadro visual se arma en el navegador con JS al mostrar
 // la nota, agrupando los <p class="muns-context-line"> consecutivos — así funciona sin importar
 // cómo el editor haya mangleado el HTML guardado.
-async function buildContextBlock(newsText: string, analysis: NewsAnalysis, apiKey: string, manualContext?: string): Promise<string> {
+async function buildContextBlock(newsText: string, analysis: NewsAnalysis, apiKey: string, manualContext?: string): Promise<{ html: string; text: string }> {
+  const closing = "Que las noticias dejen de ser solo cosa de grandes ✨";
   if (manualContext?.trim()) {
-    return `\n<p class="muns-context-line"><em>${manualContext.trim()}</em></p>`;
+    const text = manualContext.trim();
+    return { html: `\n<p class="muns-context-line"><em>${text}</em></p>`, text };
   }
   try {
     const { inspired, conversation } = await generateContextParagraphs(newsText, analysis, apiKey);
-    return `\n<p class="muns-context-line"><em>${inspired}</em></p>\n<p class="muns-context-line"><em>${conversation}</em></p>\n<p class="muns-context-line"><em>Que las noticias dejen de ser solo cosa de grandes ✨</em></p>`;
+    const html = `\n<p class="muns-context-line"><em>${inspired}</em></p>\n<p class="muns-context-line"><em>${conversation}</em></p>\n<p class="muns-context-line"><em>${closing}</em></p>`;
+    const text = `${inspired}\n\n${conversation}\n\n${closing}`;
+    return { html, text };
   } catch (e: any) {
     console.warn("[pipeline] No se pudo generar el contexto automático:", e.message);
-    return "";
+    return { html: "", text: "" };
   }
 }
 
@@ -297,6 +301,7 @@ export interface PipelineResult {
 export interface GeneratedStory {
   title: string;
   content: string;
+  context: string;
   imageUrl: string | null;
   siteName: string;
   sourceUrl: string;
@@ -341,9 +346,9 @@ export async function generateStoryFromUrl(url: string, apiKey: string, context?
 
   const cleanStory = story.toUpperCase().replace(/«/g, '"').replace(/»/g, '"');
   const content = `<p>${cleanStory.replace(/\n/g, "</p><p>")}</p>
-<p><small>Fuente original (<a href="${url}" target="_blank" rel="noopener">${siteName}</a>): ${url}</small></p>${contextBlock}`;
+<p><small>Fuente original (<a href="${url}" target="_blank" rel="noopener">${siteName}</a>): ${url}</small></p>${contextBlock.html}`;
 
-  return { title, content, imageUrl, siteName, sourceUrl: url };
+  return { title, content, context: contextBlock.text, imageUrl, siteName, sourceUrl: url };
 }
 
 export async function processSingleUrl(url: string, apiKey: string, context?: string): Promise<{ id: number; title: string }> {
@@ -403,7 +408,7 @@ export async function runDailyPipeline(limit = 10): Promise<PipelineResult> {
         .replace(/«/g, '"')
         .replace(/»/g, '"');
       const content = `<p>${cleanStory.replace(/\n/g, "</p><p>")}</p>
-<p><small>Fuente original (<a href="${article.link}" target="_blank" rel="noopener">${article.source}</a>): ${article.link}</small></p>${contextBlock}`;
+<p><small>Fuente original (<a href="${article.link}" target="_blank" rel="noopener">${article.source}</a>): ${article.link}</small></p>${contextBlock.html}`;
 
       await createDraft(title, content, mediaId);
       saveProcessedUrl(article.link, processedUrls);
