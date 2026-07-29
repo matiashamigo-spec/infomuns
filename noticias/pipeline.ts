@@ -112,7 +112,7 @@ Respondé:
   return JSON.parse(json);
 }
 
-async function generateMunsStory(newsText: string, apiKey: string): Promise<{ title: string; story: string }> {
+async function generateMunsStory(newsText: string, apiKey: string): Promise<{ title: string; story: string; analysis: NewsAnalysis }> {
   const ai = new GoogleGenAI({ apiKey });
 
   // Paso 1: analizar la noticia
@@ -206,7 +206,59 @@ En "key_metaphor" describí en 5-10 palabras la imagen o traducción principal q
     key_metaphor: result.key_metaphor || "",
   });
 
-  return result;
+  return { ...result, analysis };
+}
+
+// Genera el bloque de contexto para adultos que acompaña al cuento:
+// "Esta historia está inspirada en..." + "Este cuento busca abrir una conversación sobre..."
+// El cierre fijo "Que las noticias dejen de ser solo cosa de grandes ✨" se agrega aparte, sin IA.
+async function generateContextParagraphs(newsText: string, analysis: NewsAnalysis, apiKey: string): Promise<{ inspired: string; conversation: string }> {
+  const ai = new GoogleGenAI({ apiKey });
+  const response = await ai.models.generateContent({
+    model: "gemini-2.5-flash",
+    contents: `Escribí el contexto para adultos de una nota que acompaña un cuento infantil inspirado en esta noticia real.
+
+NOTICIA: "${newsText.substring(0, 3000)}"
+LO QUE PASÓ: ${analysis.what}
+EMOCIÓN CENTRAL: ${analysis.core_emotion}
+
+Necesito dos párrafos cortos, en español neutro, tono cálido y editorial (no periodístico):
+1. "inspired": arranca EXACTAMENTE con "Esta historia está inspirada en" y resume en 1-2 oraciones lo que pasó en la noticia real, con los datos concretos (lugar, qué ocurrió), sin opinar.
+2. "conversation": arranca EXACTAMENTE con "Este cuento busca abrir una conversación sobre" y describe en 1 oración el tema humano/emocional de fondo que el cuento invita a charlar con los chicos.`,
+    config: {
+      temperature: 0.7,
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          inspired: { type: Type.STRING },
+          conversation: { type: Type.STRING },
+        },
+        required: ["inspired", "conversation"],
+      },
+    },
+  });
+  const text = response.text;
+  if (!text) throw new Error("Gemini no devolvió el contexto");
+  const start = text.indexOf("{");
+  const end = text.lastIndexOf("}");
+  const json = start !== -1 && end > start ? text.substring(start, end + 1) : text;
+  return JSON.parse(json);
+}
+
+// Arma el bloque HTML de contexto: si hay contexto manual lo respeta tal cual (comportamiento legacy),
+// si no, lo genera automáticamente con el formato estándar del sitio.
+async function buildContextBlock(newsText: string, analysis: NewsAnalysis, apiKey: string, manualContext?: string): Promise<string> {
+  if (manualContext?.trim()) {
+    return `\n<p><em>${manualContext.trim()}</em></p>`;
+  }
+  try {
+    const { inspired, conversation } = await generateContextParagraphs(newsText, analysis, apiKey);
+    return `\n<p><em>${inspired}</em></p>\n<p><em>${conversation}</em></p>\n<p><em>Que las noticias dejen de ser solo cosa de grandes ✨</em></p>`;
+  } catch (e: any) {
+    console.warn("[pipeline] No se pudo generar el contexto automático:", e.message);
+    return "";
+  }
 }
 
 // Descarga la imagen original de la noticia y la sube a WordPress como foto principal
@@ -277,12 +329,12 @@ export async function generateStoryFromUrl(url: string, apiKey: string, context?
 
   // 2. Generar historia Muns
   const newsText = `${rawTitle}\n\n${bodyText || description}`;
-  const { title, story } = await generateMunsStory(newsText, apiKey);
+  const { title, story, analysis } = await generateMunsStory(newsText, apiKey);
+
+  // 3. Generar (o respetar el manual) el bloque de contexto para adultos
+  const contextBlock = await buildContextBlock(newsText, analysis, apiKey, context);
 
   const cleanStory = story.toUpperCase().replace(/«/g, '"').replace(/»/g, '"');
-  const contextBlock = context?.trim()
-    ? `\n<p><em>${context.trim()}</em></p>`
-    : "";
   const content = `<p>${cleanStory.replace(/\n/g, "</p><p>")}</p>
 <p><small>Fuente original (<a href="${url}" target="_blank" rel="noopener">${siteName}</a>): ${url}</small></p>${contextBlock}`;
 
@@ -329,7 +381,7 @@ export async function runDailyPipeline(limit = 10): Promise<PipelineResult> {
 
       // 1. Generar historia Muns
       const newsText = `${article.title}\n\n${article.content}`;
-      const { title, story } = await generateMunsStory(newsText, apiKey);
+      const { title, story, analysis } = await generateMunsStory(newsText, apiKey);
 
       // 2. Subir la imagen de la fuente como foto principal (reemplaza la ilustración IA, desactivada por costos)
       let mediaId: number | undefined;
@@ -337,13 +389,16 @@ export async function runDailyPipeline(limit = 10): Promise<PipelineResult> {
         mediaId = await uploadSourceImageAsFeatured(article.imageUrl, title);
       }
 
-      // 3. Crear borrador en WordPress
+      // 3. Generar el bloque de contexto para adultos
+      const contextBlock = await buildContextBlock(newsText, analysis, apiKey);
+
+      // 4. Crear borrador en WordPress
       const cleanStory = story
         .toUpperCase()
         .replace(/«/g, '"')
         .replace(/»/g, '"');
       const content = `<p>${cleanStory.replace(/\n/g, "</p><p>")}</p>
-<p><small>Fuente original (<a href="${article.link}" target="_blank" rel="noopener">${article.source}</a>): ${article.link}</small></p>`;
+<p><small>Fuente original (<a href="${article.link}" target="_blank" rel="noopener">${article.source}</a>): ${article.link}</small></p>${contextBlock}`;
 
       await createDraft(title, content, mediaId);
       saveProcessedUrl(article.link, processedUrls);
