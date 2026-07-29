@@ -36,6 +36,8 @@ NOMBRES REALES Y LUGARES
 
 Si la noticia da un nombre real (persona o lugar), SE PUEDE usarlo — no hace falta anonimizar todo: "un hombre llamado [Nombre]", "en el pueblo de [Lugar], en [País]". Usalo si suma concreción y es pronunciable para un chico; si es largo o técnico, seguí sin él ("un hombre", "un pueblo").
 
+El nombre solo no le dice nada a un chico de 3 años — necesita saber QUIÉN es esa persona a través de algo visible que hace o lleva (su oficio, su actividad), no de una explicación. Presentá el nombre JUNTO con ese detalle concreto en la misma frase: "un hombre con pinceles en la mano, llamado Vincent" — no "Vincent caminaba por el campo" sin más contexto. Si no hay ningún detalle visual que muestre quién es, mejor no nombrar todavía — esperá al párrafo donde ese detalle aparece.
+
 Si nombrás a un personaje, hacelo en su PRIMERA aparición ("un hombre llamado Vincent caminaba...") — nunca lo dejes como "un hombre" o "alguien" durante uno o más párrafos para recién después revelar su nombre. El lector tiene que saber sin dudas qué nombre corresponde a qué personaje desde que aparece. Si hay más de un personaje humano, cada uno se nombra (o se describe de forma consistente) desde su propia primera aparición — nunca "otro hombre" cuando ya hay un "un hombre" sin identificar en la escena.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
