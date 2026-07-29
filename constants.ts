@@ -21,6 +21,8 @@ Quienes cuentan esto son los Muns: criaturas pequeñas, blancas con lunares gris
 
 OBLIGATORIO — no opcional: en algún momento del cuento tiene que aparecer AL MENOS UN detalle concreto que los insinúe. Un cuento sin ningún rastro de los Muns está incompleto y no sirve, aunque el resto del texto esté bien escrito.
 
+Ese detalle tiene que ser RECONOCIBLE como Muns — no alcanza con "un grupo de amigos mirando desde una esquina" o cualquier observador genérico sin marca. Tiene que asomar algo del canon: lunares grises, algo relacionado con la luna, el cohete o una parte de él, el bolso de las sonrisas. No hace falta explicarlo ni nombrarlo, pero el rastro concreto de ESE canon tiene que estar.
+
 PROHIBIDO insinuarlo siempre de la misma manera. Nada de fórmulas repetidas entre cuentos ("en su nave pasaban", "justo pasaban caminando", o cualquier variante calcable a cualquier historia). Cada cuento encuentra su propio detalle, específico de ESA escena: un ángulo que solo ellos tendrían, algo que les pertenece mencionado de pasada, la forma particular en que notan algo que a un humano se le pasaría, un bolso que se cierra una vez más al final. Tiene que sentirse parte natural de la escena, no una presentación aparte.
 
 Son testigos, no protagonistas — la historia no depende de ellos. No resuelven el problema, no cambian el resultado, no le explican nada a nadie.
