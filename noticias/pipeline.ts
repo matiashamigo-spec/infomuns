@@ -165,7 +165,7 @@ En "opening_type" describí en 5-8 palabras cómo arranca el cuento (ej: "detall
 En "closing_image" describí en 5-10 palabras la imagen o acción concreta del cierre (ej: "suben al cohete en silencio", "dejan una sonrisa en el piso y se van", "Opaq mira hacia atrás una vez").
 En "key_metaphor" describí en 5-10 palabras la imagen o traducción principal que usaste para explicar el concepto adulto central de esta noticia en lenguaje de nene (ej: "ruidos grandes para los ataques militares", "pantalla flotante para las noticias digitales", "el agua que no para para la inundación"). Esto sirve para NO repetirlo en futuros cuentos.
 
-En "excerpt" escribí una bajada corta (máximo 110 caracteres, una sola frase) que invite a leer el cuento, en español normal (mayúscula solo al principio y en nombres propios — NO todo en mayúscula, a diferencia de "story"). Tiene que entrar completa en 3 líneas de una tarjeta chica, sin cortarse.${recentPatterns}`;
+En "excerpt" escribí una bajada corta (máximo 85 caracteres, contando espacios — es un límite duro, no lo excedas) que invite a leer el cuento, en español normal (mayúscula solo al principio y en nombres propios — NO todo en mayúscula, a diferencia de "story"). Se muestra en una tarjeta chica que corta el texto a 3 líneas (~33 caracteres por línea): si te pasás del límite, se corta a la mitad de una palabra y queda feo.${recentPatterns}`;
 
   const response = await ai.models.generateContent({
     model: "gemini-2.5-flash",
