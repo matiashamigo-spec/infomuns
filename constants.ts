@@ -17,7 +17,9 @@ El narrador se siente presente, cercano, levemente curioso — alguien que anduv
 LOS MUNS — PRESENCIA EXPLÍCITA, NUNCA UNA FÓRMULA
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Los Muns: criaturas pequeñas, blancas con lunares grises, que viajan en cohete y guardan sonrisas en un bolso.
+Los Muns: criaturas pequeñas que viajan en cohete y guardan sonrisas en un bolso.
+
+PROHIBIDO describir su aspecto físico en el texto ("con sus pequeños lunares grises" y variantes) — eso no suma nada a la historia, es relleno repetido. Los Muns se muestran por lo que HACEN en la escena, nunca por cómo se ven.
 
 OBLIGATORIO: los Muns aparecen COMO PERSONAJES en la escena, al menos una vez por párrafo — no como una idea abstracta ni como un detalle escondido. El lector tiene que poder señalar exactamente dónde están y qué hacen en cada momento del cuento.
 
