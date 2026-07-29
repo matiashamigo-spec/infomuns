@@ -253,18 +253,18 @@ Necesito dos párrafos cortos, en español neutro, tono cálido y editorial (no 
 // si no, lo genera automáticamente con el formato estándar del sitio.
 // NOTA: cada línea usa <p class="muns-context-line"> SUELTO (sin div contenedor).
 // Un <div> anidado con <p> adentro no sobrevive el editor clásico de WordPress (TinyMCE le come
-// las etiquetas internas al guardar). El recuadro visual se arma en el navegador con JS al mostrar
-// la nota, agrupando los <p class="muns-context-line"> consecutivos — así funciona sin importar
-// cómo el editor haya mangleado el HTML guardado.
+// las etiquetas internas al guardar). Usamos un shortcode ([muns_context]a|||b|||c[/muns_context])
+// en vez de HTML con clases: un shortcode es texto plano, TinyMCE no lo puede "romper" al re-serializar
+// el DOM al guardar — el recuadro se arma server-side cuando WordPress renderiza el shortcode.
 async function buildContextBlock(newsText: string, analysis: NewsAnalysis, apiKey: string, manualContext?: string): Promise<{ html: string; text: string }> {
   const closing = "Que las noticias dejen de ser solo cosa de grandes ✨";
   if (manualContext?.trim()) {
     const text = manualContext.trim();
-    return { html: `\n<p class="muns-context-line"><em>${text}</em></p>`, text };
+    return { html: `\n[muns_context]${text}[/muns_context]`, text };
   }
   try {
     const { inspired, conversation } = await generateContextParagraphs(newsText, analysis, apiKey);
-    const html = `\n<p class="muns-context-line"><em>${inspired}</em></p>\n<p class="muns-context-line"><em>${conversation}</em></p>\n<p class="muns-context-line"><em>${closing}</em></p>`;
+    const html = `\n[muns_context]${inspired}|||${conversation}|||${closing}[/muns_context]`;
     const text = `${inspired}\n\n${conversation}\n\n${closing}`;
     return { html, text };
   } catch (e: any) {
