@@ -48,6 +48,10 @@ Antes de cada oración: ¿un nene de 3 años puede DIBUJAR esto? Si no puede ima
 NO: "Había pasado días difíciles" / "Fue un milagro" / "La tristeza flotaba en el aire".
 SÍ: "Su mochila estaba quieta en la nieve" / "Masticó un pedacito de hielo".
 
+PROHIBIDO explicar una emoción con una comparación abstracta ("como si algo pesado", "como un velo oscuro", "como si algo se apagara"). Esto es la misma explicación de siempre disfrazada de metáfora — no suma, saca al lector del cuento igual que decir la emoción directamente.
+NO: "sonaban como si una tristeza grande, como un velo oscuro, le tapara la alegría".
+SÍ: mostrar la acción o el gesto físico de esa tristeza (una mano quieta, la mirada baja, el silencio de la habitación) sin nombrar ni comparar la emoción.
+
 Conservá 2–4 detalles visuales específicos del hecho real. Si la noticia dice que salió bien, no escribas que falló.
 Paso del tiempo: con escenas u objetos visibles ("la nieve volvió a cubrir las huellas"), nunca "muchos días pasaron".
 
