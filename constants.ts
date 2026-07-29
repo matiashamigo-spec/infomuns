@@ -63,6 +63,8 @@ SÍ (concreto, se entiende sin explicar la guerra): "No los dejaron seguir volan
 
 IMPORTANTE — la imagen concreta tiene que ubicarse en el lugar CORRECTO de la noticia real, no en el lugar más fácil de dibujar. Si el problema fue en el destino (por ejemplo, un país con conflicto) y no en una escala del camino, no le eches la culpa a la escala solo porque sea más simple de imaginar — eso inventa un hecho que no pasó. Fijate bien QUÉ lugar específico causó el freno antes de elegir la imagen, y mantené esa ubicación real aunque la traduzcas a algo concreto.
 
+Cuando el obstáculo sea una guerra o un conflicto: PROHIBIDO cualquier imagen visual de guerra, aunque sea "desde lejos" (humo, fuego, explosiones, luces rojas, ruidos de combate). Esto no es solo sobre-explicar, es mostrar violencia — algo que ya está prohibido en general en este documento. Quedate en el nivel administrativo y neutro: "no dejaron pasar", "cerraron el paso", "nadie podía cruzar" — sin ninguna imagen sensorial de lo que causó ese cierre.
+
 Tono cálido y sereno, contado en voz alta — no heroico, no Disney, no poético.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -75,6 +77,10 @@ ESTRUCTURA
 4. Un giro, espera o resolución — fiel a lo que realmente pasó.
 5. Un final con una imagen concreta y tranquila. La sonrisa final pertenece a alguien real del cuento, nunca es abstracta ni sin dueño.
 
+FORMATO OBLIGATORIO: el campo "story" tiene que tener 4 a 6 párrafos SEPARADOS por un salto de línea doble (\n\n) entre cada uno — nunca todo junto en un solo bloque de texto. Cada uno de los 5 puntos de arriba es, como mínimo, un párrafo propio.
+
+PROHIBIDO arrancar siempre con una pregunta ("¿Sabés qué pasó...?", "¿Sabés qué hay...?") — es la misma fórmula repetida de siempre, solo que ahora en versión conversacional en vez de literaria. Algunos cuentos SÍ pueden arrancar con una pregunta si surge natural, pero NO todos — variá el arranque tanto como variás todo lo demás: a veces con una pregunta, a veces con la escena directa, a veces con un "resulta que..." a mitad de camino. Si mirás los últimos cuentos que escribiste y todos empiezan igual, cambiá.
+
 Sin moralejas. Sin cierres genéricos. Sin explicar qué aprender.
 
 300 a 500 palabras, párrafos cortos para facilitar la lectura en voz alta.
@@ -85,7 +91,7 @@ VERACIDAD
 
 El hecho real no se tuerce. Si la noticia dice que salió bien, no escribas que falló. Nombres, lugares, fechas y acciones concretas se respetan.
 
-PROHIBIDO inventar escenas, gestos o acciones específicas que la noticia no cuenta — incluso cuando estás traduciendo un obstáculo abstracto a algo concreto. Una cosa es simplificar EL HECHO ("no los dejaron pasar"), y otra muy distinta es inventar CÓMO pasó con detalles que no están en la fuente (pilotos que niegan con la cabeza, barreras de luces, gestos específicos de personas reales). Lo mismo aplica a las personas reales de la noticia: no les inventes acciones, tareas o interacciones que la fuente no menciona (si la noticia dice que alguien hace gestiones legales, no lo conviertas en alguien que reparte comida a diario si eso no está reportado). Y no inventes un final o una continuación que la fuente no confirma (si la noticia dice que la situación sigue sin resolverse, no le pongas un "mañana lo van a lograr") — quedate en lo que el hecho real dice, aunque sea menos prolijo que un final cerrado.
+PROHIBIDO inventar escenas, gestos o acciones específicas que la noticia no cuenta — incluso cuando estás traduciendo un obstáculo abstracto a algo concreto. Una cosa es simplificar EL HECHO ("no los dejaron pasar"), y otra muy distinta es inventar CÓMO pasó con detalles que no están en la fuente (pilotos que niegan con la cabeza, barreras de luces, gestos específicos de personas reales). Lo mismo aplica a las personas reales de la noticia: no les inventes acciones, tareas o interacciones que la fuente no menciona (si la noticia dice que alguien hace gestiones legales, no lo conviertas en alguien que reparte comida a diario si eso no está reportado). Y no inventes un final o una continuación que la fuente no confirma (si la noticia dice que la situación sigue sin resolverse, no le pongas un "mañana lo van a lograr") — quedate en lo que el hecho real dice, aunque sea menos prolijo que un final cerrado. Tampoco inventes LA CAUSA de algo si la fuente no la da (si la noticia dice que alguien murió pero no dice por qué, no agregues "se enfermó" ni ninguna otra causa — dejalo sin causa explicada, así como está en la fuente).
 
 Esto NO significa escribir escenas menos vívidas — al contrario: toda esa capacidad de mostrar detalles concretos y específicos usala SIN LÍMITE en la parte de los Muns (qué hacen, qué miran, qué guardan, cómo reaccionan) — ahí es ficción pura y podés inventar lo que quieras. La restricción es solo sobre el HECHO REAL: las personas reales, lo que hicieron, y por qué pasó lo que pasó no se inventan — ahí la fidelidad no es negociable, aunque sea menos vistoso.
 
