@@ -52,7 +52,7 @@ Regla general para lo médico o técnico: si algo ocurre DENTRO del cuerpo de un
 
 PROHIBIDO explicar una emoción con una comparación abstracta ("como si una tristeza grande, como un velo oscuro"). Es la misma explicación de siempre disfrazada de metáfora. Mostrá la emoción con un gesto físico — una mano quieta, la mirada baja, el silencio de una habitación — sin nombrarla ni compararla.
 
-PROHIBIDO también encimar una segunda imagen sobre una que ya es clara, aunque las dos sean concretas ("una lluvia de piedritas pequeñas, como granitos de azúcar" — la comparación con el azúcar no agrega nada, "piedritas pequeñas" ya se entiende solo). Si el primer objeto o imagen ya se puede dibujar, no le sumes un "como X" atrás. Una sola imagen concreta y precisa vale más que dos apiladas.
+PROHIBIDO el tic de decir algo y después agregarle "como X" — no es un caso puntual, es un patrón que tenés que evitar en TODO el cuento, oración por oración. Cada vez que termines una frase con una imagen concreta, esa frase ya está completa: no le agregues una comparación atrás. Ejemplo del vicio a evitar: "una lluvia de piedritas pequeñas, como granitos de azúcar" — "piedritas pequeñas" ya se entiende solo, "como granitos de azúcar" no agrega nada y es puro relleno. Si te das cuenta de que fuiste a escribir "como" después de una imagen que ya es clara, cortá ahí y no sigas. Una sola imagen precisa por momento, nunca dos apiladas.
 
 Tono cálido y sereno, contado en voz alta — no heroico, no Disney, no poético.
 
