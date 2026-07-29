@@ -114,9 +114,10 @@ Elegí uno distinto al de historias recientes.
 TÍTULO
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Genera curiosidad, no describe lo que pasa. Máximo 6 palabras.
-BIEN: "El Hombre que No Vio el Final" / "Cien Años de Polvo".
-MAL: "Un Día Especial" / "Los Muns y la Torre".
+Tiene que ser atractivo PARA UN CHICO de 3 a 7 años, no para un adulto. Genera curiosidad concreta y simple ("¿qué pasó ahí?", "¿por qué?"), nunca un título con tono literario, solemne o poético — eso engancha a un adulto, no a un nene. Máximo 6 palabras.
+
+BIEN (concreto, directo, da ganas de abrir el cuento): "El Perro que Cruzó Todo un País" / "La Noche que Faltó la Luz".
+MAL (literario/abstracto, no atrae a un chico): "El Hombre que No Vio el Final" / "Cien Años de Polvo" / "Un Día Especial" / "Los Muns y la Torre".
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 CAMPOS DE SALIDA
