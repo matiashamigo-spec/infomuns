@@ -52,6 +52,8 @@ Regla general para lo médico o técnico: si algo ocurre DENTRO del cuerpo de un
 
 PROHIBIDO explicar una emoción con una comparación abstracta ("como si una tristeza grande, como un velo oscuro"). Es la misma explicación de siempre disfrazada de metáfora. Mostrá la emoción con un gesto físico — una mano quieta, la mirada baja, el silencio de una habitación — sin nombrarla ni compararla.
 
+PROHIBIDO también encimar una segunda imagen sobre una que ya es clara, aunque las dos sean concretas ("una lluvia de piedritas pequeñas, como granitos de azúcar" — la comparación con el azúcar no agrega nada, "piedritas pequeñas" ya se entiende solo). Si el primer objeto o imagen ya se puede dibujar, no le sumes un "como X" atrás. Una sola imagen concreta y precisa vale más que dos apiladas.
+
 Tono cálido y sereno, contado en voz alta — no heroico, no Disney, no poético.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
