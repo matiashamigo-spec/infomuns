@@ -248,13 +248,18 @@ Necesito dos párrafos cortos, en español neutro, tono cálido y editorial (no 
 
 // Arma el bloque HTML de contexto: si hay contexto manual lo respeta tal cual (comportamiento legacy),
 // si no, lo genera automáticamente con el formato estándar del sitio.
+// NOTA: cada línea usa <p class="muns-context-line"> SUELTO (sin div contenedor).
+// Un <div> anidado con <p> adentro no sobrevive el editor clásico de WordPress (TinyMCE le come
+// las etiquetas internas al guardar). El recuadro visual se arma en el navegador con JS al mostrar
+// la nota, agrupando los <p class="muns-context-line"> consecutivos — así funciona sin importar
+// cómo el editor haya mangleado el HTML guardado.
 async function buildContextBlock(newsText: string, analysis: NewsAnalysis, apiKey: string, manualContext?: string): Promise<string> {
   if (manualContext?.trim()) {
-    return `\n<div class="muns-context-note"><p><em>${manualContext.trim()}</em></p></div>`;
+    return `\n<p class="muns-context-line"><em>${manualContext.trim()}</em></p>`;
   }
   try {
     const { inspired, conversation } = await generateContextParagraphs(newsText, analysis, apiKey);
-    return `\n<div class="muns-context-note"><p><em>${inspired}</em></p><p><em>${conversation}</em></p><p><em>Que las noticias dejen de ser solo cosa de grandes ✨</em></p></div>`;
+    return `\n<p class="muns-context-line"><em>${inspired}</em></p>\n<p class="muns-context-line"><em>${conversation}</em></p>\n<p class="muns-context-line"><em>Que las noticias dejen de ser solo cosa de grandes ✨</em></p>`;
   } catch (e: any) {
     console.warn("[pipeline] No se pudo generar el contexto automático:", e.message);
     return "";
