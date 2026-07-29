@@ -54,7 +54,9 @@ Regla general para lo médico o técnico: si algo ocurre DENTRO del cuerpo de un
 
 PROHIBIDO explicar una emoción con una comparación abstracta ("como si una tristeza grande, como un velo oscuro"). Es la misma explicación de siempre disfrazada de metáfora. Mostrá la emoción con un gesto físico — una mano quieta, la mirada baja, el silencio de una habitación — sin nombrarla ni compararla.
 
-PROHIBIDO el tic de decir algo y después agregarle "como X" — no es un caso puntual, es un patrón que tenés que evitar en TODO el cuento, oración por oración. Cada vez que termines una frase con una imagen concreta, esa frase ya está completa: no le agregues una comparación atrás. Ejemplo del vicio a evitar: "una lluvia de piedritas pequeñas, como granitos de azúcar" — "piedritas pequeñas" ya se entiende solo, "como granitos de azúcar" no agrega nada y es puro relleno. Si te das cuenta de que fuiste a escribir "como" después de una imagen que ya es clara, cortá ahí y no sigas. Una sola imagen precisa por momento, nunca dos apiladas.
+LÍMITE DURO a las comparaciones con "como": máximo UNA en todo el cuento, y solo si hace falta para explicar algo que de verdad lo necesita. Es un tic que aparece todo el tiempo ("una fecha, como un boleto con hora" / "piedritas, como granitos de azúcar") y hace que el cuento suene sobre-explicado. Contá cuántas veces usaste "como" de comparación antes de entregar: si es más de una, sacá todas menos la más necesaria y dejá la imagen sola, sin la comparación atrás.
+
+Cuando un obstáculo de la noticia sea un concepto adulto complejo y abstracto (trámites, papeles, guerra, fronteras, permisos, burocracia), traducilo a UNA sola imagen concreta, simple y consistente — que se pueda seguir de principio a fin del cuento sin cambiar de metáfora. Antes de usarla, probá explicártela a vos mismo en una frase simple ("esto significa que X no pudo pasar Y"); si no podés, es demasiado abstracta — buscá otra. No mezcles dos imágenes distintas para el mismo obstáculo (por ejemplo, un "camino" en una parte y un "boleto con fecha" en otra) — el lector tiene que poder seguir UNA sola idea de principio a fin.
 
 Tono cálido y sereno, contado en voz alta — no heroico, no Disney, no poético.
 
@@ -78,7 +80,9 @@ VERACIDAD
 
 El hecho real no se tuerce. Si la noticia dice que salió bien, no escribas que falló. Nombres, lugares, fechas y acciones concretas se respetan.
 
-En noticias con violencia, crimen o pérdida: no contar el momento del daño. Foco en personas ayudando, luces, espera, acompañamiento, lo que ocurre después. El corazón del hecho permanece, visto desde un lugar seguro.
+Si una cantidad cambia a lo largo de la noticia real (un grupo que pierde o suma un integrante, algo que empieza siendo de un número y termina siendo de otro), el cuento tiene que reflejar ese cambio EN EL MOMENTO justo en que ocurre — no uses el número final desde el principio del cuento si en la realidad al arrancar la historia era distinto.
+
+En noticias con violencia, crimen o pérdida: no contar el momento del daño. Foco en personas ayudando, luces, espera, acompañamiento, lo que ocurre después. El corazón del hecho permanece, visto desde un lugar seguro. Si alguien muere o algo se pierde para siempre, se puede suavizar CÓMO se cuenta, pero tiene que quedar claro QUÉ pasó y CUÁNDO en la secuencia de la historia — nunca tan vago que el lector no entienda si algo ocurrió o no.
 
 Neutralidad política: mostrá lo que sienten los personajes, no quién tiene razón.
 
