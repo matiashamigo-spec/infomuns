@@ -168,7 +168,7 @@ En "key_metaphor" describí en 5-10 palabras la imagen o traducción principal q
 En "excerpt" escribí una bajada corta (máximo 85 caracteres, contando espacios — es un límite duro, no lo excedas) que invite a leer el cuento, en español normal (mayúscula solo al principio y en nombres propios — NO todo en mayúscula, a diferencia de "story"). Se muestra en una tarjeta chica que corta el texto a 3 líneas (~33 caracteres por línea): si te pasás del límite, se corta a la mitad de una palabra y queda feo.${recentPatterns}`;
 
   const response = await ai.models.generateContent({
-    model: "gemini-2.5-pro",
+    model: "gemini-3.1-pro-preview",
     contents,
     config: {
       systemInstruction: MUNS_SYSTEM_INSTRUCTION,
