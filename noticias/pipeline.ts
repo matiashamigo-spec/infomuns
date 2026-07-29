@@ -112,7 +112,7 @@ Respondé:
   return JSON.parse(json);
 }
 
-async function generateMunsStory(newsText: string, apiKey: string): Promise<{ title: string; story: string; analysis: NewsAnalysis }> {
+async function generateMunsStory(newsText: string, apiKey: string): Promise<{ title: string; story: string; excerpt: string; analysis: NewsAnalysis }> {
   const ai = new GoogleGenAI({ apiKey });
 
   // Paso 1: analizar la noticia
@@ -163,7 +163,9 @@ AHORA escribí el cuento. La forma surge del contenido — una historia de esper
 Elegí uno de los ARQUETIPOS DE RESOLUCIÓN (A–H). Indicá en "resolution" la letra y nombre. Indicá en "symbol" el símbolo principal del cuento. Indicá en "setting" el escenario principal (ej: "tierra - Barcelona", "luna", "cohete lunar", "lado oscuro de la luna").
 En "opening_type" describí en 5-8 palabras cómo arranca el cuento (ej: "detalle concreto del lugar", "personaje en acción", "desde la luna con algo inusual").
 En "closing_image" describí en 5-10 palabras la imagen o acción concreta del cierre (ej: "suben al cohete en silencio", "dejan una sonrisa en el piso y se van", "Opaq mira hacia atrás una vez").
-En "key_metaphor" describí en 5-10 palabras la imagen o traducción principal que usaste para explicar el concepto adulto central de esta noticia en lenguaje de nene (ej: "ruidos grandes para los ataques militares", "pantalla flotante para las noticias digitales", "el agua que no para para la inundación"). Esto sirve para NO repetirlo en futuros cuentos.${recentPatterns}`;
+En "key_metaphor" describí en 5-10 palabras la imagen o traducción principal que usaste para explicar el concepto adulto central de esta noticia en lenguaje de nene (ej: "ruidos grandes para los ataques militares", "pantalla flotante para las noticias digitales", "el agua que no para para la inundación"). Esto sirve para NO repetirlo en futuros cuentos.
+
+En "excerpt" escribí una bajada corta (máximo 110 caracteres, una sola frase) que invite a leer el cuento, en español normal (mayúscula solo al principio y en nombres propios — NO todo en mayúscula, a diferencia de "story"). Tiene que entrar completa en 3 líneas de una tarjeta chica, sin cortarse.${recentPatterns}`;
 
   const response = await ai.models.generateContent({
     model: "gemini-2.5-flash",
@@ -177,6 +179,7 @@ En "key_metaphor" describí en 5-10 palabras la imagen o traducción principal q
         properties: {
           title: { type: Type.STRING },
           story: { type: Type.STRING },
+          excerpt: { type: Type.STRING },
           symbol: { type: Type.STRING },
           resolution: { type: Type.STRING },
           setting: { type: Type.STRING },
@@ -184,7 +187,7 @@ En "key_metaphor" describí en 5-10 palabras la imagen o traducción principal q
           closing_image: { type: Type.STRING },
           key_metaphor: { type: Type.STRING },
         },
-        required: ["title", "story", "symbol", "resolution", "setting", "opening_type", "closing_image", "key_metaphor"],
+        required: ["title", "story", "excerpt", "symbol", "resolution", "setting", "opening_type", "closing_image", "key_metaphor"],
       },
     },
   });
@@ -302,6 +305,7 @@ export interface GeneratedStory {
   title: string;
   content: string;
   context: string;
+  excerpt: string;
   imageUrl: string | null;
   siteName: string;
   sourceUrl: string;
@@ -339,7 +343,7 @@ export async function generateStoryFromUrl(url: string, apiKey: string, context?
 
   // 2. Generar historia Muns
   const newsText = `${rawTitle}\n\n${bodyText || description}`;
-  const { title, story, analysis } = await generateMunsStory(newsText, apiKey);
+  const { title, story, excerpt, analysis } = await generateMunsStory(newsText, apiKey);
 
   // 3. Generar (o respetar el manual) el bloque de contexto para adultos
   const contextBlock = await buildContextBlock(newsText, analysis, apiKey, context);
@@ -348,7 +352,7 @@ export async function generateStoryFromUrl(url: string, apiKey: string, context?
   const content = `<p>${cleanStory.replace(/\n/g, "</p><p>")}</p>
 <p><small>Fuente original (<a href="${url}" target="_blank" rel="noopener">${siteName}</a>): ${url}</small></p>${contextBlock.html}`;
 
-  return { title, content, context: contextBlock.text, imageUrl, siteName, sourceUrl: url };
+  return { title, content, context: contextBlock.text, excerpt, imageUrl, siteName, sourceUrl: url };
 }
 
 export async function processSingleUrl(url: string, apiKey: string, context?: string): Promise<{ id: number; title: string }> {
