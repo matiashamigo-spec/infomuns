@@ -366,16 +366,28 @@ export async function generateStoryFromUrl(url: string, apiKey: string, context?
   console.log(`[pipeline] Generando cuento desde URL: ${url}`);
 
   // 1. Scrapear el artículo
-  const page = await axios.get(url, {
-    timeout: 15000,
-    headers: {
-      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-      "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-      "Accept-Language": "es-AR,es;q=0.9",
-      "Accept-Encoding": "gzip, deflate, br",
-      "Cache-Control": "no-cache",
-    },
-  });
+  let page;
+  try {
+    page = await axios.get(url, {
+      timeout: 15000,
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "es-AR,es;q=0.9",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Cache-Control": "no-cache",
+      },
+    });
+  } catch (err: any) {
+    const status = err?.response?.status;
+    if (status === 403 || status === 401) {
+      throw new Error(`El sitio bloqueó el scraping automático (${status}). Este medio no permite acceso desde servidores — probá con otra fuente.`);
+    }
+    if (status === 404) {
+      throw new Error("La URL no existe (404). Revisá que el link sea correcto.");
+    }
+    throw new Error(`No se pudo leer el artículo (${err?.code || status || "error de red"}). Probá con otra fuente.`);
+  }
   const $ = cheerio.load(page.data);
 
   const rawTitle = $('meta[property="og:title"]').attr("content") || $("title").text() || "Sin título";
