@@ -13,6 +13,8 @@ Usá conectores como hablás de verdad: "¿sabés qué pasó?", "y resulta que..
 
 TEST: si le leyeras esto en voz alta a un chico de 5 años sin haberlo escrito antes, ¿lo entendería sin que vos tengas que parar a explicarle nada? Si la respuesta es no, está demasiado escrito como literatura — simplificá hasta que suene a como hablás de verdad.
 
+MANTENÉ un único marco temporal de principio a fin — no contradigas en un párrafo el marco que instalaste en el anterior. Si un párrafo dice explícitamente que algo está pasando AHORA MISMO, en este instante, el párrafo siguiente no puede arrancar diciendo que eso mismo YA PASÓ (como hecho cerrado) — son dos formas de contar que se pisan y confunden al chico sobre si la escena sigue ocurriendo o si ya terminó. Mezclar tiempos dentro de una misma oración al hablar es normal y natural (así se habla de verdad), pero un marcador temporal fuerte y explícito ("ahora mismo", "en este momento", "recién") no se instala en un párrafo para desmentirlo en el que sigue.
+
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 LOS MUNS — PRESENCIA EXPLÍCITA, NUNCA UNA FÓRMULA
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -26,6 +28,8 @@ OBLIGATORIO: los Muns aparecen COMO PERSONAJES en la escena, al menos una vez po
 PROHIBIDO que aparezcan siempre de la misma manera. Nada de fórmulas repetidas entre cuentos ("justo pasaban por ahí", "andaban buscando historias", o cualquier apertura calcable a cualquier historia). Cada cuento encuentra su propia forma de que lleguen a la escena y su propia forma de que reaccionen — variá el verbo, la acción, el ángulo desde el que miran. No hace falta explicar CÓMO llegaron ni de dónde vienen — ya están ahí, mirando.
 
 PROHIBIDO que la mención de los Muns caiga siempre al FINAL del párrafo, como una cláusula pegada después de contar el hecho — es la misma fórmula de bloque que la de las aperturas repetidas, solo que ahora al cierre de cada párrafo en vez de al inicio del cuento. Variá la POSICIÓN dentro del párrafo tanto como variás la acción: puede abrir el párrafo (ya están mirando antes de que arranque la explicación del hecho), puede interrumpir a mitad de camino, puede ir integrada en la misma oración que el hecho real en vez de en una oración aparte, o puede ir al final — pero no en la mayoría de los párrafos del mismo cuento. Antes de entregar, revisá el cuento completo: si la frase de los Muns aparece pegada al final en 3 o más párrafos, está mal — movela.
+
+PROHIBIDO que los Muns aparezcan como una cantidad nueva y desconectada en cada párrafo (un Mun / dos Muns / un par de Muns, sin relación entre sí) — son LOS MISMOS Muns o el mismo grupo los que siguen presentes de principio a fin del cuento, no una serie de cameos sueltos. No hace falta explicar cómo llegaron a la primera escena, pero una vez que aparecen, si el hecho real cambia de lugar entre párrafos, son ESOS Muns los que se mueven con la historia — referite a ellos como continuación ("el mismo Mun", "los Muns que ya estaban ahí", "uno de ellos") en vez de presentar una cantidad nueva cada vez. El lector tiene que sentir que sigue a LOS MISMOS testigos de punta a punta, no a personajes distintos que aparecen y desaparecen sin conexión.
 
 Son testigos, no protagonistas — la historia no depende de ellos. Pueden: descubrir, acercarse, seguir algo con la mirada, esperar, acompañar en silencio, encontrar una sonrisa. NO pueden: resolver el problema, cambiar el resultado, explicarle nada a nadie, tomar el rol humano de la noticia. TEST: si le sacás toda mención de los Muns, la historia real (los hechos, las personas) tiene que seguir funcionando exactamente igual — ellos acompañan, no protagonizan.
 
@@ -118,8 +122,10 @@ TÍTULO
 
 Tiene que ser atractivo PARA UN CHICO de 3 a 7 años, no para un adulto. Genera curiosidad concreta y simple ("¿qué pasó ahí?", "¿por qué?"), nunca un título con tono literario, solemne o poético — eso engancha a un adulto, no a un nene. Máximo 6 palabras.
 
-BIEN (concreto, directo, da ganas de abrir el cuento): "El Perro que Cruzó Todo un País" / "La Noche que Faltó la Luz".
-MAL (literario/abstracto, no atrae a un chico): "El Hombre que No Vio el Final" / "Cien Años de Polvo" / "Un Día Especial" / "Los Muns y la Torre".
+MAYÚSCULA SOLO en la primera palabra del título (y en nombres propios que aparezcan) — el resto va en minúscula. PROHIBIDO poner mayúscula al inicio de cada palabra (Title Case a la inglesa) — no es una convención del español.
+
+BIEN (concreto, directo, da ganas de abrir el cuento, mayúscula solo al inicio): "El perro que cruzó todo un país" / "La noche que faltó la luz".
+MAL (literario/abstracto, no atrae a un chico): "El hombre que no vio el final" / "Cien años de polvo" / "Un día especial" / "Los Muns y la torre".
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 CAMPOS DE SALIDA
