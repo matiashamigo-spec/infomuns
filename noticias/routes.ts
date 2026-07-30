@@ -4,7 +4,7 @@
 import { Router, Request, Response } from "express";
 import axios from "axios";
 import * as cheerio from "cheerio";
-import { runDailyPipeline, processSingleUrl, generateStoryFromUrl } from "./pipeline.js";
+import { runDailyPipeline, processSingleUrl, generateStoryFromUrl, refineStory } from "./pipeline.js";
 import { illustrateImage, generateIllustrationSet, generateSingleIllustration } from "./illustration.js";
 import { listDrafts, listPublished, updatePost, publishPostById, unpublishPost, deletePost, uploadMedia, setFeaturedPost, createDraft, listMedia } from "./wordpress.js";
 
@@ -96,6 +96,24 @@ export function createNoticiasRouter(): Router {
       console.log(`[noticias] Generando (sin publicar) desde URL: ${url}`);
       const generated = await generateStoryFromUrl(url, apiKey, context);
       res.json({ ok: true, ...generated });
+    } catch (err: any) {
+      res.status(500).json({ error: safeError(err) });
+    }
+  });
+
+  // POST /api/noticias/refine — ajusta un cuento YA GENERADO según un pedido puntual (chat de retoque
+  // del metabox "Generar con IA"), sin volver a correr todo el pipeline. Solo dentro de la misma sesión
+  // de generación (el cliente manda el "story" plano que ya tiene en memoria, no busca nada guardado).
+  router.post("/refine", requireAdmin, async (req: Request, res: Response) => {
+    const { title, story, instruction } = req.body || {};
+    if (!story || typeof story !== "string") return res.status(400).json({ error: "Falta story" });
+    if (!instruction || typeof instruction !== "string") return res.status(400).json({ error: "Falta instruction" });
+    try {
+      const apiKey = process.env.GEMINI_API_KEY;
+      if (!apiKey) return res.status(500).json({ error: "GEMINI_API_KEY no configurada" });
+      console.log(`[noticias] Refinando cuento: "${instruction}"`);
+      const result = await refineStory(title || "", story, instruction, apiKey);
+      res.json({ ok: true, ...result });
     } catch (err: any) {
       res.status(500).json({ error: safeError(err) });
     }

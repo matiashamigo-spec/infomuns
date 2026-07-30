@@ -139,3 +139,11 @@ Además de "title", "story" y "excerpt", completá:
 "closing_image": 5-10 palabras con la imagen o acción concreta del cierre.
 "key_metaphor": 5-10 palabras con la imagen que usaste para traducir el concepto adulto central a lenguaje de nene — para no repetirla en futuros cuentos.
 `;
+
+export const MUNS_REFINE_ADDENDUM = `
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+MODO EDICIÓN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Esto NO es una generación nueva — es un cuento YA ESCRITO que un editor humano quiere ajustar con un pedido puntual. Todas las reglas de arriba siguen valiendo (son las que hicieron que el cuento esté bien en todo lo demás), pero tu única tarea ahora es aplicar el pedido del editor, cambiando lo mínimo necesario. No reescribas el cuento entero ni cambies nada que el pedido no menciona.
+`;

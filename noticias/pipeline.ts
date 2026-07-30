@@ -8,7 +8,7 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { fetchAllFeeds, findTopStories } from "./rss.js";
 import { illustrateImage, generateIllustrationFromText, generateSingleIllustration } from "./illustration.js";
 import { createDraft, uploadMedia } from "./wordpress.js";
-import { MUNS_SYSTEM_INSTRUCTION } from "../constants.js";
+import { MUNS_SYSTEM_INSTRUCTION, MUNS_REFINE_ADDENDUM } from "../constants.js";
 import { getRecentPatternsPrompt, saveStoryToMemory } from "./story-memory.js";
 
 const DATA_DIR = process.env.RAILWAY_VOLUME_MOUNT_PATH || process.env.DATA_DIR || path.join(process.cwd(), "data");
@@ -309,6 +309,14 @@ export interface GeneratedStory {
   imageUrl: string | null;
   siteName: string;
   sourceUrl: string;
+  story: string;
+  contentSuffix: string;
+}
+
+// Mayúscula + un <p> por párrafo — el formato que espera el theme para el cuerpo del cuento.
+function wrapStoryParagraphs(story: string): string {
+  const cleanStory = story.toUpperCase().replace(/«/g, '"').replace(/»/g, '"');
+  return `<p>${cleanStory.replace(/\n/g, "</p><p>")}</p>`;
 }
 
 // Scrapea la URL y genera el cuento Muns, SIN publicar nada en WordPress.
@@ -348,11 +356,12 @@ export async function generateStoryFromUrl(url: string, apiKey: string, context?
   // 3. Generar (o respetar el manual) el bloque de contexto para adultos
   const contextBlock = await buildContextBlock(newsText, analysis, apiKey, context);
 
-  const cleanStory = story.toUpperCase().replace(/«/g, '"').replace(/»/g, '"');
-  const content = `<p>${cleanStory.replace(/\n/g, "</p><p>")}</p>
+  const storyHtml = wrapStoryParagraphs(story);
+  const contentSuffix = `
 <p><small>Fuente original (<a href="${url}" target="_blank" rel="noopener">${siteName}</a>): ${url}</small></p>${contextBlock.html}`;
+  const content = `${storyHtml}${contentSuffix}`;
 
-  return { title, content, context: contextBlock.text, excerpt, imageUrl, siteName, sourceUrl: url };
+  return { title, content, context: contextBlock.text, excerpt, imageUrl, siteName, sourceUrl: url, story, contentSuffix };
 }
 
 export async function processSingleUrl(url: string, apiKey: string, context?: string): Promise<{ id: number; title: string }> {
@@ -407,11 +416,7 @@ export async function runDailyPipeline(limit = 10): Promise<PipelineResult> {
       const contextBlock = await buildContextBlock(newsText, analysis, apiKey);
 
       // 4. Crear borrador en WordPress
-      const cleanStory = story
-        .toUpperCase()
-        .replace(/«/g, '"')
-        .replace(/»/g, '"');
-      const content = `<p>${cleanStory.replace(/\n/g, "</p><p>")}</p>
+      const content = `${wrapStoryParagraphs(story)}
 <p><small>Fuente original (<a href="${article.link}" target="_blank" rel="noopener">${article.source}</a>): ${article.link}</small></p>${contextBlock.html}`;
 
       await createDraft(title, content, mediaId);
@@ -430,4 +435,63 @@ export async function runDailyPipeline(limit = 10): Promise<PipelineResult> {
 
   console.log(`[pipeline] Completado: ${result.succeeded} ok, ${result.failed} errores`);
   return result;
+}
+
+export interface RefineResult {
+  title: string;
+  story: string;
+  content: string;
+  cost: { inputTokens: number; outputTokens: number; usd: number };
+}
+
+// Ajusta un cuento YA GENERADO según un pedido puntual del editor humano (ej. "arreglá el tiempo
+// verbal del párrafo 2"), SIN volver a correr todo el pipeline. Usado por el chat de retoque del
+// metabox "Generar con IA" en info.muns.club — solo dentro de la misma sesión de generación.
+export async function refineStory(title: string, story: string, instruction: string, apiKey: string): Promise<RefineResult> {
+  const ai = new GoogleGenAI({ apiKey });
+
+  const response = await ai.models.generateContent({
+    model: "gemini-3.1-pro-preview",
+    contents: `CUENTO ACTUAL:
+TÍTULO: ${title}
+CUENTO:
+${story}
+
+PEDIDO DE EDICIÓN DEL USUARIO: ${instruction}
+
+Aplicá SOLO este pedido puntual. Cambiá lo mínimo necesario para cumplirlo — no reescribas oraciones que no tienen que ver con el pedido. Mantené el resto del cuento (tono, hechos, estructura, longitud) tal como está.`,
+    config: {
+      systemInstruction: MUNS_SYSTEM_INSTRUCTION + "\n\n" + MUNS_REFINE_ADDENDUM,
+      temperature: 0.7,
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          title: { type: Type.STRING },
+          story: { type: Type.STRING },
+        },
+        required: ["title", "story"],
+      },
+    },
+  });
+
+  const text = response.text;
+  if (!text) throw new Error("Gemini no devolvió texto");
+  const start = text.indexOf("{");
+  const end = text.lastIndexOf("}");
+  const json = start !== -1 && end > start ? text.substring(start, end + 1) : text;
+  const result = JSON.parse(json);
+
+  const usage: any = (response as any).usageMetadata || {};
+  console.log(`[pipeline] refineStory usageMetadata: ${JSON.stringify(usage)}`);
+  const inputTokens = usage.promptTokenCount ?? 0;
+  const outputTokens = usage.candidatesTokenCount ?? 0;
+  const usd = (inputTokens / 1_000_000) * 2.0 + (outputTokens / 1_000_000) * 12.0;
+
+  return {
+    title: result.title,
+    story: result.story,
+    content: wrapStoryParagraphs(result.story),
+    cost: { inputTokens, outputTokens, usd },
+  };
 }
