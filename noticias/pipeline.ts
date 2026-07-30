@@ -36,6 +36,39 @@ function saveProcessedUrl(url: string, processed: Set<string>): void {
   }
 }
 
+// Pricing de Gemini (USD por 1M tokens) — actualizar acá si Google cambia las tarifas.
+const GEMINI_PRICING: Record<string, { inputPerM: number; outputPerM: number }> = {
+  "gemini-2.5-flash": { inputPerM: 0.15, outputPerM: 1.25 },
+  "gemini-3.1-pro-preview": { inputPerM: 2.0, outputPerM: 12.0 },
+};
+
+interface UsageCost {
+  model: string;
+  inputTokens: number;
+  outputTokens: number;
+  usd: number;
+}
+
+function costFromResponse(model: string, response: any): UsageCost {
+  const usage = response?.usageMetadata || {};
+  const inputTokens = usage.promptTokenCount ?? 0;
+  const outputTokens = usage.candidatesTokenCount ?? 0;
+  const pricing = GEMINI_PRICING[model] || { inputPerM: 0, outputPerM: 0 };
+  const usd = (inputTokens / 1_000_000) * pricing.inputPerM + (outputTokens / 1_000_000) * pricing.outputPerM;
+  return { model, inputTokens, outputTokens, usd };
+}
+
+function sumCosts(costs: UsageCost[]): { inputTokens: number; outputTokens: number; usd: number } {
+  return costs.reduce(
+    (acc, c) => ({
+      inputTokens: acc.inputTokens + c.inputTokens,
+      outputTokens: acc.outputTokens + c.outputTokens,
+      usd: acc.usd + c.usd,
+    }),
+    { inputTokens: 0, outputTokens: 0, usd: 0 }
+  );
+}
+
 type NewsTone = "positive" | "concerning" | "negative";
 
 export async function classifyTone(newsText: string, apiKey: string): Promise<NewsTone> {
@@ -67,10 +100,11 @@ interface NewsAnalysis {
   hopeful_actor: string;
 }
 
-async function analyzeNews(newsText: string, apiKey: string): Promise<NewsAnalysis> {
+async function analyzeNews(newsText: string, apiKey: string): Promise<{ analysis: NewsAnalysis; cost: UsageCost }> {
   const ai = new GoogleGenAI({ apiKey });
+  const model = "gemini-2.5-flash";
   const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash",
+    model,
     contents: `Analizá esta noticia para preparar un cuento infantil. Respondé en JSON.
 
 Noticia: "${newsText.substring(0, 4000)}"
@@ -109,14 +143,14 @@ Respondé:
   const start = text.indexOf("{");
   const end = text.lastIndexOf("}");
   const json = start !== -1 && end > start ? text.substring(start, end + 1) : text;
-  return JSON.parse(json);
+  return { analysis: JSON.parse(json), cost: costFromResponse(model, response) };
 }
 
-async function generateMunsStory(newsText: string, apiKey: string): Promise<{ title: string; story: string; excerpt: string; analysis: NewsAnalysis }> {
+async function generateMunsStory(newsText: string, apiKey: string): Promise<{ title: string; story: string; excerpt: string; analysis: NewsAnalysis; costs: UsageCost[] }> {
   const ai = new GoogleGenAI({ apiKey });
 
   // Paso 1: analizar la noticia
-  const analysis = await analyzeNews(newsText, apiKey);
+  const { analysis, cost: analysisCost } = await analyzeNews(newsText, apiKey);
   console.log(`[pipeline] Análisis: ${JSON.stringify(analysis)}`);
 
   // Paso 2: construir contexto para el cuento
@@ -167,8 +201,9 @@ En "key_metaphor" describí en 5-10 palabras la imagen o traducción principal q
 
 En "excerpt" escribí una bajada corta (máximo 85 caracteres, contando espacios — es un límite duro, no lo excedas) que invite a leer el cuento, en español normal (mayúscula solo al principio y en nombres propios — NO todo en mayúscula, a diferencia de "story"). Se muestra en una tarjeta chica que corta el texto a 3 líneas (~33 caracteres por línea): si te pasás del límite, se corta a la mitad de una palabra y queda feo.${recentPatterns}`;
 
+  const storyModel = "gemini-3.1-pro-preview";
   const response = await ai.models.generateContent({
-    model: "gemini-3.1-pro-preview",
+    model: storyModel,
     contents,
     config: {
       systemInstruction: MUNS_SYSTEM_INSTRUCTION,
@@ -209,16 +244,17 @@ En "excerpt" escribí una bajada corta (máximo 85 caracteres, contando espacios
     key_metaphor: result.key_metaphor || "",
   });
 
-  return { ...result, analysis };
+  return { ...result, analysis, costs: [analysisCost, costFromResponse(storyModel, response)] };
 }
 
 // Genera el bloque de contexto para adultos que acompaña al cuento:
 // "Esta historia está inspirada en..." + "Este cuento busca abrir una conversación sobre..."
 // El cierre fijo "Que las noticias dejen de ser solo cosa de grandes ✨" se agrega aparte, sin IA.
-async function generateContextParagraphs(newsText: string, analysis: NewsAnalysis, apiKey: string): Promise<{ inspired: string; conversation: string }> {
+async function generateContextParagraphs(newsText: string, analysis: NewsAnalysis, apiKey: string): Promise<{ inspired: string; conversation: string; cost: UsageCost }> {
   const ai = new GoogleGenAI({ apiKey });
+  const model = "gemini-2.5-flash";
   const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash",
+    model,
     contents: `Escribí el contexto para adultos de una nota que acompaña un cuento infantil inspirado en esta noticia real.
 
 NOTICIA: "${newsText.substring(0, 3000)}"
@@ -246,7 +282,7 @@ Necesito dos párrafos cortos, en español neutro, tono cálido y editorial (no 
   const start = text.indexOf("{");
   const end = text.lastIndexOf("}");
   const json = start !== -1 && end > start ? text.substring(start, end + 1) : text;
-  return JSON.parse(json);
+  return { ...JSON.parse(json), cost: costFromResponse(model, response) };
 }
 
 // Arma el bloque HTML de contexto: si hay contexto manual lo respeta tal cual (comportamiento legacy),
@@ -256,20 +292,20 @@ Necesito dos párrafos cortos, en español neutro, tono cálido y editorial (no 
 // las etiquetas internas al guardar). Usamos un shortcode ([muns_context]a|||b|||c[/muns_context])
 // en vez de HTML con clases: un shortcode es texto plano, TinyMCE no lo puede "romper" al re-serializar
 // el DOM al guardar — el recuadro se arma server-side cuando WordPress renderiza el shortcode.
-async function buildContextBlock(newsText: string, analysis: NewsAnalysis, apiKey: string, manualContext?: string): Promise<{ html: string; text: string }> {
+async function buildContextBlock(newsText: string, analysis: NewsAnalysis, apiKey: string, manualContext?: string): Promise<{ html: string; text: string; cost: UsageCost | null }> {
   const closing = "Que las noticias dejen de ser solo cosa de grandes ✨";
   if (manualContext?.trim()) {
     const text = manualContext.trim();
-    return { html: `\n[muns_context]${text}[/muns_context]`, text };
+    return { html: `\n[muns_context]${text}[/muns_context]`, text, cost: null };
   }
   try {
-    const { inspired, conversation } = await generateContextParagraphs(newsText, analysis, apiKey);
+    const { inspired, conversation, cost } = await generateContextParagraphs(newsText, analysis, apiKey);
     const html = `\n[muns_context]${inspired}|||${conversation}|||${closing}[/muns_context]`;
     const text = `${inspired}\n\n${conversation}\n\n${closing}`;
-    return { html, text };
+    return { html, text, cost };
   } catch (e: any) {
     console.warn("[pipeline] No se pudo generar el contexto automático:", e.message);
-    return { html: "", text: "" };
+    return { html: "", text: "", cost: null };
   }
 }
 
@@ -311,6 +347,7 @@ export interface GeneratedStory {
   sourceUrl: string;
   story: string;
   contentSuffix: string;
+  cost: { inputTokens: number; outputTokens: number; usd: number };
 }
 
 // Mayúscula + un <p> por párrafo — el formato que espera el theme para el cuerpo del cuento.
@@ -354,7 +391,7 @@ export async function generateStoryFromUrl(url: string, apiKey: string, context?
 
   // 2. Generar historia Muns
   const newsText = `${rawTitle}\n\n${bodyText || description}`;
-  const { title, story, excerpt, analysis } = await generateMunsStory(newsText, apiKey);
+  const { title, story, excerpt, analysis, costs: storyCosts } = await generateMunsStory(newsText, apiKey);
 
   // 3. Generar (o respetar el manual) el bloque de contexto para adultos
   const contextBlock = await buildContextBlock(newsText, analysis, apiKey, context);
@@ -364,7 +401,9 @@ export async function generateStoryFromUrl(url: string, apiKey: string, context?
 <p><small>Fuente original (<a href="${url}" target="_blank" rel="noopener">${siteName}</a>): ${url}</small></p>${contextBlock.html}`;
   const content = `${storyHtml}${contentSuffix}`;
 
-  return { title, content, context: contextBlock.text, excerpt, imageUrl, siteName, sourceUrl: url, story, contentSuffix };
+  const cost = sumCosts(contextBlock.cost ? [...storyCosts, contextBlock.cost] : storyCosts);
+
+  return { title, content, context: contextBlock.text, excerpt, imageUrl, siteName, sourceUrl: url, story, contentSuffix, cost };
 }
 
 export async function processSingleUrl(url: string, apiKey: string, context?: string): Promise<{ id: number; title: string }> {
@@ -453,8 +492,9 @@ export interface RefineResult {
 export async function refineStory(title: string, story: string, instruction: string, apiKey: string): Promise<RefineResult> {
   const ai = new GoogleGenAI({ apiKey });
 
+  const model = "gemini-3.1-pro-preview";
   const response = await ai.models.generateContent({
-    model: "gemini-3.1-pro-preview",
+    model,
     contents: `CUENTO ACTUAL:
 TÍTULO: ${title}
 CUENTO:
@@ -485,16 +525,12 @@ Aplicá SOLO este pedido puntual. Cambiá lo mínimo necesario para cumplirlo �
   const json = start !== -1 && end > start ? text.substring(start, end + 1) : text;
   const result = JSON.parse(json);
 
-  const usage: any = (response as any).usageMetadata || {};
-  console.log(`[pipeline] refineStory usageMetadata: ${JSON.stringify(usage)}`);
-  const inputTokens = usage.promptTokenCount ?? 0;
-  const outputTokens = usage.candidatesTokenCount ?? 0;
-  const usd = (inputTokens / 1_000_000) * 2.0 + (outputTokens / 1_000_000) * 12.0;
+  const cost = costFromResponse(model, response);
 
   return {
     title: result.title,
     story: result.story,
     content: wrapStoryParagraphs(result.story),
-    cost: { inputTokens, outputTokens, usd },
+    cost,
   };
 }
