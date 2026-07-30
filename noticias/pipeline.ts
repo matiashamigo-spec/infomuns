@@ -314,9 +314,12 @@ export interface GeneratedStory {
 }
 
 // Mayúscula + un <p> por párrafo — el formato que espera el theme para el cuerpo del cuento.
+// Colapsa uno o más saltos de línea seguidos en un solo corte de párrafo (el prompt le pide a
+// Gemini separar párrafos con \n\n, un reemplazo de \n suelto dejaba un <p></p> vacío en el medio).
 function wrapStoryParagraphs(story: string): string {
   const cleanStory = story.toUpperCase().replace(/«/g, '"').replace(/»/g, '"');
-  return `<p>${cleanStory.replace(/\n/g, "</p><p>")}</p>`;
+  const paragraphs = cleanStory.split(/\n+/).map(p => p.trim()).filter(Boolean);
+  return paragraphs.map(p => `<p>${p}</p>`).join("");
 }
 
 // Scrapea la URL y genera el cuento Muns, SIN publicar nada en WordPress.
