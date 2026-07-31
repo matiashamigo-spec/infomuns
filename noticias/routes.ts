@@ -333,7 +333,7 @@ export function createNoticiasRouter(): Router {
     if (!apiKey) return res.status(500).json({ error: "GEMINI_API_KEY no configurada" });
 
     const GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta/models/";
-    const GEMINI_MODEL = "gemini-2.5-flash-image";
+    const GEMINI_MODEL = "gemini-3.1-flash-image";
 
     const MUNS_STYLE_PROMPT = `Transform this photo into the Muns 2D animation art style. The result must look exactly like a frame from the Muns animated series.
 
@@ -404,9 +404,9 @@ OUTPUT: A 16:9 horizontal image in the Muns 2D animation style.`;
 
       res.json({ ok: true, mediaId: media.id, mediaUrl: media.url, cost: { inputTokens, outputTokens, usd: costUsd } });
     } catch (err: any) {
-      const detail = err.response?.data ? JSON.stringify(err.response.data).slice(0, 300) : err.message;
+      const detail = err.response?.data ? JSON.stringify(err.response.data).slice(0, 400) : err.message;
       console.error("[foto-muns-style] error:", detail);
-      res.status(500).json({ error: safeError(err) });
+      res.status(500).json({ error: safeError(err), detail });
     }
   });
 
