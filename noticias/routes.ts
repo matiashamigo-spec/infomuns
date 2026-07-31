@@ -156,6 +156,7 @@ STYLE RULES:
 - Warm, inviting, storybook feel
 - Remove ALL photographic realism
 - Keep the overall composition and recognizable elements but aggressively simplify everything
+- If people appear in the original photo, include them as simplified 2D cartoon characters — same simplified style, no realistic facial detail, just simple round heads and basic body shapes
 
 OUTPUT: A 16:9 horizontal image in the Muns 2D animation style — background/scene only, no animated characters.`;
 
@@ -278,8 +279,10 @@ BODY — copy exactly from IMAGE 1:
 FACIAL EXPRESSION — adapt to the scene in IMAGE 2:
 - Look at IMAGE 2 and decide what emotion the character would naturally feel in that situation
 - Give the character a matching expression: surprised, scared, curious, excited, sad, amazed, or any fitting emotion
-- The expression must react to what is actually happening in the scene
-- Keep the face simple and flat 2D kawaii — only change eyes/mouth to show the emotion
+- ONLY change the curvature/shape of the eyes and mouth — nothing else on the face
+- Do NOT add sparkles, highlights, shine, extra lines, lashes, or any detail not present in IMAGE 1
+- Do NOT add extra fingers, limbs, or body parts — keep the exact body silhouette from IMAGE 1
+- The face must stay as simple and flat as in IMAGE 1 — just a different expression using the same simple shapes
 
 PLACEMENT:
 - Natural physically-possible pose (standing, sitting, leaning)
