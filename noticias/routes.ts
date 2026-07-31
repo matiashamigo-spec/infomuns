@@ -382,7 +382,7 @@ OUTPUT: A 16:9 horizontal image in the Muns 2D animation style.`;
         throw new Error("Gemini no generó imagen" + (reason ? ` (${reason})` : "") + ". Probá con otra foto.");
       }
 
-      // Calcular costo aproximado (gemini-2.5-flash-image usa pricing de 2.5-flash)
+      // Calcular costo aproximado (gemini-3.1-flash-image, pricing similar a 2.5-flash)
       const usage = geminiRes.data?.usageMetadata;
       const inputTokens: number = usage?.promptTokenCount ?? 0;
       const outputTokens: number = usage?.candidatesTokenCount ?? 0;
@@ -391,23 +391,9 @@ OUTPUT: A 16:9 horizontal image in the Muns 2D animation style.`;
       const costUsd = (inputTokens / 1_000_000) * INPUT_PER_M + (outputTokens / 1_000_000) * OUTPUT_PER_M;
       console.log(`[foto-muns-style] tokens: in=${inputTokens} out=${outputTokens} ~$${costUsd.toFixed(4)}`);
 
-      console.log(`[foto-muns-style] Imagen generada, subiendo a WP...`);
-      const dataUrl = `data:${resultMime};base64,${resultData}`;
-      const slug = `muns-style-${Date.now()}`;
-      const media = await uploadMedia(dataUrl, slug);
-      if (!media) throw new Error("No se pudo subir la imagen a la biblioteca de WordPress");
-
-      if (postId) {
-        try {
-          await updatePost(parseInt(String(postId)), { featuredMediaId: media.id });
-          console.log(`[foto-muns-style] Imagen asignada al post ${postId}`);
-        } catch (assignErr: any) {
-          // Auto-drafts no existen vía REST API — el cliente asigna la imagen con wp.media.featuredImage.set()
-          console.warn(`[foto-muns-style] No se pudo asignar featured image al post ${postId}:`, assignErr.message);
-        }
-      }
-
-      res.json({ ok: true, mediaId: media.id, mediaUrl: media.url, cost: { inputTokens, outputTokens, usd: costUsd } });
+      // Devolver el base64 al cliente — el cliente sube a su propio WordPress via AJAX
+      // (evita cross-site: WP_URL apunta a muns.club, pero el editor trabaja en info.muns.club)
+      res.json({ ok: true, imageBase64: resultData, imageMime: resultMime, cost: { inputTokens, outputTokens, usd: costUsd } });
     } catch (err: any) {
       const detail = err.response?.data ? JSON.stringify(err.response.data).slice(0, 400) : err.message;
       console.error("[foto-muns-style] error:", detail);
