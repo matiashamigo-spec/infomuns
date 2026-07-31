@@ -147,9 +147,10 @@ COLOR PALETTE — use ONLY these colors:
 Blues and browns are the dominant colors. Yellow/gold only for small details or highlights. Do NOT introduce any colors outside this palette.
 
 STYLE RULES:
-- Flat vector illustration with clean simple linework
-- Rounded simplified shapes — everything has smooth, friendly curves
-- Children's 2D animated TV show aesthetic — think simple, clear, warm
+- Children's 2D animated TV show aesthetic — think Bluey or Plin Plin Plon: simple, warm, slightly loose linework, friendly and expressive
+- Flat vector illustration with clean but slightly organic linework (not mechanical-perfect)
+- Rounded, simplified shapes — smooth friendly curves, nothing sharp or harsh
+- Warm and inviting — the style should feel like a child's storybook brought to life
 - Remove ALL photographic realism: no realistic lighting, no complex textures, no photographic shadows
 - Keep the overall composition and recognizable elements but redraw as 2D flat cartoon
 
