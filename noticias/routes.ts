@@ -398,8 +398,13 @@ OUTPUT: A 16:9 horizontal image in the Muns 2D animation style.`;
       if (!media) throw new Error("No se pudo subir la imagen a la biblioteca de WordPress");
 
       if (postId) {
-        await updatePost(parseInt(String(postId)), { featuredMediaId: media.id });
-        console.log(`[foto-muns-style] Imagen asignada al post ${postId}`);
+        try {
+          await updatePost(parseInt(String(postId)), { featuredMediaId: media.id });
+          console.log(`[foto-muns-style] Imagen asignada al post ${postId}`);
+        } catch (assignErr: any) {
+          // Auto-drafts no existen vía REST API — el cliente asigna la imagen con wp.media.featuredImage.set()
+          console.warn(`[foto-muns-style] No se pudo asignar featured image al post ${postId}:`, assignErr.message);
+        }
       }
 
       res.json({ ok: true, mediaId: media.id, mediaUrl: media.url, cost: { inputTokens, outputTokens, usd: costUsd } });
