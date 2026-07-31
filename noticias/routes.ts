@@ -1,5 +1,7 @@
 import { Router, Request, Response } from "express";
 import axios from "axios";
+import { readFile } from "fs/promises";
+import path from "path";
 import { generateStoryFromUrl, refineStory } from "./pipeline.js";
 
 function isSafeUrl(raw: string): boolean {
@@ -86,9 +88,11 @@ export function createNoticiasRouter(): Router {
     const GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta/models/";
     const GEMINI_MODEL = "gemini-3.1-flash-image";
 
-    const PROMPT = `Transform this photo into the Muns 2D animation art style. The result must look exactly like a frame from the Muns animated series.
+    const PROMPT = `Transform this photo into the Muns 2D animation art style. The result must look exactly like a background frame from the Muns animated series.
 
-ABSOLUTE RULE — NO TEXT WHATSOEVER: No letters, words, numbers, labels or writing anywhere in the image.
+ABSOLUTE RULES:
+- NO TEXT WHATSOEVER: No letters, words, numbers, labels or writing anywhere in the image.
+- NO ANIMATED CHARACTERS: Do NOT add Mun, Opaq, or any kawaii moon-shaped characters. Only convert the existing scene/background elements.
 
 STYLE RULES:
 - Flat vector illustration with clean simple linework
@@ -98,7 +102,7 @@ STYLE RULES:
 - Remove ALL photographic realism: no realistic lighting, no complex textures, no photographic shadows
 - Keep the overall composition and recognizable elements but redraw as 2D flat cartoon
 
-OUTPUT: A 16:9 horizontal image in the Muns 2D animation style.`;
+OUTPUT: A 16:9 horizontal image in the Muns 2D animation style — background/scene only, no animated characters.`;
 
     try {
       const geminiRes = await axios.post(
@@ -137,6 +141,150 @@ OUTPUT: A 16:9 horizontal image in the Muns 2D animation style.`;
     } catch (err: any) {
       const detail = err.response?.data ? JSON.stringify(err.response.data).slice(0, 400) : err.message;
       console.error("[foto-muns-style] error:", detail);
+      res.status(500).json({ error: safeError(err), detail });
+    }
+  });
+
+  const MUNS_CHARACTERS: Record<string, string> = {
+    mun_contento:    "Mun alegre",
+    mun_triste:      "Mun triste",
+    mun_enojado:     "Mun enojado",
+    mun_sorprendido: "Mun sorprendido",
+    mun_conmovido:   "Mun conmovido",
+    mun_divertido:   "Mun divertido",
+    opaq_contento:   "Opaq alegre",
+    opaq_triste:     "Opaq triste",
+    opaq_enojado:    "Opaq enojado",
+    opaq_sorprendido:"Opaq sorprendido",
+  };
+
+  // POST /api/noticias/foto-muns-sugerir — dada la historia, elige el personaje más apropiado (solo texto, rápido)
+  // Body: { story: string }
+  // Devuelve: { ok, character, displayName }
+  router.post("/foto-muns-sugerir", requireAdmin, async (req: Request, res: Response) => {
+    const { story } = req.body;
+    if (!story || typeof story !== "string") return res.status(400).json({ error: "story requerido" });
+
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) return res.status(500).json({ error: "GEMINI_API_KEY no configurada" });
+
+    const charOptions = [
+      "mun_contento: alegría, logro, buenas noticias, éxito, celebración",
+      "mun_triste: tristeza, pérdida, despedida, lamento, derrota",
+      "mun_enojado: injusticia, conflicto, bronca, protesta",
+      "mun_sorprendido: descubrimiento, sorpresa, impacto, revelación",
+      "mun_conmovido: emoción profunda, conmoción, solidaridad",
+      "mun_divertido: humor, diversión, entretenimiento, juego, festejo",
+      "opaq_contento: éxito formal o técnico, logro serio",
+      "opaq_triste: situación muy grave, crisis, pérdida importante",
+      "opaq_enojado: conflicto serio, denuncia, problema grave",
+      "opaq_sorprendido: revelación impactante inesperada con tono serio",
+    ].join("\n");
+
+    try {
+      const textRes = await axios.post(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+        {
+          contents: [{
+            parts: [{
+              text: `Dado este cuento para niños:\n\n${story.substring(0, 2000)}\n\nElegí el personaje Muns más apropiado para acompañar visualmente esta nota.\n\nOpciones:\n${charOptions}\n\nRespondé SOLO con el nombre exacto (ejemplo: mun_contento). Sin explicación.`,
+            }],
+          }],
+        },
+        { timeout: 30000 }
+      );
+
+      let charKey = (textRes.data?.candidates?.[0]?.content?.parts?.[0]?.text ?? "").trim().replace(/[^a-z_]/g, "");
+      if (!MUNS_CHARACTERS[charKey]) charKey = "mun_contento";
+      console.log(`[foto-muns-sugerir] sugerido: ${charKey}`);
+
+      res.json({ ok: true, character: charKey, displayName: MUNS_CHARACTERS[charKey] });
+    } catch (err: any) {
+      const detail = err.response?.data ? JSON.stringify(err.response.data).slice(0, 400) : err.message;
+      console.error("[foto-muns-sugerir] error:", detail);
+      res.status(500).json({ error: safeError(err), detail });
+    }
+  });
+
+  // POST /api/noticias/foto-muns-personajes — compone un personaje Muns en una imagen estilo Muns
+  // Body: { imageBase64: string, imageMime: string, character: string }
+  // Devuelve: { ok, imageBase64, imageMime, character, cost }
+  router.post("/foto-muns-personajes", requireAdmin, async (req: Request, res: Response) => {
+    const { imageBase64, imageMime, character } = req.body;
+    if (!imageBase64 || typeof imageBase64 !== "string") return res.status(400).json({ error: "imageBase64 requerido" });
+    if (!imageMime || typeof imageMime !== "string") return res.status(400).json({ error: "imageMime requerido" });
+    if (!character || !MUNS_CHARACTERS[character]) return res.status(400).json({ error: "character inválido" });
+
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) return res.status(500).json({ error: "GEMINI_API_KEY no configurada" });
+
+    try {
+      const charPath = path.join(process.cwd(), "noticias", "characters", `${character}.png`);
+      const charBase64 = (await readFile(charPath)).toString("base64");
+
+      const GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta/models/";
+      const GEMINI_MODEL = "gemini-3.1-flash-image";
+
+      const displayName = MUNS_CHARACTERS[character];
+      const PROMPT = `You have two images:
+- IMAGE 1: A 2D animated scene in the Muns kawaii animation style (16:9 horizontal)
+- IMAGE 2: A flat 2D Muns character called "${displayName}"
+
+Task: Redraw IMAGE 1 with the Muns character from IMAGE 2 naturally integrated into the scene.
+
+PLACEMENT RULES:
+- Place the character on the LEFT side or RIGHT side, never centered
+- The character stands in the lower third of the image
+- Character height: approximately 25-35% of the total image height
+- The character faces inward toward the center of the scene
+
+STYLE RULES:
+- Exact flat 2D kawaii animation style throughout — clean vector lines, soft rounded shapes, pastel colors
+- Keep ALL existing elements of the original scene intact
+- The character must look like it naturally belongs there
+- NO text, NO labels, NO writing anywhere
+
+OUTPUT: A 16:9 horizontal image with the character integrated into the scene.`;
+
+      const geminiRes = await axios.post(
+        `${GEMINI_BASE}${GEMINI_MODEL}:generateContent?key=${apiKey}`,
+        {
+          contents: [{
+            parts: [
+              { inlineData: { data: imageBase64, mimeType: imageMime } },
+              { inlineData: { data: charBase64, mimeType: "image/png" } },
+              { text: PROMPT },
+            ],
+          }],
+          generationConfig: { responseModalities: ["TEXT", "IMAGE"] },
+        },
+        { timeout: 120000 }
+      );
+
+      let resultData: string | null = null;
+      let resultMime = "image/png";
+      for (const c of geminiRes.data?.candidates || []) {
+        for (const p of c.content?.parts || []) {
+          if (p.inlineData?.data) { resultData = p.inlineData.data; resultMime = p.inlineData.mimeType || "image/png"; break; }
+        }
+        if (resultData) break;
+      }
+
+      if (!resultData) {
+        const reason = geminiRes.data?.candidates?.[0]?.finishReason;
+        throw new Error("Gemini no generó imagen" + (reason ? ` (${reason})` : ""));
+      }
+
+      const usage = geminiRes.data?.usageMetadata;
+      const inputTokens = usage?.promptTokenCount ?? 0;
+      const outputTokens = usage?.candidatesTokenCount ?? 0;
+      const costUsd = (inputTokens / 1_000_000) * 0.15 + (outputTokens / 1_000_000) * 1.25;
+      console.log(`[foto-muns-personajes] char=${character} tokens: in=${inputTokens} out=${outputTokens} ~$${costUsd.toFixed(4)}`);
+
+      res.json({ ok: true, imageBase64: resultData, imageMime: resultMime, character, cost: { inputTokens, outputTokens, usd: costUsd } });
+    } catch (err: any) {
+      const detail = err.response?.data ? JSON.stringify(err.response.data).slice(0, 400) : err.message;
+      console.error("[foto-muns-personajes] error:", detail);
       res.status(500).json({ error: safeError(err), detail });
     }
   });
