@@ -382,6 +382,15 @@ OUTPUT: A 16:9 horizontal image in the Muns 2D animation style.`;
         throw new Error("Gemini no generó imagen" + (reason ? ` (${reason})` : "") + ". Probá con otra foto.");
       }
 
+      // Calcular costo aproximado (gemini-2.5-flash-image usa pricing de 2.5-flash)
+      const usage = geminiRes.data?.usageMetadata;
+      const inputTokens: number = usage?.promptTokenCount ?? 0;
+      const outputTokens: number = usage?.candidatesTokenCount ?? 0;
+      const INPUT_PER_M = 0.15;
+      const OUTPUT_PER_M = 1.25;
+      const costUsd = (inputTokens / 1_000_000) * INPUT_PER_M + (outputTokens / 1_000_000) * OUTPUT_PER_M;
+      console.log(`[foto-muns-style] tokens: in=${inputTokens} out=${outputTokens} ~$${costUsd.toFixed(4)}`);
+
       console.log(`[foto-muns-style] Imagen generada, subiendo a WP...`);
       const dataUrl = `data:${resultMime};base64,${resultData}`;
       const slug = `muns-style-${Date.now()}`;
@@ -393,7 +402,7 @@ OUTPUT: A 16:9 horizontal image in the Muns 2D animation style.`;
         console.log(`[foto-muns-style] Imagen asignada al post ${postId}`);
       }
 
-      res.json({ ok: true, mediaId: media.id, mediaUrl: media.url });
+      res.json({ ok: true, mediaId: media.id, mediaUrl: media.url, cost: { inputTokens, outputTokens, usd: costUsd } });
     } catch (err: any) {
       const detail = err.response?.data ? JSON.stringify(err.response.data).slice(0, 300) : err.message;
       console.error("[foto-muns-style] error:", detail);
