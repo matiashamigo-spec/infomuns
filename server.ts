@@ -11,7 +11,6 @@ import crypto from "crypto";
 import multer from "multer";
 import cron from "node-cron";
 import { createNoticiasRouter } from "./noticias/routes.js";
-import { runDailyPipeline } from "./noticias/pipeline.js";
 
 const storyLimiter = rateLimit({
   windowMs: 24 * 60 * 60 * 1000,
@@ -564,34 +563,6 @@ async function startServer() {
   // ── Noticias Muns ─────────────────────────────────────────────────────────
   app.use("/api/noticias", createNoticiasRouter());
 
-  // Panel admin — protegido con HTTP Basic Auth, servido ANTES del catch-all del frontend
-  // /noticias-admin redirige a /cargarnoticias para no exponer la URL vieja
-  app.get("/noticias-admin", (req, res) => {
-    res.redirect(301, "/cargarnoticias");
-  });
-
-  app.get("/cargarnoticias", (req, res) => {
-    const secret = process.env.NOTICIAS_ADMIN_SECRET;
-    if (!secret) return res.status(500).send("NOTICIAS_ADMIN_SECRET no configurada");
-
-    const key = req.query.key as string || "";
-    if (key === secret) {
-      return res.sendFile("noticias-admin.html", { root: "." });
-    }
-
-    res.status(401).send(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Muns Admin</title><style>body{font-family:sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;background:#F4F1EA;}.box{text-align:center;padding:2rem;background:white;border-radius:12px;box-shadow:0 2px 12px #0001;}input{display:block;margin:1rem auto;padding:10px 16px;border:2px solid #C2DCF2;border-radius:8px;font-size:1rem;width:260px;}button{padding:10px 24px;background:#4464AD;color:white;border:none;border-radius:8px;font-size:1rem;cursor:pointer;}p{color:#cf2e2e;}</style></head><body><div class="box"><h2>Muns Admin</h2><input type="password" id="k" placeholder="Contraseña" onkeydown="if(event.key==='Enter')go()"><button onclick="go()">Entrar</button><p id="err"></p></div><script>function go(){const k=document.getElementById('k').value;if(!k)return;window.location='/cargarnoticias?key='+encodeURIComponent(k);}</script></body></html>`);
-  });
-
-  // Cron diario DESACTIVADO
-  /* // Cron diario: 8am hora Argentina (UTC-3) = 11:00 UTC
-  cron.schedule("0 11 * * *", async () => {
-    console.log("[cron] Iniciando pipeline diario de noticias...");
-    try {
-      await runDailyPipeline();
-    } catch (err: any) {
-      console.error("[cron] Error en pipeline diario:", err.message);
-    }
-  }, { timezone: "America/Argentina/Buenos_Aires" }); */
 
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
