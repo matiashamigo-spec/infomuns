@@ -147,12 +147,15 @@ COLOR PALETTE — use ONLY these colors:
 Blues and browns are the dominant colors. Yellow/gold only for small details or highlights. Do NOT introduce any colors outside this palette.
 
 STYLE RULES:
-- Children's 2D animated TV show aesthetic — same visual style as Bluey or Plin Plin Plon (simple, warm, slightly loose linework, friendly and expressive) but DO NOT include any characters from those shows
-- Flat vector illustration with clean but slightly organic linework (not mechanical-perfect)
-- Rounded, simplified shapes — smooth friendly curves, nothing sharp or harsh
-- Warm and inviting — the style should feel like a child's storybook brought to life
-- Remove ALL photographic realism: no realistic lighting, no complex textures, no photographic shadows
-- Keep the overall composition and recognizable elements but redraw as 2D flat cartoon
+- Children's 2D animated TV show aesthetic — same visual style as Bluey or Plin Plin Plon but DO NOT include any characters from those shows
+- MAXIMUM SIMPLIFICATION: reduce every element to its most basic readable shape — no anatomical detail, no fine textures, no complex linework
+- Animals and objects must be drawn as simple rounded silhouettes with minimal interior lines — think toy-like, not realistic
+- Thick, clean outlines on all elements
+- Flat color fills only — no gradients, no shading, no texture
+- Large simple shapes dominate — avoid small decorative details
+- Warm, inviting, storybook feel
+- Remove ALL photographic realism
+- Keep the overall composition and recognizable elements but aggressively simplify everything
 
 OUTPUT: A 16:9 horizontal image in the Muns 2D animation style — background/scene only, no animated characters.`;
 
