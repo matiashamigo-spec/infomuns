@@ -2,6 +2,7 @@ import { Router, Request, Response } from "express";
 import axios from "axios";
 import { readFile } from "fs/promises";
 import path from "path";
+import { GoogleGenAI } from "@google/genai";
 import { generateStoryFromUrl, refineStory } from "./pipeline.js";
 
 function isSafeUrl(raw: string): boolean {
@@ -41,12 +42,10 @@ export function createNoticiasRouter(): Router {
 
   // Genera la versión en sentence case del HTML usando Gemini — preserva nombres propios y tags HTML
   async function buildSentenceCase(htmlContent: string, apiKey: string): Promise<string> {
-    const r = await axios.post(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-      {
-        contents: [{
-          parts: [{
-            text: `El siguiente es contenido HTML en MAYÚSCULAS en español. Devolvé EXACTAMENTE el mismo HTML con sentence case correcto:
+    const ai = new GoogleGenAI({ apiKey });
+    const r = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: `El siguiente es contenido HTML en MAYÚSCULAS en español. Devolvé EXACTAMENTE el mismo HTML con sentence case correcto:
 - Primera letra de cada oración en mayúscula
 - Nombres propios (personas, lugares, organizaciones) con mayúscula inicial
 - Todo lo demás en minúscula
@@ -56,12 +55,8 @@ export function createNoticiasRouter(): Router {
 
 HTML:
 ${htmlContent}`,
-          }],
-        }],
-      },
-      { timeout: 30000 }
-    );
-    const text: string = r.data?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+    });
+    const text: string = r.text ?? "";
     return text.replace(/^```html?\n?/i, "").replace(/\n?```$/i, "").trim() || htmlContent;
   }
 
