@@ -41,13 +41,12 @@ export function createNoticiasRouter(): Router {
 
   // Genera la versión en sentence case del HTML usando Gemini — preserva nombres propios y tags HTML
   async function buildSentenceCase(htmlContent: string, apiKey: string): Promise<string> {
-    try {
-      const r = await axios.post(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-        {
-          contents: [{
-            parts: [{
-              text: `El siguiente es contenido HTML en MAYÚSCULAS en español. Devolvé EXACTAMENTE el mismo HTML con sentence case correcto:
+    const r = await axios.post(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+      {
+        contents: [{
+          parts: [{
+            text: `El siguiente es contenido HTML en MAYÚSCULAS en español. Devolvé EXACTAMENTE el mismo HTML con sentence case correcto:
 - Primera letra de cada oración en mayúscula
 - Nombres propios (personas, lugares, organizaciones) con mayúscula inicial
 - Todo lo demás en minúscula
@@ -57,16 +56,13 @@ export function createNoticiasRouter(): Router {
 
 HTML:
 ${htmlContent}`,
-            }],
           }],
-        },
-        { timeout: 30000 }
-      );
-      const text: string = r.data?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
-      return text.replace(/^```html?\n?/i, "").replace(/\n?```$/i, "").trim() || htmlContent;
-    } catch {
-      return htmlContent;
-    }
+        }],
+      },
+      { timeout: 30000 }
+    );
+    const text: string = r.data?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+    return text.replace(/^```html?\n?/i, "").replace(/\n?```$/i, "").trim() || htmlContent;
   }
 
   // POST /api/noticias/sentence-case — convierte HTML a sentence case con nombres propios (para posts existentes)
@@ -96,7 +92,7 @@ ${htmlContent}`,
       if (!apiKey) return res.status(500).json({ error: "GEMINI_API_KEY no configurada" });
       console.log(`[noticias] Generando desde URL: ${url}`);
       const generated = await generateStoryFromUrl(url, apiKey, context);
-      const contentSentenceCase = await buildSentenceCase(generated.content as string, apiKey);
+      const contentSentenceCase = await buildSentenceCase(generated.content as string, apiKey).catch(() => generated.content as string);
       res.json({ ok: true, ...generated, contentSentenceCase });
     } catch (err: any) {
       res.status(500).json({ error: safeError(err) });
@@ -115,7 +111,7 @@ ${htmlContent}`,
       if (!apiKey) return res.status(500).json({ error: "GEMINI_API_KEY no configurada" });
       console.log(`[noticias] Refinando: "${instruction}"`);
       const result = await refineStory(title || "", story, instruction, apiKey);
-      const contentSentenceCase = await buildSentenceCase(result.content as string, apiKey);
+      const contentSentenceCase = await buildSentenceCase(result.content as string, apiKey).catch(() => result.content as string);
       res.json({ ok: true, ...result, contentSentenceCase });
     } catch (err: any) {
       res.status(500).json({ error: safeError(err) });
