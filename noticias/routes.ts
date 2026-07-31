@@ -134,9 +134,20 @@ ABSOLUTE RULES:
 - NO TEXT WHATSOEVER: No letters, words, numbers, labels or writing anywhere in the image.
 - NO ANIMATED CHARACTERS: Do NOT add Mun, Opaq, or any kawaii moon-shaped characters. Only convert the existing scene/background elements.
 
+COLOR PALETTE — use ONLY these colors:
+- Dark blue (dominant): #1F1D5B
+- Blue (dominant): #4464AD
+- Cream/white: #FEF8E7
+- Brown: #A48A7B
+- Yellow/gold (accents only, use sparingly): #E2C061
+- Light blue: #9FCFE2
+- Dark brown: #7B6A58
+- Beige: #CBBBA0
+- Light cream: #EDE6D4
+Blues and browns are the dominant colors. Yellow/gold only for small details or highlights. Do NOT introduce any colors outside this palette.
+
 STYLE RULES:
 - Flat vector illustration with clean simple linework
-- Soft pastel colors: deep indigo blue (#4464AD), warm yellows, soft violets and creams
 - Rounded simplified shapes — everything has smooth, friendly curves
 - Children's 2D animated TV show aesthetic — think simple, clear, warm
 - Remove ALL photographic realism: no realistic lighting, no complex textures, no photographic shadows
@@ -186,16 +197,9 @@ OUTPUT: A 16:9 horizontal image in the Muns 2D animation style — background/sc
   });
 
   const MUNS_CHARACTERS: Record<string, string> = {
-    mun_contento:    "Mun alegre",
-    mun_triste:      "Mun triste",
-    mun_enojado:     "Mun enojado",
-    mun_sorprendido: "Mun sorprendido",
-    mun_conmovido:   "Mun conmovido",
-    mun_divertido:   "Mun divertido",
-    opaq_contento:   "Opaq alegre",
-    opaq_triste:     "Opaq triste",
-    opaq_enojado:    "Opaq enojado",
-    opaq_sorprendido:"Opaq sorprendido",
+    mun:       "Mun",
+    mun_triste:"Mun triste",
+    opaq:      "Opaq",
   };
 
   // POST /api/noticias/foto-muns-sugerir — dada la historia, elige el personaje más apropiado (solo texto, rápido)
@@ -209,16 +213,9 @@ OUTPUT: A 16:9 horizontal image in the Muns 2D animation style — background/sc
     if (!apiKey) return res.status(500).json({ error: "GEMINI_API_KEY no configurada" });
 
     const charOptions = [
-      "mun_contento: alegría, logro, buenas noticias, éxito, celebración",
-      "mun_triste: tristeza, pérdida, despedida, lamento, derrota",
-      "mun_enojado: injusticia, conflicto, bronca, protesta",
-      "mun_sorprendido: descubrimiento, sorpresa, impacto, revelación",
-      "mun_conmovido: emoción profunda, conmoción, solidaridad",
-      "mun_divertido: humor, diversión, entretenimiento, juego, festejo",
-      "opaq_contento: éxito formal o técnico, logro serio",
-      "opaq_triste: situación muy grave, crisis, pérdida importante",
-      "opaq_enojado: conflicto serio, denuncia, problema grave",
-      "opaq_sorprendido: revelación impactante inesperada con tono serio",
+      "mun: historia positiva, neutral, aventura, curiosidad, logro",
+      "mun_triste: historia triste, pérdida, despedida, situación difícil",
+      "opaq: historia seria, formal, conflicto, denuncia, situación grave",
     ].join("\n");
 
     try {
@@ -280,6 +277,12 @@ WHAT YOU CAN DO — organic placement only:
 - Scale the character so its height is about 30-35% of the total image height
 - The character faces inward toward the center of the scene
 - Add a soft drop shadow beneath the character to ground it in the scene
+
+COLOR PALETTE — maintain these exact colors throughout:
+- Dark blue: #1F1D5B — Blue: #4464AD — Cream: #FEF8E7 — Brown: #A48A7B
+- Yellow/gold (accents only): #E2C061 — Light blue: #9FCFE2
+- Dark brown: #7B6A58 — Beige: #CBBBA0 — Light cream: #EDE6D4
+Blues and browns are dominant. Yellow only for small highlights. No colors outside this palette.
 
 ABSOLUTE RULES:
 - Do NOT redraw or reinvent the character — copy its design faithfully from IMAGE 1
