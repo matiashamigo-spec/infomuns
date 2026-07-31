@@ -2,6 +2,7 @@ import { Router, Request, Response } from "express";
 import axios from "axios";
 import { readFile } from "fs/promises";
 import path from "path";
+import sharp from "sharp";
 import { GoogleGenAI } from "@google/genai";
 import { generateStoryFromUrl, refineStory } from "./pipeline.js";
 
@@ -254,77 +255,41 @@ OUTPUT: A 16:9 horizontal image in the Muns 2D animation style — background/sc
     if (!imageMime || typeof imageMime !== "string") return res.status(400).json({ error: "imageMime requerido" });
     if (!character || !MUNS_CHARACTERS[character]) return res.status(400).json({ error: "character inválido" });
 
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) return res.status(500).json({ error: "GEMINI_API_KEY no configurada" });
-
     try {
       const charPath = path.join(process.cwd(), "noticias", "characters", `${character}.png`);
-      const charBase64 = (await readFile(charPath)).toString("base64");
+      const bgBuf = Buffer.from(imageBase64, "base64");
 
-      const GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta/models/";
-      const GEMINI_MODEL = "gemini-3.1-flash-image";
+      // Dimensiones del fondo
+      const bgMeta = await sharp(bgBuf).metadata();
+      const bgW = bgMeta.width ?? 1024;
+      const bgH = bgMeta.height ?? 576;
 
-      const displayName = MUNS_CHARACTERS[character];
-      const PROMPT = `You have two images:
-- IMAGE 1: A 2D animated scene in the Muns kawaii animation style (16:9 horizontal)
-- IMAGE 2: A flat 2D Muns character called "${displayName}"
+      // Personaje: alto = 32% del fondo, ancho proporcional (PNG transparente)
+      const charH = Math.round(bgH * 0.32);
+      const charBuf = await sharp(charPath)
+        .resize({ height: charH, fit: "inside" })
+        .toBuffer();
+      const charMeta = await sharp(charBuf).metadata();
+      const charW = charMeta.width ?? charH;
 
-Task: Redraw IMAGE 1 with the Muns character from IMAGE 2 naturally integrated into the scene.
+      // Posición: tercio inferior, alternamos izquierda/derecha según el nombre del personaje
+      const side = character.includes("opaq") ? "right" : "left";
+      const margin = Math.round(bgW * 0.04);
+      const left = side === "left" ? margin : bgW - charW - margin;
+      const top = bgH - charH - Math.round(bgH * 0.05);
 
-PLACEMENT RULES:
-- Place the character on the LEFT side or RIGHT side, never centered
-- The character stands in the lower third of the image
-- Character height: approximately 25-35% of the total image height
-- The character faces inward toward the center of the scene
+      const resultBuf = await sharp(bgBuf)
+        .composite([{ input: charBuf, left, top }])
+        .png()
+        .toBuffer();
 
-STYLE RULES:
-- Exact flat 2D kawaii animation style throughout — clean vector lines, soft rounded shapes, pastel colors
-- Keep ALL existing elements of the original scene intact
-- The character must look like it naturally belongs there
-- NO text, NO labels, NO writing anywhere
+      const resultBase64 = resultBuf.toString("base64");
+      console.log(`[foto-muns-personajes] char=${character} composite ok (${bgW}x${bgH}, char ${charW}x${charH} @ ${left},${top})`);
 
-OUTPUT: A 16:9 horizontal image with the character integrated into the scene.`;
-
-      const geminiRes = await axios.post(
-        `${GEMINI_BASE}${GEMINI_MODEL}:generateContent?key=${apiKey}`,
-        {
-          contents: [{
-            parts: [
-              { inlineData: { data: imageBase64, mimeType: imageMime } },
-              { inlineData: { data: charBase64, mimeType: "image/png" } },
-              { text: PROMPT },
-            ],
-          }],
-          generationConfig: { responseModalities: ["TEXT", "IMAGE"] },
-        },
-        { timeout: 120000 }
-      );
-
-      let resultData: string | null = null;
-      let resultMime = "image/png";
-      for (const c of geminiRes.data?.candidates || []) {
-        for (const p of c.content?.parts || []) {
-          if (p.inlineData?.data) { resultData = p.inlineData.data; resultMime = p.inlineData.mimeType || "image/png"; break; }
-        }
-        if (resultData) break;
-      }
-
-      if (!resultData) {
-        const reason = geminiRes.data?.candidates?.[0]?.finishReason;
-        throw new Error("Gemini no generó imagen" + (reason ? ` (${reason})` : ""));
-      }
-
-      const usage = geminiRes.data?.usageMetadata;
-      const inputTokens = usage?.promptTokenCount ?? 0;
-      const outputTokens = usage?.candidatesTokenCount ?? 0;
-      const costUsd = (inputTokens / 1_000_000) * 0.15 + (outputTokens / 1_000_000) * 1.25;
-      console.log(`[foto-muns-personajes] char=${character} tokens: in=${inputTokens} out=${outputTokens} ~$${costUsd.toFixed(4)}`);
-
-      res.json({ ok: true, imageBase64: resultData, imageMime: resultMime, character, cost: { inputTokens, outputTokens, usd: costUsd } });
+      res.json({ ok: true, imageBase64: resultBase64, imageMime: "image/png", character, cost: { inputTokens: 0, outputTokens: 0, usd: 0 } });
     } catch (err: any) {
-      const detail = err.response?.data ? JSON.stringify(err.response.data).slice(0, 400) : err.message;
-      console.error("[foto-muns-personajes] error:", detail);
-      res.status(500).json({ error: safeError(err), detail });
+      console.error("[foto-muns-personajes] error:", err.message);
+      res.status(500).json({ error: safeError(err) });
     }
   });
 
