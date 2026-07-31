@@ -260,41 +260,40 @@ OUTPUT: A 16:9 horizontal image in the Muns 2D animation style — background/sc
       const charBase64 = (await readFile(charPath)).toString("base64");
       const displayName = MUNS_CHARACTERS[character];
 
-      // Para "mun" (base), la expresión se adapta al estado emocional del cuento.
-      // Para mun_triste u opaq el usuario los eligió a conciencia — no alterar la expresión.
-      const expressionInstruction = character === "mun" && story
-        ? `EXPRESSION ADAPTATION: The story's emotional tone is provided below. Adapt Mun's facial expression to match — can be happy, curious, excited, surprised, worried, or any naturally fitting emotion. Keep the body shape, proportions, and style EXACTLY as in IMAGE 1; only the facial expression may differ to fit the story mood.\n\nStory (for mood reference only — do not illustrate specific events):\n${story.substring(0, 800)}`
-        : `EXPRESSION: Keep the character's expression IDENTICAL to IMAGE 1.`;
-
       const PROMPT = `You have two images:
-- IMAGE 1: The Muns character "${displayName}" — this is the REFERENCE DESIGN. Flat 2D kawaii character with a specific shape and style.
+- IMAGE 1: The Muns character "${displayName}" — a flat 2D kawaii character. Use this as the BODY REFERENCE only.
 - IMAGE 2: A 2D animated Muns-style background scene (16:9 horizontal).
 
-YOUR TASK: Place the character from IMAGE 1 into the scene of IMAGE 2 in a natural, organic way.
+YOUR TASK: Draw the character from IMAGE 1 into the scene of IMAGE 2.
 
-CHARACTER DESIGN:
-- The character's body shape, proportions, silhouette, and colors must be IDENTICAL to IMAGE 1
-- The character is already in the correct flat 2D kawaii style — do NOT add detail or change its body
-${expressionInstruction}
+BODY — copy exactly from IMAGE 1:
+- Same body shape, proportions, limbs, and silhouette
+- Same body colors and flat 2D kawaii style
+- Do NOT add detail or change the body
+
+FACIAL EXPRESSION — adapt to the scene in IMAGE 2:
+- Look at IMAGE 2 and decide what emotion the character would naturally feel in that situation
+- Give the character a matching expression: surprised, scared, curious, excited, sad, amazed, or any fitting emotion
+- The expression must react to what is actually happening in the scene
+- Keep the face simple and flat 2D kawaii — only change eyes/mouth to show the emotion
 
 PLACEMENT:
-- The character can be in a natural physically-possible pose (standing, sitting, leaning against something)
-- Place in the lower third, to the LEFT or RIGHT side
-- Scale so the character height is about 30-35% of the total image height
-- The character faces inward toward the center
-- Add a soft drop shadow beneath the character
+- Natural physically-possible pose (standing, sitting, leaning)
+- Lower third, LEFT or RIGHT side
+- Character height about 30-35% of total image height
+- Faces inward toward the center of the scene
+- Soft drop shadow beneath the character
 
-COLOR PALETTE — maintain throughout:
+COLOR PALETTE — use only these colors:
 - Dark blue: #1F1D5B — Blue: #4464AD — Cream: #FEF8E7 — Brown: #A48A7B
 - Yellow/gold (accents only): #E2C061 — Light blue: #9FCFE2
 - Dark brown: #7B6A58 — Beige: #CBBBA0 — Light cream: #EDE6D4
-Blues and browns are dominant. Yellow only for small highlights. No colors outside this palette.
 
-ABSOLUTE RULES:
-- Do NOT redraw or reinvent the character's body — copy it faithfully from IMAGE 1
-- No text, no labels, no writing anywhere in the output
+RULES:
+- No text, no labels, no writing anywhere
+- Flat 2D vector style throughout
 
-OUTPUT: A 16:9 horizontal image with the character naturally placed in the scene.`;
+OUTPUT: 16:9 image with the character in the scene, expression reacting to what is happening.`;
 
       const GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta/models/";
       const GEMINI_MODEL = "gemini-3.1-flash-image";
