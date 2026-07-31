@@ -255,41 +255,94 @@ OUTPUT: A 16:9 horizontal image in the Muns 2D animation style — background/sc
     if (!imageMime || typeof imageMime !== "string") return res.status(400).json({ error: "imageMime requerido" });
     if (!character || !MUNS_CHARACTERS[character]) return res.status(400).json({ error: "character inválido" });
 
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) return res.status(500).json({ error: "GEMINI_API_KEY no configurada" });
+
     try {
       const charPath = path.join(process.cwd(), "noticias", "characters", `${character}.png`);
-      const bgBuf = Buffer.from(imageBase64, "base64");
+      const charBase64 = (await readFile(charPath)).toString("base64");
+      const displayName = MUNS_CHARACTERS[character];
 
-      // Dimensiones del fondo
-      const bgMeta = await sharp(bgBuf).metadata();
-      const bgW = bgMeta.width ?? 1024;
-      const bgH = bgMeta.height ?? 576;
+      const PROMPT = `You have two images:
+- IMAGE 1: The Muns character "${displayName}" — this is the REFERENCE DESIGN. It is a flat 2D kawaii character with a specific shape, colors, and expression.
+- IMAGE 2: A 2D animated Muns-style background scene (16:9 horizontal).
 
-      // Personaje: alto = 32% del fondo, ancho proporcional (PNG transparente)
-      const charH = Math.round(bgH * 0.32);
-      const charBuf = await sharp(charPath)
-        .resize({ height: charH, fit: "inside" })
-        .toBuffer();
-      const charMeta = await sharp(charBuf).metadata();
-      const charW = charMeta.width ?? charH;
+YOUR TASK: Place the character from IMAGE 1 into the scene of IMAGE 2 in a natural, organic way.
 
-      // Posición: tercio inferior, alternamos izquierda/derecha según el nombre del personaje
-      const side = character.includes("opaq") ? "right" : "left";
-      const margin = Math.round(bgW * 0.04);
-      const left = side === "left" ? margin : bgW - charW - margin;
-      const top = bgH - charH - Math.round(bgH * 0.05);
+CHARACTER DESIGN — DO NOT ALTER:
+- The character's shape, proportions, and silhouette must be IDENTICAL to IMAGE 1
+- The character's colors, face, and expression must be IDENTICAL to IMAGE 1
+- The character is already in the correct flat 2D kawaii style — do NOT add detail or change its look
 
-      const resultBuf = await sharp(bgBuf)
-        .composite([{ input: charBuf, left, top }])
-        .png()
-        .toBuffer();
+WHAT YOU CAN DO — organic placement only:
+- The character can be in a natural physically-possible pose within the scene (standing, sitting on a surface, leaning against something, looking at an element in the scene)
+- Place the character in the lower third of the image, to the LEFT or RIGHT side
+- Scale the character so its height is about 30-35% of the total image height
+- The character faces inward toward the center of the scene
+- Add a soft drop shadow beneath the character to ground it in the scene
 
-      const resultBase64 = resultBuf.toString("base64");
-      console.log(`[foto-muns-personajes] char=${character} composite ok (${bgW}x${bgH}, char ${charW}x${charH} @ ${left},${top})`);
+ABSOLUTE RULES:
+- Do NOT redraw or reinvent the character — copy its design faithfully from IMAGE 1
+- No text, no labels, no writing anywhere in the output
 
-      res.json({ ok: true, imageBase64: resultBase64, imageMime: "image/png", character, cost: { inputTokens: 0, outputTokens: 0, usd: 0 } });
+OUTPUT: A 16:9 horizontal image with the character from IMAGE 1 naturally placed in the scene from IMAGE 2.`;
+
+      const GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta/models/";
+      const GEMINI_MODEL = "gemini-3.1-flash-image";
+
+      const geminiRes = await axios.post(
+        `${GEMINI_BASE}${GEMINI_MODEL}:generateContent?key=${apiKey}`,
+        {
+          contents: [{ parts: [
+            { inlineData: { data: charBase64, mimeType: "image/png" } },
+            { inlineData: { data: imageBase64, mimeType: imageMime } },
+            { text: PROMPT },
+          ]}],
+          generationConfig: { responseModalities: ["TEXT", "IMAGE"] },
+        },
+        { timeout: 120000 }
+      );
+
+      let resultData: string | null = null;
+      let resultMime = "image/png";
+      for (const c of geminiRes.data?.candidates || []) {
+        for (const p of c.content?.parts || []) {
+          if (p.inlineData?.data) { resultData = p.inlineData.data; resultMime = p.inlineData.mimeType || "image/png"; break; }
+        }
+        if (resultData) break;
+      }
+
+      // Fallback: si Gemini no genera o falla, hacer composite directo con sharp
+      if (!resultData) {
+        console.warn(`[foto-muns-personajes] Gemini no generó imagen, usando fallback sharp`);
+        const bgBuf = Buffer.from(imageBase64, "base64");
+        const bgMeta = await sharp(bgBuf).metadata();
+        const bgW = bgMeta.width ?? 1024;
+        const bgH = bgMeta.height ?? 576;
+        const charH = Math.round(bgH * 0.32);
+        const charBuf = await sharp(charPath).resize({ height: charH, fit: "inside" }).toBuffer();
+        const charMeta = await sharp(charBuf).metadata();
+        const charW = charMeta.width ?? charH;
+        const side = character.includes("opaq") ? "right" : "left";
+        const margin = Math.round(bgW * 0.04);
+        const left = side === "left" ? margin : bgW - charW - margin;
+        const top = bgH - charH - Math.round(bgH * 0.05);
+        const fallbackBuf = await sharp(bgBuf).composite([{ input: charBuf, left, top }]).png().toBuffer();
+        resultData = fallbackBuf.toString("base64");
+        resultMime = "image/png";
+      }
+
+      const usage = geminiRes.data?.usageMetadata;
+      const inputTokens = usage?.promptTokenCount ?? 0;
+      const outputTokens = usage?.candidatesTokenCount ?? 0;
+      const costUsd = (inputTokens / 1_000_000) * 0.15 + (outputTokens / 1_000_000) * 1.25;
+      console.log(`[foto-muns-personajes] char=${character} ok, tokens: in=${inputTokens} out=${outputTokens} ~$${costUsd.toFixed(4)}`);
+
+      res.json({ ok: true, imageBase64: resultData, imageMime: resultMime, character, cost: { inputTokens, outputTokens, usd: costUsd } });
     } catch (err: any) {
-      console.error("[foto-muns-personajes] error:", err.message);
-      res.status(500).json({ error: safeError(err) });
+      const detail = err.response?.data ? JSON.stringify(err.response.data).slice(0, 400) : err.message;
+      console.error("[foto-muns-personajes] error:", detail);
+      res.status(500).json({ error: safeError(err), detail });
     }
   });
 
