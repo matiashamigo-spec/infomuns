@@ -69,6 +69,22 @@ ${htmlContent}`,
     }
   }
 
+  // POST /api/noticias/sentence-case — convierte HTML a sentence case con nombres propios (para posts existentes)
+  // Body: { html: string }
+  // Devuelve: { ok, html }
+  router.post("/sentence-case", requireAdmin, async (req: Request, res: Response) => {
+    const { html } = req.body;
+    if (!html || typeof html !== "string") return res.status(400).json({ error: "html requerido" });
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) return res.status(500).json({ error: "GEMINI_API_KEY no configurada" });
+    try {
+      const result = await buildSentenceCase(html, apiKey);
+      res.json({ ok: true, html: result });
+    } catch (err: any) {
+      res.status(500).json({ error: safeError(err) });
+    }
+  });
+
   // POST /api/noticias/generate-from-url — genera cuento Muns desde una URL de noticia
   // Devuelve: { ok, title, content, contentSentenceCase, story, contentSuffix, context, excerpt, imageUrl, cost }
   router.post("/generate-from-url", requireAdmin, async (req: Request, res: Response) => {
