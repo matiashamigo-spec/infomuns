@@ -321,5 +321,85 @@ export function createNoticiasRouter(): Router {
     }
   });
 
+  // POST /api/noticias/foto-muns-style — convierte una foto a estilo Muns (2D animación) y la sube a la biblioteca de WP
+  // Body: { imageBase64: string, imageMime: string, postId?: number }
+  // Devuelve: { ok, mediaId, mediaUrl }
+  router.post("/foto-muns-style", requireAdmin, async (req: Request, res: Response) => {
+    const { imageBase64, imageMime, postId } = req.body;
+    if (!imageBase64 || typeof imageBase64 !== "string") return res.status(400).json({ error: "imageBase64 requerido" });
+    if (!imageMime || typeof imageMime !== "string") return res.status(400).json({ error: "imageMime requerido" });
+
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) return res.status(500).json({ error: "GEMINI_API_KEY no configurada" });
+
+    const GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta/models/";
+    const GEMINI_MODEL = "gemini-2.5-flash-image";
+
+    const MUNS_STYLE_PROMPT = `Transform this photo into the Muns 2D animation art style. The result must look exactly like a frame from the Muns animated series.
+
+ABSOLUTE RULE — NO TEXT WHATSOEVER: No letters, words, numbers, labels or writing anywhere in the image.
+
+STYLE RULES:
+- Flat vector illustration with clean simple linework
+- Soft pastel colors: deep indigo blue (#4464AD), warm yellows, soft violets and creams
+- Rounded simplified shapes — everything has smooth, friendly curves
+- Children's 2D animated TV show aesthetic — think simple, clear, warm
+- Remove ALL photographic realism: no realistic lighting, no complex textures, no photographic shadows
+- Keep the overall composition and recognizable elements but redraw as 2D flat cartoon
+
+OUTPUT: A 16:9 horizontal image in the Muns 2D animation style.`;
+
+    try {
+      const geminiRes = await axios.post(
+        `${GEMINI_BASE}${GEMINI_MODEL}:generateContent?key=${apiKey}`,
+        {
+          contents: [{
+            parts: [
+              { inlineData: { data: imageBase64, mimeType: imageMime } },
+              { text: MUNS_STYLE_PROMPT },
+            ],
+          }],
+          generationConfig: { responseModalities: ["TEXT", "IMAGE"] },
+        },
+        { timeout: 90000 }
+      );
+
+      let resultData: string | null = null;
+      let resultMime = "image/png";
+      for (const c of geminiRes.data?.candidates || []) {
+        for (const p of c.content?.parts || []) {
+          if (p.inlineData?.data) {
+            resultData = p.inlineData.data;
+            resultMime = p.inlineData.mimeType || "image/png";
+            break;
+          }
+        }
+        if (resultData) break;
+      }
+
+      if (!resultData) {
+        const reason = geminiRes.data?.candidates?.[0]?.finishReason;
+        throw new Error("Gemini no generó imagen" + (reason ? ` (${reason})` : "") + ". Probá con otra foto.");
+      }
+
+      console.log(`[foto-muns-style] Imagen generada, subiendo a WP...`);
+      const dataUrl = `data:${resultMime};base64,${resultData}`;
+      const slug = `muns-style-${Date.now()}`;
+      const media = await uploadMedia(dataUrl, slug);
+      if (!media) throw new Error("No se pudo subir la imagen a la biblioteca de WordPress");
+
+      if (postId) {
+        await updatePost(parseInt(String(postId)), { featuredMediaId: media.id });
+        console.log(`[foto-muns-style] Imagen asignada al post ${postId}`);
+      }
+
+      res.json({ ok: true, mediaId: media.id, mediaUrl: media.url });
+    } catch (err: any) {
+      const detail = err.response?.data ? JSON.stringify(err.response.data).slice(0, 300) : err.message;
+      console.error("[foto-muns-style] error:", detail);
+      res.status(500).json({ error: safeError(err) });
+    }
+  });
+
   return router;
 }
