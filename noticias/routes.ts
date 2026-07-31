@@ -244,10 +244,10 @@ OUTPUT: A 16:9 horizontal image in the Muns 2D animation style — background/sc
   });
 
   // POST /api/noticias/foto-muns-personajes — compone un personaje Muns en una imagen estilo Muns
-  // Body: { imageBase64: string, imageMime: string, character: string }
+  // Body: { imageBase64: string, imageMime: string, character: string, story?: string }
   // Devuelve: { ok, imageBase64, imageMime, character, cost }
   router.post("/foto-muns-personajes", requireAdmin, async (req: Request, res: Response) => {
-    const { imageBase64, imageMime, character } = req.body;
+    const { imageBase64, imageMime, character, story } = req.body;
     if (!imageBase64 || typeof imageBase64 !== "string") return res.status(400).json({ error: "imageBase64 requerido" });
     if (!imageMime || typeof imageMime !== "string") return res.status(400).json({ error: "imageMime requerido" });
     if (!character || !MUNS_CHARACTERS[character]) return res.status(400).json({ error: "character inválido" });
@@ -260,35 +260,41 @@ OUTPUT: A 16:9 horizontal image in the Muns 2D animation style — background/sc
       const charBase64 = (await readFile(charPath)).toString("base64");
       const displayName = MUNS_CHARACTERS[character];
 
+      // Para "mun" (base), la expresión se adapta al estado emocional del cuento.
+      // Para mun_triste u opaq el usuario los eligió a conciencia — no alterar la expresión.
+      const expressionInstruction = character === "mun" && story
+        ? `EXPRESSION ADAPTATION: The story's emotional tone is provided below. Adapt Mun's facial expression to match — can be happy, curious, excited, surprised, worried, or any naturally fitting emotion. Keep the body shape, proportions, and style EXACTLY as in IMAGE 1; only the facial expression may differ to fit the story mood.\n\nStory (for mood reference only — do not illustrate specific events):\n${story.substring(0, 800)}`
+        : `EXPRESSION: Keep the character's expression IDENTICAL to IMAGE 1.`;
+
       const PROMPT = `You have two images:
-- IMAGE 1: The Muns character "${displayName}" — this is the REFERENCE DESIGN. It is a flat 2D kawaii character with a specific shape, colors, and expression.
+- IMAGE 1: The Muns character "${displayName}" — this is the REFERENCE DESIGN. Flat 2D kawaii character with a specific shape and style.
 - IMAGE 2: A 2D animated Muns-style background scene (16:9 horizontal).
 
 YOUR TASK: Place the character from IMAGE 1 into the scene of IMAGE 2 in a natural, organic way.
 
-CHARACTER DESIGN — DO NOT ALTER:
-- The character's shape, proportions, and silhouette must be IDENTICAL to IMAGE 1
-- The character's colors, face, and expression must be IDENTICAL to IMAGE 1
-- The character is already in the correct flat 2D kawaii style — do NOT add detail or change its look
+CHARACTER DESIGN:
+- The character's body shape, proportions, silhouette, and colors must be IDENTICAL to IMAGE 1
+- The character is already in the correct flat 2D kawaii style — do NOT add detail or change its body
+${expressionInstruction}
 
-WHAT YOU CAN DO — organic placement only:
-- The character can be in a natural physically-possible pose within the scene (standing, sitting on a surface, leaning against something, looking at an element in the scene)
-- Place the character in the lower third of the image, to the LEFT or RIGHT side
-- Scale the character so its height is about 30-35% of the total image height
-- The character faces inward toward the center of the scene
-- Add a soft drop shadow beneath the character to ground it in the scene
+PLACEMENT:
+- The character can be in a natural physically-possible pose (standing, sitting, leaning against something)
+- Place in the lower third, to the LEFT or RIGHT side
+- Scale so the character height is about 30-35% of the total image height
+- The character faces inward toward the center
+- Add a soft drop shadow beneath the character
 
-COLOR PALETTE — maintain these exact colors throughout:
+COLOR PALETTE — maintain throughout:
 - Dark blue: #1F1D5B — Blue: #4464AD — Cream: #FEF8E7 — Brown: #A48A7B
 - Yellow/gold (accents only): #E2C061 — Light blue: #9FCFE2
 - Dark brown: #7B6A58 — Beige: #CBBBA0 — Light cream: #EDE6D4
 Blues and browns are dominant. Yellow only for small highlights. No colors outside this palette.
 
 ABSOLUTE RULES:
-- Do NOT redraw or reinvent the character — copy its design faithfully from IMAGE 1
+- Do NOT redraw or reinvent the character's body — copy it faithfully from IMAGE 1
 - No text, no labels, no writing anywhere in the output
 
-OUTPUT: A 16:9 horizontal image with the character from IMAGE 1 naturally placed in the scene from IMAGE 2.`;
+OUTPUT: A 16:9 horizontal image with the character naturally placed in the scene.`;
 
       const GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta/models/";
       const GEMINI_MODEL = "gemini-3.1-flash-image";
