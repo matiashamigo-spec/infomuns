@@ -39,8 +39,38 @@ export function createNoticiasRouter(): Router {
     next();
   }
 
+  // Genera la versión en sentence case del HTML usando Gemini — preserva nombres propios y tags HTML
+  async function buildSentenceCase(htmlContent: string, apiKey: string): Promise<string> {
+    try {
+      const r = await axios.post(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+        {
+          contents: [{
+            parts: [{
+              text: `El siguiente es contenido HTML en MAYÚSCULAS en español. Devolvé EXACTAMENTE el mismo HTML con sentence case correcto:
+- Primera letra de cada oración en mayúscula
+- Nombres propios (personas, lugares, organizaciones) con mayúscula inicial
+- Todo lo demás en minúscula
+- Preservar TODOS los tags HTML exactamente como están (no agregar ni quitar nada)
+- Preservar shortcodes como [muns_context]...[/muns_context] exactamente como están
+- Devolver SOLO el HTML, sin explicaciones ni bloques markdown
+
+HTML:
+${htmlContent}`,
+            }],
+          }],
+        },
+        { timeout: 30000 }
+      );
+      const text: string = r.data?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+      return text.replace(/^```html?\n?/i, "").replace(/\n?```$/i, "").trim() || htmlContent;
+    } catch {
+      return htmlContent;
+    }
+  }
+
   // POST /api/noticias/generate-from-url — genera cuento Muns desde una URL de noticia
-  // Devuelve: { ok, title, content, story, contentSuffix, context, excerpt, imageUrl, cost }
+  // Devuelve: { ok, title, content, contentSentenceCase, story, contentSuffix, context, excerpt, imageUrl, cost }
   router.post("/generate-from-url", requireAdmin, async (req: Request, res: Response) => {
     const { url, context } = req.body;
     if (!url || typeof url !== "string") return res.status(400).json({ error: "Se requiere una URL válida" });
@@ -50,7 +80,8 @@ export function createNoticiasRouter(): Router {
       if (!apiKey) return res.status(500).json({ error: "GEMINI_API_KEY no configurada" });
       console.log(`[noticias] Generando desde URL: ${url}`);
       const generated = await generateStoryFromUrl(url, apiKey, context);
-      res.json({ ok: true, ...generated });
+      const contentSentenceCase = await buildSentenceCase(generated.content as string, apiKey);
+      res.json({ ok: true, ...generated, contentSentenceCase });
     } catch (err: any) {
       res.status(500).json({ error: safeError(err) });
     }
@@ -58,7 +89,7 @@ export function createNoticiasRouter(): Router {
 
   // POST /api/noticias/refine — ajuste puntual de un cuento ya generado (chat de retoque)
   // Body: { title, story, instruction }
-  // Devuelve: { ok, title, story, content, cost }
+  // Devuelve: { ok, title, story, content, contentSentenceCase, cost }
   router.post("/refine", requireAdmin, async (req: Request, res: Response) => {
     const { title, story, instruction } = req.body || {};
     if (!story || typeof story !== "string") return res.status(400).json({ error: "Falta story" });
@@ -68,7 +99,8 @@ export function createNoticiasRouter(): Router {
       if (!apiKey) return res.status(500).json({ error: "GEMINI_API_KEY no configurada" });
       console.log(`[noticias] Refinando: "${instruction}"`);
       const result = await refineStory(title || "", story, instruction, apiKey);
-      res.json({ ok: true, ...result });
+      const contentSentenceCase = await buildSentenceCase(result.content as string, apiKey);
+      res.json({ ok: true, ...result, contentSentenceCase });
     } catch (err: any) {
       res.status(500).json({ error: safeError(err) });
     }
