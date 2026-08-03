@@ -284,13 +284,14 @@ async function generateContextParagraphs(newsText: string, analysis: NewsAnalysi
   const model = "gemini-2.5-flash";
   const isExcluded = !!analysis.excluded_topic;
   const prompt = isExcluded
-    ? `Escribí el contexto para adultos de una nota que acompaña un cuento infantil SIMBÓLICO — NO es una adaptación de un hecho puntual, sino una pieza sobre un patrón que se repite (tema: ${analysis.excluded_topic}).
+    ? `Escribí el contexto para adultos de una nota que acompaña un cuento infantil SIMBÓLICO — NO es una adaptación de un hecho puntual, sino una pieza sobre un patrón que se repite. Este texto lo lee un adulto/curador, nunca el chico, así que nombrá el tema real sin rodeos.
 
+TEMA REAL (nombralo explícitamente, sin eufemismos — "femicidio", "trata de personas", etc. según corresponda): ${analysis.excluded_topic}
 EMOCIÓN CENTRAL: ${analysis.core_emotion}
 
-Necesito dos párrafos cortos, en español neutro, tono cálido y editorial (no periodístico), SIN mencionar el caso puntual, sin nombres, lugares ni fechas de ninguna noticia real:
-1. "inspired": arranca EXACTAMENTE con "Esta historia no adapta un hecho puntual" y explicá en 1-2 oraciones que nace de lo seguido que pasa este tipo de caso en general, sin dar detalles de un caso específico.
-2. "conversation": en 1 oración, con arranque LIBRE Y VARIADO, describe el tema humano/emocional de fondo que el cuento invita a charlar con los chicos (la comunidad, el cuidado, la atención).`
+Necesito dos párrafos cortos, en tono HUMILDE y tentativo — como alguien que comparte por qué le pareció importante contar algo, no como un comunicado institucional ni una guía pedagógica. PROHIBIDO usar fórmulas de comunicado tipo "es una invitación a reflexionar", "fomentando la empatía y la prevención", "busca visibilizar", "invita a construir conciencia" — suenan a declaración de intenciones, no a alguien hablando en primera persona. SIN nombres, lugares ni fechas de ninguna noticia real (el tema se nombra en general, el caso puntual no):
+1. "inspired": arranca EXACTAMENTE con "Esta historia no adapta un hecho puntual" y en 1-2 oraciones, nombrando el tema real de arriba directamente, contá que nace de lo seguido que pasa este tipo de caso — sin dar detalles de un caso específico.
+2. "conversation": en 1 oración, tono humilde y simple (ej. "nos pareció importante contar algo sobre esto" en vez de "buscamos fomentar la empatía"), sobre lo que el cuento invita a charlar con los chicos.`
     : `Escribí el contexto para adultos de una nota que acompaña un cuento infantil inspirado en esta noticia real.
 
 NOTICIA: "${newsText.substring(0, 3000)}"

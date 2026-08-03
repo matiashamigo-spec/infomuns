@@ -163,6 +163,8 @@ REGLAS DURAS PARA ESTA PIEZA:
 - El foco nunca es "qué podría haber hecho distinto la víctima" — eso responsabiliza a quien sufrió el daño en vez de a quien lo causó. El foco es el amor, la ausencia, o la comunidad que cuida.
 - Ningún lugar, fecha o dato que identifique la noticia puntual — es sobre el patrón, no sobre este caso.
 
+RIESGO ESPECÍFICO DE ESTE MODO — MORALEJA DISFRAZADA: la regla "Sin moralejas. Sin cierres genéricos. Sin explicar qué aprender." de arriba vale acá con más fuerza todavía, porque al no tener un hecho real concreto que ancle la escena, es fácil rellenar el vacío emocional con una frase-tesis general sobre el duelo o la pérdida (ej. "cuando alguien se va para siempre, las personas que la querían se ponen tristes y necesitan hacer algo para recordarla" — eso es una moraleja narrada, no mostrada). Cada gesto emocional tiene que nacer de UNA decisión concreta de UN personaje particular (por qué ESA persona pintó ESE dibujo, por qué ató ESA cinta en ESE lugar) — nunca de una ley general de "así funciona el duelo". El cierre tampoco verbaliza la conclusión emocional (nada de "ahora sabe que...", "entendió que...", "así todos se van a acordar") — se queda en la imagen o la acción concreta, sin explicarle al lector lo que ya vio.
+
 Seguí usando el esquema de salida normal (title, story, excerpt, symbol, resolution, setting, opening_type, closing_image, key_metaphor) — todos describen esta pieza simbólica nueva, no la noticia original.
 `;
 
