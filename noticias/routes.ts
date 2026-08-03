@@ -4,7 +4,7 @@
 import { Router, Request, Response } from "express";
 import axios from "axios";
 import * as cheerio from "cheerio";
-import { runDailyPipeline, processSingleUrl, generateStoryFromUrl, refineStory } from "./pipeline.js";
+import { runDailyPipeline, processSingleUrl, generateStoryFromUrl, refineStory, chatAboutStory, ChatMessage } from "./pipeline.js";
 import { illustrateImage, generateIllustrationSet, generateSingleIllustration } from "./illustration.js";
 import { listDrafts, listPublished, updatePost, publishPostById, unpublishPost, deletePost, uploadMedia, setFeaturedPost, createDraft, listMedia } from "./wordpress.js";
 
@@ -113,6 +113,31 @@ export function createNoticiasRouter(): Router {
       if (!apiKey) return res.status(500).json({ error: "GEMINI_API_KEY no configurada" });
       console.log(`[noticias] Refinando cuento: "${instruction}"`);
       const result = await refineStory(title || "", story, instruction, apiKey);
+      res.json({ ok: true, ...result });
+    } catch (err: any) {
+      res.status(500).json({ error: safeError(err) });
+    }
+  });
+
+  // POST /api/noticias/chat — asistente de redacción conversacional (Claude) para el metabox
+  // "Generar con IA". Reemplaza a /refine para la interacción con el editor humano: mantiene
+  // historial de mensajes y solo actualiza el cuento cuando el modelo propone un borrador concreto.
+  router.post("/chat", requireAdmin, async (req: Request, res: Response) => {
+    const { title, story, sourceContext, history } = req.body || {};
+    if (!story || typeof story !== "string") return res.status(400).json({ error: "Falta story" });
+    if (!Array.isArray(history) || history.length === 0) return res.status(400).json({ error: "Falta history" });
+    const validHistory: ChatMessage[] = [];
+    for (const m of history) {
+      if (!m || (m.role !== "user" && m.role !== "assistant") || typeof m.content !== "string") {
+        return res.status(400).json({ error: "history inválido" });
+      }
+      validHistory.push({ role: m.role, content: m.content });
+    }
+    try {
+      const apiKey = process.env.ANTHROPIC_API_KEY;
+      if (!apiKey) return res.status(500).json({ error: "ANTHROPIC_API_KEY no configurada" });
+      console.log(`[noticias] Chat de redacción: "${validHistory[validHistory.length - 1]?.content?.substring(0, 80)}"`);
+      const result = await chatAboutStory(title || "", story, sourceContext || "", validHistory, apiKey);
       res.json({ ok: true, ...result });
     } catch (err: any) {
       res.status(500).json({ error: safeError(err) });

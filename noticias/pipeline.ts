@@ -5,10 +5,11 @@ import * as cheerio from "cheerio";
 import fs from "fs";
 import path from "path";
 import { GoogleGenAI, Type } from "@google/genai";
+import Anthropic from "@anthropic-ai/sdk";
 import { fetchAllFeeds, findTopStories } from "./rss.js";
 import { illustrateImage, generateIllustrationFromText, generateSingleIllustration } from "./illustration.js";
 import { createDraft, uploadMedia } from "./wordpress.js";
-import { MUNS_SYSTEM_INSTRUCTION, MUNS_REFINE_ADDENDUM } from "../constants.js";
+import { MUNS_SYSTEM_INSTRUCTION, MUNS_REFINE_ADDENDUM, MUNS_CHAT_ADDENDUM } from "../constants.js";
 import { getRecentPatternsPrompt, saveStoryToMemory } from "./story-memory.js";
 
 const DATA_DIR = process.env.RAILWAY_VOLUME_MOUNT_PATH || process.env.DATA_DIR || path.join(process.cwd(), "data");
@@ -67,6 +68,20 @@ function sumCosts(costs: UsageCost[]): { inputTokens: number; outputTokens: numb
     }),
     { inputTokens: 0, outputTokens: 0, usd: 0 }
   );
+}
+
+// Pricing de Claude (USD por 1M tokens) — actualizar acá si Anthropic cambia las tarifas.
+const CLAUDE_PRICING: Record<string, { inputPerM: number; outputPerM: number }> = {
+  "claude-opus-5": { inputPerM: 5.0, outputPerM: 25.0 },
+};
+
+function costFromClaudeResponse(model: string, response: Anthropic.Message): UsageCost {
+  const usage = response.usage;
+  const inputTokens = usage.input_tokens ?? 0;
+  const outputTokens = usage.output_tokens ?? 0;
+  const pricing = CLAUDE_PRICING[model] || { inputPerM: 0, outputPerM: 0 };
+  const usd = (inputTokens / 1_000_000) * pricing.inputPerM + (outputTokens / 1_000_000) * pricing.outputPerM;
+  return { model, inputTokens, outputTokens, usd };
 }
 
 type NewsTone = "positive" | "concerning" | "negative";
@@ -545,4 +560,77 @@ Aplicá SOLO este pedido puntual. Cambiá lo mínimo necesario para cumplirlo �
     content: wrapStoryParagraphs(result.story),
     cost,
   };
+}
+
+export interface ChatMessage {
+  role: "user" | "assistant";
+  content: string;
+}
+
+export interface ChatResult {
+  reply: string;
+  update: { title: string; story: string; content: string } | null;
+  cost: { inputTokens: number; outputTokens: number; usd: number };
+}
+
+// Asistente de redacción conversacional (Claude) para el metabox "Generar con IA" en info.muns.club.
+// A diferencia de refineStory, mantiene historial de conversación y puede discutir con el editor
+// antes de proponer un cambio — solo actualiza el cuento cuando el modelo llama a "update_story".
+export async function chatAboutStory(
+  title: string,
+  story: string,
+  sourceContext: string,
+  history: ChatMessage[],
+  apiKey: string
+): Promise<ChatResult> {
+  const anthropic = new Anthropic({ apiKey });
+  const model = "claude-opus-5";
+
+  const contextBlock = `CUENTO ACTUAL EN EL EDITOR:
+TÍTULO: ${title}
+CUENTO:
+${story}
+${sourceContext ? `\nCONTEXTO DE LA NOTICIA ORIGINAL:\n${sourceContext}` : ""}`;
+
+  const response = await anthropic.messages.create({
+    model,
+    max_tokens: 8000,
+    system: MUNS_SYSTEM_INSTRUCTION + "\n\n" + MUNS_CHAT_ADDENDUM + "\n\n" + contextBlock,
+    messages: history.map((m) => ({ role: m.role, content: m.content })),
+    tools: [
+      {
+        name: "update_story",
+        description:
+          'Propone un borrador concreto y completo (título + cuento) para reemplazar lo que está en el editor. Llamala SOLO cuando tengas una versión terminada para proponer — no para discutir opciones o pedir aclaraciones, eso va como texto normal.',
+        input_schema: {
+          type: "object",
+          properties: {
+            title: { type: "string", description: "Título propuesto" },
+            story: { type: "string", description: "Texto completo del cuento propuesto" },
+          },
+          required: ["title", "story"],
+        },
+      },
+    ],
+  });
+
+  let reply = "";
+  let update: ChatResult["update"] = null;
+
+  for (const block of response.content) {
+    if (block.type === "text") {
+      reply += block.text;
+    } else if (block.type === "tool_use" && block.name === "update_story") {
+      const input = block.input as { title: string; story: string };
+      update = {
+        title: input.title,
+        story: input.story,
+        content: wrapStoryParagraphs(input.story),
+      };
+    }
+  }
+
+  const cost = costFromClaudeResponse(model, response);
+
+  return { reply: reply.trim(), update, cost };
 }
