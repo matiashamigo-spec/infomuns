@@ -9,7 +9,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { fetchAllFeeds, findTopStories } from "./rss.js";
 import { illustrateImage, generateIllustrationFromText, generateSingleIllustration } from "./illustration.js";
 import { createDraft, uploadMedia } from "./wordpress.js";
-import { MUNS_SYSTEM_INSTRUCTION, MUNS_REFINE_ADDENDUM, MUNS_CHAT_ADDENDUM } from "../constants.js";
+import { MUNS_SYSTEM_INSTRUCTION, MUNS_REFINE_ADDENDUM, MUNS_CHAT_ADDENDUM, MUNS_SYMBOLIC_ADDENDUM } from "../constants.js";
 import { getRecentPatternsPrompt, saveStoryToMemory } from "./story-memory.js";
 
 const DATA_DIR = process.env.RAILWAY_VOLUME_MOUNT_PATH || process.env.DATA_DIR || path.join(process.cwd(), "data");
@@ -113,6 +113,7 @@ interface NewsAnalysis {
   core_emotion: string;
   has_resolution: boolean;
   hopeful_actor: string;
+  excluded_topic: string;
 }
 
 async function analyzeNews(newsText: string, apiKey: string): Promise<{ analysis: NewsAnalysis; cost: UsageCost }> {
@@ -132,7 +133,8 @@ Respondé:
 - human_choice: ¿cuál es la naturaleza del hecho? "daño" solo si hay una acción claramente dañina y no debatible (violencia, abuso, crimen). "bien" solo si hay un gesto claramente positivo y no debatible (rescate, donación, cuidado). "político" si involucra gobiernos, partidos, políticas públicas, movimientos sociales o cualquier tema donde distintas personas pueden tener opiniones legítimas distintas. "ninguna" si fue natural, accidental o estructural sin actor claro.
 - core_emotion: cuál es la emoción principal que un nene de 5 años sentiría al escuchar esto (una sola palabra: tristeza, bronca, miedo, alegría, orgullo, confusión, ternura, alivio)
 - has_resolution: true si el hecho ya tiene un final definitivo, false si la situación sigue abierta
-- hopeful_actor: si hay alguien que denunció, ayudó, cuidó o habló en esta noticia, describilo en una frase. Si no hay nadie así, dejalo vacío.`,
+- hopeful_actor: si hay alguien que denunció, ayudó, cuidó o habló en esta noticia, describilo en una frase. Si no hay nadie así, dejalo vacío.
+- excluded_topic: la noticia trata alguno de estos temas — femicidio, violencia de género con resultado de muerte, trata de personas, secuestro con violencia, abuso infantil, suicidio, terrorismo, tortura, o algo de gravedad equivalente — sin importar cuán breve o suave esté redactada la nota. Si es así, indicá cuál en pocas palabras (ej: "femicidio con resultado de muerte"). Si NINGUNO de estos aplica, dejalo como string vacío "".`,
     config: {
       temperature: 0.2,
       responseMimeType: "application/json",
@@ -147,8 +149,9 @@ Respondé:
           core_emotion: { type: Type.STRING },
           has_resolution: { type: Type.BOOLEAN },
           hopeful_actor: { type: Type.STRING },
+          excluded_topic: { type: Type.STRING },
         },
-        required: ["what", "heart", "visual_anchor", "story_type", "human_choice", "core_emotion", "has_resolution", "hopeful_actor"],
+        required: ["what", "heart", "visual_anchor", "story_type", "human_choice", "core_emotion", "has_resolution", "hopeful_actor", "excluded_topic"],
       },
     },
   });
@@ -186,7 +189,24 @@ async function generateMunsStory(newsText: string, apiKey: string): Promise<{ ti
     ? `FINAL CERRADO: lo que pasó ya terminó. El cuento también debe tener final cerrado.`
     : `FINAL ABIERTO: la situación sigue sin resolverse. El cuento puede terminar con algo pendiente.`;
 
-  const contents = `NOTICIA ORIGINAL (leé todo — los detalles concretos, objetos, lugares y nombres están acá):
+  const trailingInstructions = `
+Elegí uno de los ARQUETIPOS DE RESOLUCIÓN (A–H). Indicá en "resolution" la letra y nombre. Indicá en "symbol" el símbolo principal del cuento. Indicá en "setting" el escenario principal (ej: "tierra - Barcelona", "un puente sobre un río", "la vereda de una escuela").
+En "opening_type" describí en 5-8 palabras cómo arranca el cuento (ej: "detalle concreto del lugar", "personaje en acción", "desde la luna con algo inusual").
+En "closing_image" describí en 5-10 palabras la imagen o acción concreta del cierre (ej: "dejan una sonrisa en el piso y se van", "un Mun mira hacia atrás una vez", "se quedan mirando la ventana iluminada").
+En "key_metaphor" describí en 5-10 palabras la imagen o traducción principal que usaste para explicar el concepto adulto central de esta noticia en lenguaje de nene (ej: "ruidos grandes para los ataques militares", "pantalla flotante para las noticias digitales", "el agua que no para para la inundación"). Esto sirve para NO repetirlo en futuros cuentos.
+
+En "excerpt" escribí una bajada corta (máximo 85 caracteres, contando espacios — es un límite duro, no lo excedas) que invite a leer el cuento, en español normal (mayúscula solo al principio y en nombres propios — NO todo en mayúscula, a diferencia de "story"). Se muestra en una tarjeta chica que corta el texto a 3 líneas (~33 caracteres por línea): si te pasás del límite, se corta a la mitad de una palabra y queda feo.${recentPatterns}`;
+
+  const isExcluded = !!analysis.excluded_topic;
+
+  const contents = isExcluded
+    ? `TEMA DETECTADO — NO SE ADAPTA LITERAL: ${analysis.excluded_topic}
+LO QUE PASÓ (referencia interna — NO narres esto, NO uses nombres/lugares/fechas de acá): ${analysis.what}
+EMOCIÓN CENTRAL: ${analysis.core_emotion}
+
+Escribí, siguiendo el modo simbólico de tu instrucción de sistema, una pieza nueva sobre el patrón o el sentimiento colectivo que representa este tipo de caso — no una adaptación de esta noticia puntual.
+${trailingInstructions}`
+    : `NOTICIA ORIGINAL (leé todo — los detalles concretos, objetos, lugares y nombres están acá):
 ---
 ${newsText.substring(0, 5000)}
 ---
@@ -208,20 +228,14 @@ ANTES DE ESCRIBIR — hacé este ejercicio mental (no lo incluyas en el output):
 4. ¿Qué no vas a hacer? (el recurso fácil, el clima genérico, la metáfora que funcionaría para cualquier cuento)
 
 AHORA escribí el cuento. La forma surge del contenido — una historia de espera tiene otro ritmo que una de pérdida, que otra de descubrimiento. Dejá que ESTA situación te diga cómo contarla.
-
-Elegí uno de los ARQUETIPOS DE RESOLUCIÓN (A–H). Indicá en "resolution" la letra y nombre. Indicá en "symbol" el símbolo principal del cuento. Indicá en "setting" el escenario principal (ej: "tierra - Barcelona", "un puente sobre un río", "la vereda de una escuela").
-En "opening_type" describí en 5-8 palabras cómo arranca el cuento (ej: "detalle concreto del lugar", "personaje en acción", "desde la luna con algo inusual").
-En "closing_image" describí en 5-10 palabras la imagen o acción concreta del cierre (ej: "dejan una sonrisa en el piso y se van", "un Mun mira hacia atrás una vez", "se quedan mirando la ventana iluminada").
-En "key_metaphor" describí en 5-10 palabras la imagen o traducción principal que usaste para explicar el concepto adulto central de esta noticia en lenguaje de nene (ej: "ruidos grandes para los ataques militares", "pantalla flotante para las noticias digitales", "el agua que no para para la inundación"). Esto sirve para NO repetirlo en futuros cuentos.
-
-En "excerpt" escribí una bajada corta (máximo 85 caracteres, contando espacios — es un límite duro, no lo excedas) que invite a leer el cuento, en español normal (mayúscula solo al principio y en nombres propios — NO todo en mayúscula, a diferencia de "story"). Se muestra en una tarjeta chica que corta el texto a 3 líneas (~33 caracteres por línea): si te pasás del límite, se corta a la mitad de una palabra y queda feo.${recentPatterns}`;
+${trailingInstructions}`;
 
   const storyModel = "gemini-3.1-pro-preview";
   const response = await ai.models.generateContent({
     model: storyModel,
     contents,
     config: {
-      systemInstruction: MUNS_SYSTEM_INSTRUCTION,
+      systemInstruction: isExcluded ? MUNS_SYSTEM_INSTRUCTION + "\n\n" + MUNS_SYMBOLIC_ADDENDUM : MUNS_SYSTEM_INSTRUCTION,
       temperature: 1.0,
       responseMimeType: "application/json",
       responseSchema: {
@@ -268,9 +282,16 @@ En "excerpt" escribí una bajada corta (máximo 85 caracteres, contando espacios
 async function generateContextParagraphs(newsText: string, analysis: NewsAnalysis, apiKey: string): Promise<{ inspired: string; conversation: string; cost: UsageCost }> {
   const ai = new GoogleGenAI({ apiKey });
   const model = "gemini-2.5-flash";
-  const response = await ai.models.generateContent({
-    model,
-    contents: `Escribí el contexto para adultos de una nota que acompaña un cuento infantil inspirado en esta noticia real.
+  const isExcluded = !!analysis.excluded_topic;
+  const prompt = isExcluded
+    ? `Escribí el contexto para adultos de una nota que acompaña un cuento infantil SIMBÓLICO — NO es una adaptación de un hecho puntual, sino una pieza sobre un patrón que se repite (tema: ${analysis.excluded_topic}).
+
+EMOCIÓN CENTRAL: ${analysis.core_emotion}
+
+Necesito dos párrafos cortos, en español neutro, tono cálido y editorial (no periodístico), SIN mencionar el caso puntual, sin nombres, lugares ni fechas de ninguna noticia real:
+1. "inspired": arranca EXACTAMENTE con "Esta historia no adapta un hecho puntual" y explicá en 1-2 oraciones que nace de lo seguido que pasa este tipo de caso en general, sin dar detalles de un caso específico.
+2. "conversation": en 1 oración, con arranque LIBRE Y VARIADO, describe el tema humano/emocional de fondo que el cuento invita a charlar con los chicos (la comunidad, el cuidado, la atención).`
+    : `Escribí el contexto para adultos de una nota que acompaña un cuento infantil inspirado en esta noticia real.
 
 NOTICIA: "${newsText.substring(0, 3000)}"
 LO QUE PASÓ: ${analysis.what}
@@ -278,7 +299,10 @@ EMOCIÓN CENTRAL: ${analysis.core_emotion}
 
 Necesito dos párrafos cortos, en español neutro, tono cálido y editorial (no periodístico):
 1. "inspired": arranca EXACTAMENTE con "Esta historia está inspirada en" y resume en 1-2 oraciones lo que pasó en la noticia real, con los datos concretos (lugar, qué ocurrió), sin opinar.
-2. "conversation": en 1 oración, con arranque LIBRE Y VARIADO (no repitas la misma fórmula de nota a nota, como "Este cuento busca..."), describe el tema humano/emocional de fondo que el cuento invita a charlar con los chicos.`,
+2. "conversation": en 1 oración, con arranque LIBRE Y VARIADO (no repitas la misma fórmula de nota a nota, como "Este cuento busca..."), describe el tema humano/emocional de fondo que el cuento invita a charlar con los chicos.`;
+  const response = await ai.models.generateContent({
+    model,
+    contents: prompt,
     config: {
       temperature: 0.7,
       responseMimeType: "application/json",
@@ -363,6 +387,7 @@ export interface GeneratedStory {
   story: string;
   contentSuffix: string;
   cost: { inputTokens: number; outputTokens: number; usd: number };
+  excludedTopic: string | null;
 }
 
 // Mayúscula + un <p> por párrafo — el formato que espera el theme para el cuerpo del cuento.
@@ -419,18 +444,35 @@ export async function generateStoryFromUrl(url: string, apiKey: string, context?
   // 2. Generar historia Muns
   const newsText = `${rawTitle}\n\n${bodyText || description}`;
   const { title, story, excerpt, analysis, costs: storyCosts } = await generateMunsStory(newsText, apiKey);
+  const excludedTopic = analysis.excluded_topic || null;
 
   // 3. Generar (o respetar el manual) el bloque de contexto para adultos
   const contextBlock = await buildContextBlock(newsText, analysis, apiKey, context);
 
   const storyHtml = wrapStoryParagraphs(story);
-  const contentSuffix = `
+  // Si el tema quedó excluido de adaptación literal, la pieza es simbólica: no lleva link a la
+  // noticia puntual (no es una adaptación de ESE hecho) ni la foto real del caso como destacada.
+  const contentSuffix = excludedTopic
+    ? contextBlock.html
+    : `
 <p><small>Fuente original (<a href="${url}" target="_blank" rel="noopener">${siteName}</a>): ${url}</small></p>${contextBlock.html}`;
   const content = `${storyHtml}${contentSuffix}`;
 
   const cost = sumCosts(contextBlock.cost ? [...storyCosts, contextBlock.cost] : storyCosts);
 
-  return { title, content, context: contextBlock.text, excerpt, imageUrl, siteName, sourceUrl: url, story, contentSuffix, cost };
+  return {
+    title,
+    content,
+    context: contextBlock.text,
+    excerpt,
+    imageUrl: excludedTopic ? null : imageUrl,
+    siteName,
+    sourceUrl: url,
+    story,
+    contentSuffix,
+    cost,
+    excludedTopic,
+  };
 }
 
 export async function processSingleUrl(url: string, apiKey: string, context?: string): Promise<{ id: number; title: string }> {

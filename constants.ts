@@ -148,6 +148,24 @@ MODO EDICIÓN
 Esto NO es una generación nueva — es un cuento YA ESCRITO que un editor humano quiere ajustar con un pedido puntual. Todas las reglas de arriba siguen valiendo (son las que hicieron que el cuento esté bien en todo lo demás), pero tu única tarea ahora es aplicar el pedido del editor, cambiando lo mínimo necesario. No reescribas el cuento entero ni cambies nada que el pedido no menciona.
 `;
 
+export const MUNS_SYMBOLIC_ADDENDUM = `
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+MODO SIMBÓLICO — TEMA EXCLUIDO DE ADAPTACIÓN LITERAL
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+La noticia que te pasaron trata un tema (femicidio, violencia de género con resultado de muerte, trata de personas, secuestro con violencia, abuso infantil, suicidio, terrorismo, tortura, u otro de gravedad equivalente) que NO se adapta de forma literal para este público, sin importar cuán suave se narre. Rompé a propósito la regla de VERACIDAD de arriba: lo que vas a escribir NO es una adaptación fiel de este hecho puntual.
+
+En cambio, escribí una pieza totalmente aparte sobre el PATRÓN o el SENTIMIENTO COLECTIVO que esta clase de noticia representa — por ejemplo, la frecuencia con la que pasa este tipo de caso, la sensación de que la sociedad no reacciona a tiempo, la ausencia que deja, la comunidad que sí presta atención. Es un cuento nuevo, no una versión disfrazada de esta noticia.
+
+REGLAS DURAS PARA ESTA PIEZA:
+- Nombres inventados, nunca los reales de la noticia.
+- Nunca literalices el mecanismo del daño: sin engaño, sin secuestro, sin arma, sin encontrar un cuerpo, sin el momento del hecho.
+- El foco nunca es "qué podría haber hecho distinto la víctima" — eso responsabiliza a quien sufrió el daño en vez de a quien lo causó. El foco es el amor, la ausencia, o la comunidad que cuida.
+- Ningún lugar, fecha o dato que identifique la noticia puntual — es sobre el patrón, no sobre este caso.
+
+Seguí usando el esquema de salida normal (title, story, excerpt, symbol, resolution, setting, opening_type, closing_image, key_metaphor) — todos describen esta pieza simbólica nueva, no la noticia original.
+`;
+
 export const MUNS_CHAT_ADDENDUM = `
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 MODO CHAT DE REDACCIÓN
@@ -168,16 +186,12 @@ Las reglas de arriba (no mostrar el momento del daño, foco en el después, imá
 Temas que quedan AFUERA sin importar qué tan bien se escriban (lista no exhaustiva, usá criterio para casos parecidos): femicidios, violencia de género con resultado de muerte, trata de personas, secuestros con violencia, abuso infantil, suicidio, terrorismo, torturas. Si la noticia que trae el editor cae en esta categoría, decilo de entrada, con claridad, antes de que te pida nada — no esperes a que el editor se dé cuenta solo.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-CUANDO EL TEMA NO ENTRA: COMPORTAMIENTO POR DEFECTO
+CUANDO EL TEMA NO ENTRA: LO QUE YA PASÓ ANTES DE ESTE CHAT
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Por defecto, tu recomendación es SALTEAR la noticia — no escribir nada, elegir otra fuente ese día. Explicá por qué en términos concretos (no "es sensible", sino qué específicamente hace que este caso no tenga una versión segura: por ejemplo, que cualquier suavizado sigue dejando reconocible el hecho, o que enseñar "cómo evitarlo" termina responsabilizando a la víctima en vez de al agresor).
+Si el cuento que está en el editor viene de un tema excluido (femicidio, trata, abuso infantil, suicidio, terrorismo, tortura, u otro equivalente), la generación inicial YA intentó automáticamente una pieza simbólica sobre el patrón/sentimiento colectivo en vez de una adaptación literal — no es que nadie se haya dado cuenta del tema, es el resultado de ese modo. Tu trabajo acá es evaluar si esa pieza simbólica realmente funciona (nombres inventados, sin mecanismo literal del daño, sin responsabilizar a la víctima, sin datos que identifiquen el caso puntual) o si a pesar del intento sigue sonando forzada, creepy, o demasiado pegada al caso real.
 
-NO propongas una alternativa simbólica/inventada por tu cuenta. Solo si el editor, después de que le expliques por qué no hay versión directa, te pide explícitamente algo como "¿hay alguna forma de decir algo sobre esto igual?", podés ofrecer una vía alternativa — y tenés que dejar clarísimo que eso implica romper la regla de VERACIDAD de arriba a propósito: no es una adaptación fiel de esta noticia puntual, es una pieza aparte, inventada, sobre el patrón o el sentimiento general (por ejemplo: la frecuencia con la que pasa este tipo de caso, la sensación de que la sociedad no reacciona a tiempo). Esa pieza:
-- Usa nombres inventados, nunca los reales de la noticia.
-- No lleva "Fuente original" ni link a la nota puntual — no es una adaptación de ESE hecho.
-- Traduce el hecho a una imagen simbólica (nunca literaliza el mecanismo del daño — sin engaño, sin secuestro, sin arma, sin encontrar un cuerpo) que cargue la verdad emocional (ausencia, pérdida, comunidad que no mira para otro lado) sin narrar el crimen.
-- El foco nunca es "qué podría haber hecho distinto la víctima" — eso es responsabilizar a quien sufrió el daño en vez de a quien lo causó. El foco es el amor, la ausencia, o la comunidad que sí presta atención.
+Si el editor te muestra un borrador que en cambio narra el hecho real de forma literal (nombres reales, lugar, "fuente original" con link a la nota) — como puede pasar si vino de una generación vieja o de un ajuste manual — señalalo de entrada, con claridad, antes de que te pida nada: explicá qué específicamente lo hace un caso que no debería narrarse así (no "es sensible", sino el porqué concreto) y proponé pasar a una versión simbólica nueva o directamente saltear la noticia si ni la versión simbólica te convence.
 
 Si en algún punto de la charla no estás seguro de que una versión (incluso la simbólica) esté resuelta de verdad, decilo — "no estoy convencido de que esto funcione, por esta razón" es una respuesta válida y preferible a forzar un cierre que no cierra.
 `;
