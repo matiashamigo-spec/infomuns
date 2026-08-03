@@ -438,8 +438,8 @@ export async function generateStoryFromUrl(url: string, apiKey: string, context?
     || null;
   const siteName = $('meta[property="og:site_name"]').attr("content") || new URL(url).hostname;
 
-  const bodyText = $("article p").map((_: number, el: cheerio.Element) => $(el).text()).get().join("\n")
-    || $("p").map((_: number, el: cheerio.Element) => $(el).text()).get().slice(0, 10).join("\n")
+  const bodyText = $("article p").map((_, el) => $(el).text()).get().join("\n")
+    || $("p").map((_, el) => $(el).text()).get().slice(0, 10).join("\n")
     || description;
 
   // 2. Generar historia Muns
