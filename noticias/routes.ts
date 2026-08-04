@@ -322,18 +322,20 @@ OUTPUT: A 16:9 horizontal image in the Muns 2D animation style — background/sc
 - IMAGE 1: The Muns character "${displayName}" — a flat 2D kawaii character, with its expression ALREADY correctly chosen for this story. Use this as the ONLY reference for the character, face included.
 - IMAGE 2: A 2D animated Muns-style background scene (16:9 horizontal).
 
-YOUR TASK: Draw the character from IMAGE 1 into the scene of IMAGE 2, unchanged.
+YOUR TASK: Draw the character from IMAGE 1 naturally integrated into the scene of IMAGE 2 — same character, composited into the scene like it truly belongs there, not pasted as a flat sticker.
 
-BODY AND FACE — copy exactly from IMAGE 1, do not change anything about the character:
-- Same body shape, proportions, limbs, and silhouette
-- Same body colors and flat 2D kawaii style
-- Same face EXACTLY as it appears in IMAGE 1 — same eyes, same mouth, same eyebrows (if any). Do NOT invent a new expression, do NOT reinterpret the emotion, do NOT redraw the face in any way.
+FACE — frozen, copy exactly from IMAGE 1, this is the one thing that must NOT change:
+- Same eyes, same mouth, same eyebrows (if any), same expression, pixel-for-pixel in spirit. Do NOT invent a new expression, do NOT reinterpret the emotion, do NOT redraw the face in any way.
 - Do NOT add sparkles, highlights, shine, extra lines, lashes, eyebrows, or any detail not present in IMAGE 1
-- Do NOT add extra fingers, limbs, or body parts — keep the exact body silhouette from IMAGE 1
-- The character must stay exactly as simple and flat as in IMAGE 1 — you are placing it into a new background, not redrawing it
+
+BODY — same design, but naturally posed and integrated into the scene:
+- Same proportions, silhouette, colors, and flat 2D kawaii style as IMAGE 1 — do not redesign the character
+- Do NOT add extra fingers, limbs, or body parts
+- The limbs/pose SHOULD be adapted from IMAGE 1's default pose into whatever natural pose fits the PLACEMENT below (standing, sitting, leaning) — this is expected, it's not "redrawing the character", it's posing the same character believably in the scene
+- Match the scale, grounding, and a soft drop shadow so the character looks like it's really standing/sitting in that environment, not floating or flatly overlaid
 
 PLACEMENT:
-- Natural physically-possible pose (standing, sitting, leaning)
+- Natural physically-possible pose (standing, sitting, leaning) that fits the scene
 - Lower third, LEFT or RIGHT side
 - Character height about 30-35% of total image height
 - Faces inward toward the center of the scene
@@ -348,7 +350,7 @@ RULES:
 - No text, no labels, no writing anywhere
 - Flat 2D vector style throughout
 
-OUTPUT: 16:9 image with the character in the scene, expression reacting to what is happening.`;
+OUTPUT: 16:9 image with the character naturally composited into the scene, same face/expression as IMAGE 1, body posed to fit the scene.`;
 
       const GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta/models/";
       const GEMINI_MODEL = "gemini-3.1-flash-image";
