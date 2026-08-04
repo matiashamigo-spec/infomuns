@@ -331,11 +331,13 @@ FACE — frozen, copy exactly from IMAGE 1, this is the one thing that must NOT 
 BODY — same design, but naturally posed and integrated into the scene:
 - Same proportions, silhouette, colors, and flat 2D kawaii style as IMAGE 1 — do not redesign the character
 - Do NOT add extra fingers, limbs, or body parts
-- The limbs/pose SHOULD be adapted from IMAGE 1's default pose into whatever natural pose fits the PLACEMENT below (standing, sitting, leaning) — this is expected, it's not "redrawing the character", it's posing the same character believably in the scene
-- Match the scale, grounding, and a soft drop shadow so the character looks like it's really standing/sitting in that environment, not floating or flatly overlaid
+- IMAGE 1 shows the character standing perfectly straight and symmetrical, arms hanging evenly at both sides, facing forward — that is a neutral reference pose, NOT the pose to use in the final image. Copying that exact symmetrical stance makes the character look like a pasted-on sticker instead of a character in a scene. You MUST break that symmetry.
+- Give it ONE simple, natural asymmetrical pose that fits the moment, for example: one arm raised or reaching toward something in the scene while the other stays down; head and body turned or tilted a few degrees toward whatever it's reacting to; weight shifted so one leg is slightly forward/bent instead of both perfectly straight and even. Pick whichever of these fits the scene, but the pose must NOT be the plain straight-forward stance from IMAGE 1.
+- Keep the same limb thickness, joint style, and simple flat shapes as IMAGE 1 — you're re-posing the same character, not redesigning it or adding detail
+- Match the scale, grounding, and a soft drop shadow so the character looks like it's really standing in that environment, not floating or flatly overlaid
 
 PLACEMENT:
-- Natural physically-possible pose (standing, sitting, leaning) that fits the scene
+- Natural physically-possible pose (standing, sitting, leaning) that fits the scene — see the asymmetry requirement above, never the plain frontal stance from IMAGE 1
 - Lower third, LEFT or RIGHT side
 - Character height about 30-35% of total image height
 - Faces inward toward the center of the scene
