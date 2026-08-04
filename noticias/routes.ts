@@ -179,12 +179,16 @@ STYLE RULES:
 - Animals and objects must be drawn as simple rounded silhouettes with minimal interior lines — think toy-like, not realistic
 - Thick, clean outlines on all elements
 - STRICTLY FLAT COLOR FILLS — no gradients, no shading, no shadows, no glow, no reflections, no light beams, no highlights of any kind. Every single shape is ONE flat, uniform color.
-- If the original photo has many small repeated objects (products on shelves, papers, a crowd, bottles, books, etc.), DO NOT draw them individually — merge them into 2-4 large simple color blocks or a single simplified silhouette that just suggests "shelf with stuff" or "pile of things". Never itemize small objects one by one.
-- Maximum of a handful of distinct shapes per scene — if you're about to draw more than ~10 separate objects, you're not simplifying enough: merge more.
-- Large simple shapes dominate — avoid small decorative details
 - Warm, inviting, storybook feel
 - Remove ALL photographic realism
-- Keep only the 2-3 most essential elements that make the location recognizable (e.g., "a counter and one shelf" for a store) — everything else gets dropped or merged into background color blocks
+
+HARD CAPS ON REPETITION — these are counts, not suggestions, count them before finishing:
+- Maximum 6 total distinct visual elements/objects in the ENTIRE image (not per group — total). If the original has more, you MUST drop or merge the extras — never draw a 7th, 8th, 9th... separate object.
+- Repeated small objects (flags, pins, bottles, books, products, people in a crowd, papers, hands, etc.): if the original shows more than 2-3 of the same kind of thing, draw AT MOST 2, and either remove the rest entirely or imply them with a single simplified cluster shape (e.g., one flag, not twelve; one hand, not six; one shelf block, not a row of bottles).
+- Complex shapes made of many small subdivided pieces (a map cut into many regions, a puzzle, a crowd of individual faces, a grid of windows) must become ONE single simplified silhouette with at most 2-3 flat color zones — never keep each individual piece/region outlined separately.
+- No hatching, no small repeated line patterns for texture (mountains, fur, fabric, grass) — represent that surface as one flat shape instead.
+- Before finishing, do a mental count of every separate outlined shape in the image. If it's more than ~6, go back and merge more — this is the single most common mistake, err on the side of removing detail rather than keeping it.
+- Keep only the 1-2 most essential elements that make the scene recognizable — everything else gets dropped or merged into background color blocks
 - If people appear in the original photo, include them as simplified 2D cartoon characters — same simplified style, no realistic facial detail, just simple round heads and basic body shapes
 
 OUTPUT: A 16:9 horizontal image in the Muns 2D animation style — background/scene only, no animated characters.`;
