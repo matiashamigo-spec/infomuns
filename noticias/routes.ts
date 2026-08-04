@@ -175,14 +175,16 @@ Blues and browns are the dominant colors. Yellow/gold only for small details or 
 
 STYLE RULES:
 - Children's 2D animated TV show aesthetic — same visual style as Bluey or Plin Plin Plon but DO NOT include any characters from those shows
-- MAXIMUM SIMPLIFICATION: reduce every element to its most basic readable shape — no anatomical detail, no fine textures, no complex linework
+- MAXIMUM SIMPLIFICATION, NO EXCEPTIONS: reduce every element to its most basic readable shape — no anatomical detail, no fine textures, no complex linework
 - Animals and objects must be drawn as simple rounded silhouettes with minimal interior lines — think toy-like, not realistic
 - Thick, clean outlines on all elements
-- Flat color fills only — no gradients, no shading, no texture
+- STRICTLY FLAT COLOR FILLS — no gradients, no shading, no shadows, no glow, no reflections, no light beams, no highlights of any kind. Every single shape is ONE flat, uniform color.
+- If the original photo has many small repeated objects (products on shelves, papers, a crowd, bottles, books, etc.), DO NOT draw them individually — merge them into 2-4 large simple color blocks or a single simplified silhouette that just suggests "shelf with stuff" or "pile of things". Never itemize small objects one by one.
+- Maximum of a handful of distinct shapes per scene — if you're about to draw more than ~10 separate objects, you're not simplifying enough: merge more.
 - Large simple shapes dominate — avoid small decorative details
 - Warm, inviting, storybook feel
 - Remove ALL photographic realism
-- Keep the overall composition and recognizable elements but aggressively simplify everything
+- Keep only the 2-3 most essential elements that make the location recognizable (e.g., "a counter and one shelf" for a store) — everything else gets dropped or merged into background color blocks
 - If people appear in the original photo, include them as simplified 2D cartoon characters — same simplified style, no realistic facial detail, just simple round heads and basic body shapes
 
 OUTPUT: A 16:9 horizontal image in the Muns 2D animation style — background/scene only, no animated characters.`;
@@ -229,9 +231,18 @@ OUTPUT: A 16:9 horizontal image in the Muns 2D animation style — background/sc
   });
 
   const MUNS_CHARACTERS: Record<string, string> = {
-    mun:       "Mun",
-    mun_triste:"Mun triste",
-    opaq:      "Opaq",
+    mun:              "Mun",
+    mun_contento:     "Mun contento",
+    mun_triste:       "Mun triste",
+    mun_sorprendido:  "Mun sorprendido",
+    mun_enojado:      "Mun enojado",
+    mun_divertido:    "Mun divertido",
+    mun_conmovido:    "Mun conmovido",
+    opaq:             "Opaq",
+    opaq_contento:    "Opaq contento",
+    opaq_triste:      "Opaq triste",
+    opaq_sorprendido: "Opaq sorprendido",
+    opaq_enojado:     "Opaq enojado",
   };
 
   // POST /api/noticias/foto-muns-sugerir — dada la historia, elige el personaje más apropiado (solo texto, rápido)
@@ -244,10 +255,21 @@ OUTPUT: A 16:9 horizontal image in the Muns 2D animation style — background/sc
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) return res.status(500).json({ error: "GEMINI_API_KEY no configurada" });
 
+    // Cada opción corresponde a un PNG ya dibujado a mano en noticias/characters/ — no se
+    // improvisa la expresión después, así que esta elección es la que define la cara final.
     const charOptions = [
-      "mun: historia positiva, neutral, aventura, curiosidad, logro",
-      "mun_triste: historia triste, pérdida, despedida, situación difícil",
-      "opaq: historia seria, formal, conflicto, denuncia, situación grave",
+      "mun: historia liviana, cotidiana, positiva sin emoción marcada, curiosidad, aventura chica",
+      "mun_contento: alegría clara, buena noticia, logro, festejo",
+      "mun_sorprendido: giro inesperado, revelación, algo insólito",
+      "mun_triste: pérdida, despedida, algo triste que no llega a ser grave/denuncia",
+      "mun_enojado: injusticia chica, bronca, sin ser un tema grave",
+      "mun_divertido: humor, algo gracioso o tierno",
+      "mun_conmovido: un gesto que emociona, ternura",
+      "opaq: historia seria, formal, tema de fondo grave (denuncia, conflicto), sin emoción específica dominante",
+      "opaq_contento: tema serio pero con un final o gesto positivo",
+      "opaq_triste: tema serio y triste",
+      "opaq_sorprendido: tema serio con un giro inesperado",
+      "opaq_enojado: tema serio, injusticia, denuncia, situación grave que genera bronca",
     ].join("\n");
 
     try {
@@ -293,23 +315,18 @@ OUTPUT: A 16:9 horizontal image in the Muns 2D animation style — background/sc
       const displayName = MUNS_CHARACTERS[character];
 
       const PROMPT = `You have two images:
-- IMAGE 1: The Muns character "${displayName}" — a flat 2D kawaii character. Use this as the BODY REFERENCE only.
+- IMAGE 1: The Muns character "${displayName}" — a flat 2D kawaii character, with its expression ALREADY correctly chosen for this story. Use this as the ONLY reference for the character, face included.
 - IMAGE 2: A 2D animated Muns-style background scene (16:9 horizontal).
 
-YOUR TASK: Draw the character from IMAGE 1 into the scene of IMAGE 2.
+YOUR TASK: Draw the character from IMAGE 1 into the scene of IMAGE 2, unchanged.
 
-BODY — copy exactly from IMAGE 1:
+BODY AND FACE — copy exactly from IMAGE 1, do not change anything about the character:
 - Same body shape, proportions, limbs, and silhouette
 - Same body colors and flat 2D kawaii style
-- Do NOT add detail or change the body
-
-FACIAL EXPRESSION — adapt to the scene in IMAGE 2:
-- Look at IMAGE 2 and decide what emotion the character would naturally feel in that situation
-- Give the character a matching expression: surprised, scared, curious, excited, sad, amazed, or any fitting emotion
-- ONLY change the curvature/shape of the eyes and mouth — nothing else on the face
-- Do NOT add sparkles, highlights, shine, extra lines, lashes, or any detail not present in IMAGE 1
+- Same face EXACTLY as it appears in IMAGE 1 — same eyes, same mouth, same eyebrows (if any). Do NOT invent a new expression, do NOT reinterpret the emotion, do NOT redraw the face in any way.
+- Do NOT add sparkles, highlights, shine, extra lines, lashes, eyebrows, or any detail not present in IMAGE 1
 - Do NOT add extra fingers, limbs, or body parts — keep the exact body silhouette from IMAGE 1
-- The face must stay as simple and flat as in IMAGE 1 — just a different expression using the same simple shapes
+- The character must stay exactly as simple and flat as in IMAGE 1 — you are placing it into a new background, not redrawing it
 
 PLACEMENT:
 - Natural physically-possible pose (standing, sitting, leaning)
