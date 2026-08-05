@@ -10,7 +10,7 @@ import path from "path";
 import crypto from "crypto";
 import multer from "multer";
 import cron from "node-cron";
-import { createNoticiasRouter } from "./noticias/routes.js";
+import { createNoticiasRouter, isSafeUrl } from "./noticias/routes.js";
 
 const storyLimiter = rateLimit({
   windowMs: 24 * 60 * 60 * 1000,
@@ -26,6 +26,14 @@ const munsmoodLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: "Demasiadas fotos procesadas. Volvé en un rato." },
+});
+
+const fetchNewsLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Demasiadas solicitudes. Esperá unos minutos." },
 });
 
 // Cache de imágenes de personajes (se cargan al arrancar desde env vars)
@@ -108,29 +116,24 @@ async function startServer() {
   };
   app.get("/api/key", sendKey);
   app.get("/api/", sendKey);
-  app.get("/api/taller-init", sendKey);
+  // /api/taller-init removido — Taller de Escritura está fuera de uso, cerraba
+  // un endpoint público que regalaba GEMINI_API_KEY en texto plano a cualquiera.
   app.get("/api/munsmood-init", sendKey);
   app.get("/api/scanmuns-init", sendKey);
   app.get("/api/memomuns-init", sendKey);
 
-  // Temporal: listar modelos disponibles
-  app.get("/api/debug/models", async (req: any, res: any) => {
-    const key = process.env.GEMINI_API_KEY;
-    if (!key) return res.status(500).json({ error: "no key" });
-    const r = await axios.get(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}&pageSize=100`);
-    const image = (r.data.models || []).filter((m: any) =>
-      (m.supportedGenerationMethods || []).includes("generateContent") &&
-      (JSON.stringify(m).toLowerCase().includes("image") || JSON.stringify(m).toLowerCase().includes("vision"))
-    );
-    res.json({ all: (r.data.models || []).map((m: any) => m.name), image });
-  });
+  // /api/debug/models removido — endpoint de debug ("Temporal") que quedó público en
+  // producción sin protección, sin uso real de ningún widget.
 
   // API endpoint for fetching and scraping news
-  app.get("/api/fetch-news", async (req, res) => {
+  app.get("/api/fetch-news", fetchNewsLimiter, async (req, res) => {
     const { url } = req.query;
 
     if (!url || typeof url !== "string") {
       return res.status(400).json({ error: "URL is required" });
+    }
+    if (!isSafeUrl(url)) {
+      return res.status(400).json({ error: "URL no permitida" });
     }
 
     try {
@@ -462,14 +465,31 @@ async function startServer() {
   const scanmunsUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 30 * 1024 * 1024 } });
   const BASE_URL = process.env.BASE_URL || 'https://infomuns-production.up.railway.app';
 
-  // CORS abierto para ScanMuns (datos públicos)
+  // CORS abierto para ScanMuns (lectura de cards/imágenes/mind es pública a propósito —
+  // la app AR necesita bajarlas desde cualquier origen)
   app.use(['/api/scanmuns', '/minds', '/images'], (req: any, res: any, next: any) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     if (req.method === 'OPTIONS') return res.sendStatus(204);
     next();
   });
+
+  // Protege solo las operaciones de ESCRITURA de ScanMuns (subir/editar/borrar cards).
+  // Antes cualquiera en internet podía vandalizar o borrar el catálogo entero de tarjetas
+  // AR con un simple curl — no había ningún chequeo. Comparación timing-safe para evitar
+  // filtrar el secreto por diferencia de tiempo de respuesta.
+  function requireScanmunsAdmin(req: any, res: any, next: any) {
+    const secret = process.env.SCANMUNS_ADMIN_SECRET;
+    if (!secret) return res.status(500).json({ error: 'SCANMUNS_ADMIN_SECRET no configurada' });
+    const auth = req.headers.authorization || '';
+    const token = auth.startsWith('Bearer ') ? auth.slice(7) : '';
+    const tokenBuf = Buffer.from(token);
+    const secretBuf = Buffer.from(secret);
+    const valid = tokenBuf.length === secretBuf.length && crypto.timingSafeEqual(tokenBuf, secretBuf);
+    if (!valid) return res.status(401).json({ error: 'No autorizado' });
+    next();
+  }
 
   // Servir combined.mind e imágenes originales
   app.use('/minds', express.static(MINDS_DIR));
@@ -477,6 +497,7 @@ async function startServer() {
 
   // Subir / reemplazar una card + nuevo combined.mind
   app.post('/api/scanmuns/upload',
+    requireScanmunsAdmin,
     scanmunsUpload.fields([{ name: 'mindFile', maxCount: 1 }, { name: 'imageFile', maxCount: 1 }]),
     (req: any, res: any) => {
       const files = req.files as { [f: string]: Express.Multer.File[] };
@@ -513,7 +534,7 @@ async function startServer() {
   );
 
   // Actualizar solo el combined.mind (después de eliminar una card)
-  app.post('/api/scanmuns/combined-mind', scanmunsUpload.single('mindFile'), (req: any, res: any) => {
+  app.post('/api/scanmuns/combined-mind', requireScanmunsAdmin, scanmunsUpload.single('mindFile'), (req: any, res: any) => {
     if (!req.file) return res.status(400).json({ error: 'mindFile requerido' });
     fs.writeFileSync(path.join(MINDS_DIR, 'combined.mind'), req.file.buffer);
     res.json({ success: true });
@@ -532,7 +553,7 @@ async function startServer() {
   });
 
   // Actualizar overlayUrl/name/aspectRatio de una card sin subir archivos
-  app.patch('/api/scanmuns/card/:slug', (req: any, res: any) => {
+  app.patch('/api/scanmuns/card/:slug', requireScanmunsAdmin, (req: any, res: any) => {
     const cards = readCards();
     const idx = cards.findIndex(c => c.slug === req.params.slug);
     if (idx < 0) return res.status(404).json({ error: 'Card no encontrada' });
@@ -549,7 +570,7 @@ async function startServer() {
   });
 
   // Eliminar una card (el cliente debe recompilar y subir nuevo combined.mind)
-  app.delete('/api/scanmuns/card/:slug', (req: any, res: any) => {
+  app.delete('/api/scanmuns/card/:slug', requireScanmunsAdmin, (req: any, res: any) => {
     const cards = readCards();
     const idx = cards.findIndex(c => c.slug === req.params.slug);
     if (idx < 0) return res.status(404).json({ error: 'Card no encontrada' });

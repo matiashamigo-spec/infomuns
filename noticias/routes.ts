@@ -2,11 +2,12 @@ import { Router, Request, Response } from "express";
 import axios from "axios";
 import { readFile } from "fs/promises";
 import path from "path";
+import crypto from "crypto";
 import sharp from "sharp";
 import { GoogleGenAI } from "@google/genai";
 import { generateStoryFromUrl, refineStory, chatAboutStory, ChatMessage } from "./pipeline.js";
 
-function isSafeUrl(raw: string): boolean {
+export function isSafeUrl(raw: string): boolean {
   try {
     const u = new URL(raw);
     if (u.protocol !== "http:" && u.protocol !== "https:") return false;
@@ -37,7 +38,10 @@ export function createNoticiasRouter(): Router {
     if (!secret) return res.status(500).json({ error: "NOTICIAS_ADMIN_SECRET no configurada" });
     const auth = req.headers.authorization || "";
     const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
-    if (token !== secret) return res.status(401).json({ error: "No autorizado" });
+    const tokenBuf = Buffer.from(token);
+    const secretBuf = Buffer.from(secret);
+    const valid = tokenBuf.length === secretBuf.length && crypto.timingSafeEqual(tokenBuf, secretBuf);
+    if (!valid) return res.status(401).json({ error: "No autorizado" });
     next();
   }
 

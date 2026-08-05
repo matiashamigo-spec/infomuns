@@ -357,7 +357,7 @@ async function uploadSourceImageAsFeatured(imageUrl: string, title: string): Pro
       timeout: 15000,
       headers: { "User-Agent": "Mozilla/5.0" },
     });
-    const mime = (res.headers["content-type"] || "image/jpeg").split(";")[0];
+    const mime = String(res.headers["content-type"] || "image/jpeg").split(";")[0];
     const b64 = Buffer.from(res.data).toString("base64");
     const dataUrl = `data:${mime};base64,${b64}`;
     const ext = mime.includes("png") ? "png" : mime.includes("webp") ? "webp" : "jpg";
