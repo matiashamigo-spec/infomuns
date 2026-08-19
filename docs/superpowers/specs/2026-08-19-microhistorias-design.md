@@ -2,7 +2,7 @@
 
 ## Propósito
 
-Página web en `info.muns.club/microhistorias` que guía a cualquier persona, paso a paso,
+Página web en `microhistorias.muns.club` que guía a cualquier persona, paso a paso,
 a grabar su "micro historia" (entrevista de 3 partes) siguiendo el instructivo del PDF
 "Cómo contar tus Micro Historias" (Muns), y la envía automáticamente a un canal de
 Telegram — sin que quien graba necesite tener Telegram instalado.
@@ -54,17 +54,18 @@ WhatsApp a un número fijo. Esta app reemplaza esa fricción manteniendo el mism
    → Telegram node manda el material de apoyo aparte, como álbum, si hay
    → responde 200 al webhook apenas recibe los archivos (no espera ffmpeg/Telegram)
 
-[Cloudflare Worker] (muns.club ya está en Cloudflare)
-   → intercepta requests a info.muns.club/microhistorias*
-   → hace proxy hacia infomuns-temp en Railway
+[DNS — muns.club ya está en Cloudflare]
+   → CNAME `microhistorias.muns.club` → dominio custom de Railway
 
 [infomuns-temp — Railway]
-   → sirve la página estática (HTML/CSS/JS, sin build de React necesario)
+   → sirve la página estática (HTML/CSS/JS, sin build de React necesario) en el
+     dominio custom `microhistorias.muns.club`
    → no procesa ni almacena los videos — van directo a n8n
 ```
 
 Costo incremental: $0. Todo corre sobre infraestructura que ya existe (Railway, n8n
-self-hosteado, Cloudflare free tier, Telegram Bot API gratis).
+self-hosteado, Cloudflare free tier, Telegram Bot API gratis). Railway permite agregar
+dominios custom gratis, solo hace falta el registro CNAME en Cloudflare.
 
 ## Flujo de grabación (UX)
 
@@ -177,7 +178,8 @@ web, no algo resolvible desde el código) — en iPhone esta sección del UI que
 ## Setup pendiente (no es diseño, son tareas de configuración)
 
 - Crear bot de Telegram con @BotFather y decidir canal/chat destino.
-- Crear el Cloudflare Worker de proxy hacia Railway.
+- Agregar `microhistorias.muns.club` como dominio custom en Railway y crear el CNAME
+  correspondiente en Cloudflare.
 - Armar el workflow descripto arriba en n8n (`n8n.wips.digital`).
 
 ## Testing
