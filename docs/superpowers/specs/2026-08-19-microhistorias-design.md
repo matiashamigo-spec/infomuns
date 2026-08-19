@@ -112,12 +112,17 @@ en vertical, siguiendo los pasos.
 
 Reusar la identidad visual que ya tiene InfoMuns, para que se sienta parte del mismo
 sitio y no un formulario genérico pegado con cinta:
-- Mismo fondo crema del sitio.
+- Paleta oficial de marca:
+  - `#FEF8E7` — fondo (crema, confirmado en el CSS en vivo del sitio).
+  - `#4464AD` — azul primario, para títulos (igual que los headings del sitio).
+  - `#466995` — azul secundario, para estados hover/activos.
+  - `#E2C061` — mostaza/dorado, acento principal para los CTA ("Grabar", "Usar este
+    y seguir", "Enviar mi historia").
+  - `#CBBBA0` — beige, para estados deshabilitados/fondos sutiles.
+  - `#7B6A58` — marrón, para texto secundario/tips.
 - Mismas tarjetas/paneles con borde negro grueso (4px) y esquinas muy redondeadas
   (border-radius ~40px) — el mismo lenguaje visual de las tarjetas de notas y de los
   botones Aa/AA que ya están en la home.
-- Mismo celeste de acento (`#AEE1F5` aprox.) para el estado activo/CTA principal
-  ("Grabar", "Usar este y seguir", "Enviar mi historia").
 - Tipografía **Nunito** (Google Fonts, gratis) para todos los textos de la app —
   redondeada y amigable, en línea con el logo Muns.
 - Logo Muns visible en el header de la página, como en el resto del sitio.
@@ -133,8 +138,8 @@ elementos chicos tipo desktop — consistente con los botones pill que ya usa el
 **Ícono de WhatsApp:** presente pero discreto (esquina, no interrumpe el flujo) en la
 pantalla de inicio; más protagonista (llamado a la acción) en la pantalla de error.
 
-Los valores exactos de color/tipografía se toman del CSS en vivo del sitio al momento
-de implementar, no se inventan nuevos.
+Los valores de color de la sección anterior son la paleta oficial de marca, provista
+directamente — no se samplean del CSS en vivo del sitio para esta app.
 
 ## Control de foco y exposición (donde el navegador lo permita)
 
