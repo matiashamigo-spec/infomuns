@@ -5,10 +5,11 @@ import * as cheerio from "cheerio";
 import fs from "fs";
 import path from "path";
 import { GoogleGenAI, Type } from "@google/genai";
+import Anthropic from "@anthropic-ai/sdk";
 import { fetchAllFeeds, findTopStories } from "./rss.js";
 import { illustrateImage, generateIllustrationFromText, generateSingleIllustration } from "./illustration.js";
 import { createDraft, uploadMedia } from "./wordpress.js";
-import { MUNS_SYSTEM_INSTRUCTION } from "../constants.js";
+import { MUNS_SYSTEM_INSTRUCTION, MUNS_REFINE_ADDENDUM, MUNS_CHAT_ADDENDUM, MUNS_SYMBOLIC_ADDENDUM } from "../constants.js";
 import { getRecentPatternsPrompt, saveStoryToMemory } from "./story-memory.js";
 
 const DATA_DIR = process.env.RAILWAY_VOLUME_MOUNT_PATH || process.env.DATA_DIR || path.join(process.cwd(), "data");
@@ -34,6 +35,53 @@ function saveProcessedUrl(url: string, processed: Set<string>): void {
   } catch (e: any) {
     console.warn("[pipeline] No se pudo guardar processed-urls:", e.message);
   }
+}
+
+// Pricing de Gemini (USD por 1M tokens) — actualizar acá si Google cambia las tarifas.
+const GEMINI_PRICING: Record<string, { inputPerM: number; outputPerM: number }> = {
+  "gemini-2.5-flash": { inputPerM: 0.15, outputPerM: 1.25 },
+  "gemini-3.1-pro-preview": { inputPerM: 2.0, outputPerM: 12.0 },
+};
+
+interface UsageCost {
+  model: string;
+  inputTokens: number;
+  outputTokens: number;
+  usd: number;
+}
+
+function costFromResponse(model: string, response: any): UsageCost {
+  const usage = response?.usageMetadata || {};
+  const inputTokens = usage.promptTokenCount ?? 0;
+  const outputTokens = usage.candidatesTokenCount ?? 0;
+  const pricing = GEMINI_PRICING[model] || { inputPerM: 0, outputPerM: 0 };
+  const usd = (inputTokens / 1_000_000) * pricing.inputPerM + (outputTokens / 1_000_000) * pricing.outputPerM;
+  return { model, inputTokens, outputTokens, usd };
+}
+
+function sumCosts(costs: UsageCost[]): { inputTokens: number; outputTokens: number; usd: number } {
+  return costs.reduce(
+    (acc, c) => ({
+      inputTokens: acc.inputTokens + c.inputTokens,
+      outputTokens: acc.outputTokens + c.outputTokens,
+      usd: acc.usd + c.usd,
+    }),
+    { inputTokens: 0, outputTokens: 0, usd: 0 }
+  );
+}
+
+// Pricing de Claude (USD por 1M tokens) — actualizar acá si Anthropic cambia las tarifas.
+const CLAUDE_PRICING: Record<string, { inputPerM: number; outputPerM: number }> = {
+  "claude-opus-5": { inputPerM: 5.0, outputPerM: 25.0 },
+};
+
+function costFromClaudeResponse(model: string, response: Anthropic.Message): UsageCost {
+  const usage = response.usage;
+  const inputTokens = usage.input_tokens ?? 0;
+  const outputTokens = usage.output_tokens ?? 0;
+  const pricing = CLAUDE_PRICING[model] || { inputPerM: 0, outputPerM: 0 };
+  const usd = (inputTokens / 1_000_000) * pricing.inputPerM + (outputTokens / 1_000_000) * pricing.outputPerM;
+  return { model, inputTokens, outputTokens, usd };
 }
 
 type NewsTone = "positive" | "concerning" | "negative";
@@ -65,12 +113,14 @@ interface NewsAnalysis {
   core_emotion: string;
   has_resolution: boolean;
   hopeful_actor: string;
+  excluded_topic: string;
 }
 
-async function analyzeNews(newsText: string, apiKey: string): Promise<NewsAnalysis> {
+async function analyzeNews(newsText: string, apiKey: string): Promise<{ analysis: NewsAnalysis; cost: UsageCost }> {
   const ai = new GoogleGenAI({ apiKey });
+  const model = "gemini-2.5-flash";
   const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash",
+    model,
     contents: `Analizá esta noticia para preparar un cuento infantil. Respondé en JSON.
 
 Noticia: "${newsText.substring(0, 4000)}"
@@ -83,7 +133,8 @@ Respondé:
 - human_choice: ¿cuál es la naturaleza del hecho? "daño" solo si hay una acción claramente dañina y no debatible (violencia, abuso, crimen). "bien" solo si hay un gesto claramente positivo y no debatible (rescate, donación, cuidado). "político" si involucra gobiernos, partidos, políticas públicas, movimientos sociales o cualquier tema donde distintas personas pueden tener opiniones legítimas distintas. "ninguna" si fue natural, accidental o estructural sin actor claro.
 - core_emotion: cuál es la emoción principal que un nene de 5 años sentiría al escuchar esto (una sola palabra: tristeza, bronca, miedo, alegría, orgullo, confusión, ternura, alivio)
 - has_resolution: true si el hecho ya tiene un final definitivo, false si la situación sigue abierta
-- hopeful_actor: si hay alguien que denunció, ayudó, cuidó o habló en esta noticia, describilo en una frase. Si no hay nadie así, dejalo vacío.`,
+- hopeful_actor: si hay alguien que denunció, ayudó, cuidó o habló en esta noticia, describilo en una frase. Si no hay nadie así, dejalo vacío.
+- excluded_topic: la noticia trata alguno de estos temas — femicidio, violencia de género con resultado de muerte, trata de personas, secuestro con violencia, abuso infantil, suicidio, terrorismo, tortura, o algo de gravedad equivalente — sin importar cuán breve o suave esté redactada la nota. Si es así, indicá cuál en pocas palabras (ej: "femicidio con resultado de muerte"). Si NINGUNO de estos aplica, dejalo como string vacío "".`,
     config: {
       temperature: 0.2,
       responseMimeType: "application/json",
@@ -98,8 +149,9 @@ Respondé:
           core_emotion: { type: Type.STRING },
           has_resolution: { type: Type.BOOLEAN },
           hopeful_actor: { type: Type.STRING },
+          excluded_topic: { type: Type.STRING },
         },
-        required: ["what", "heart", "visual_anchor", "story_type", "human_choice", "core_emotion", "has_resolution", "hopeful_actor"],
+        required: ["what", "heart", "visual_anchor", "story_type", "human_choice", "core_emotion", "has_resolution", "hopeful_actor", "excluded_topic"],
       },
     },
   });
@@ -109,14 +161,14 @@ Respondé:
   const start = text.indexOf("{");
   const end = text.lastIndexOf("}");
   const json = start !== -1 && end > start ? text.substring(start, end + 1) : text;
-  return JSON.parse(json);
+  return { analysis: JSON.parse(json), cost: costFromResponse(model, response) };
 }
 
-async function generateMunsStory(newsText: string, apiKey: string): Promise<{ title: string; story: string }> {
+async function generateMunsStory(newsText: string, apiKey: string): Promise<{ title: string; story: string; excerpt: string; analysis: NewsAnalysis; costs: UsageCost[] }> {
   const ai = new GoogleGenAI({ apiKey });
 
   // Paso 1: analizar la noticia
-  const analysis = await analyzeNews(newsText, apiKey);
+  const { analysis, cost: analysisCost } = await analyzeNews(newsText, apiKey);
   console.log(`[pipeline] Análisis: ${JSON.stringify(analysis)}`);
 
   // Paso 2: construir contexto para el cuento
@@ -137,7 +189,24 @@ async function generateMunsStory(newsText: string, apiKey: string): Promise<{ ti
     ? `FINAL CERRADO: lo que pasó ya terminó. El cuento también debe tener final cerrado.`
     : `FINAL ABIERTO: la situación sigue sin resolverse. El cuento puede terminar con algo pendiente.`;
 
-  const contents = `NOTICIA ORIGINAL (leé todo — los detalles concretos, objetos, lugares y nombres están acá):
+  const trailingInstructions = `
+Elegí uno de los ARQUETIPOS DE RESOLUCIÓN (A–H). Indicá en "resolution" la letra y nombre. Indicá en "symbol" el símbolo principal del cuento. Indicá en "setting" el escenario principal (ej: "tierra - Barcelona", "un puente sobre un río", "la vereda de una escuela").
+En "opening_type" describí en 5-8 palabras cómo arranca el cuento (ej: "detalle concreto del lugar", "personaje en acción", "desde la luna con algo inusual").
+En "closing_image" describí en 5-10 palabras la imagen o acción concreta del cierre (ej: "dejan una sonrisa en el piso y se van", "un Mun mira hacia atrás una vez", "se quedan mirando la ventana iluminada").
+En "key_metaphor" describí en 5-10 palabras la imagen o traducción principal que usaste para explicar el concepto adulto central de esta noticia en lenguaje de nene (ej: "ruidos grandes para los ataques militares", "pantalla flotante para las noticias digitales", "el agua que no para para la inundación"). Esto sirve para NO repetirlo en futuros cuentos.
+
+En "excerpt" escribí una bajada corta (máximo 85 caracteres, contando espacios — es un límite duro, no lo excedas) que invite a leer el cuento, en español normal (mayúscula solo al principio y en nombres propios — NO todo en mayúscula, a diferencia de "story"). Se muestra en una tarjeta chica que corta el texto a 3 líneas (~33 caracteres por línea): si te pasás del límite, se corta a la mitad de una palabra y queda feo.${recentPatterns}`;
+
+  const isExcluded = !!analysis.excluded_topic;
+
+  const contents = isExcluded
+    ? `TEMA DETECTADO — NO SE ADAPTA LITERAL: ${analysis.excluded_topic}
+LO QUE PASÓ (referencia interna — NO narres esto, NO uses nombres/lugares/fechas de acá): ${analysis.what}
+EMOCIÓN CENTRAL: ${analysis.core_emotion}
+
+Escribí, siguiendo el modo simbólico de tu instrucción de sistema, una pieza nueva sobre el patrón o el sentimiento colectivo que representa este tipo de caso — no una adaptación de esta noticia puntual.
+${trailingInstructions}`
+    : `NOTICIA ORIGINAL (leé todo — los detalles concretos, objetos, lugares y nombres están acá):
 ---
 ${newsText.substring(0, 5000)}
 ---
@@ -159,17 +228,14 @@ ANTES DE ESCRIBIR — hacé este ejercicio mental (no lo incluyas en el output):
 4. ¿Qué no vas a hacer? (el recurso fácil, el clima genérico, la metáfora que funcionaría para cualquier cuento)
 
 AHORA escribí el cuento. La forma surge del contenido — una historia de espera tiene otro ritmo que una de pérdida, que otra de descubrimiento. Dejá que ESTA situación te diga cómo contarla.
+${trailingInstructions}`;
 
-Elegí uno de los ARQUETIPOS DE RESOLUCIÓN (A–H). Indicá en "resolution" la letra y nombre. Indicá en "symbol" el símbolo principal del cuento. Indicá en "setting" el escenario principal (ej: "tierra - Barcelona", "luna", "cohete lunar", "lado oscuro de la luna").
-En "opening_type" describí en 5-8 palabras cómo arranca el cuento (ej: "detalle concreto del lugar", "personaje en acción", "desde la luna con algo inusual").
-En "closing_image" describí en 5-10 palabras la imagen o acción concreta del cierre (ej: "suben al cohete en silencio", "dejan una sonrisa en el piso y se van", "Opaq mira hacia atrás una vez").
-En "key_metaphor" describí en 5-10 palabras la imagen o traducción principal que usaste para explicar el concepto adulto central de esta noticia en lenguaje de nene (ej: "ruidos grandes para los ataques militares", "pantalla flotante para las noticias digitales", "el agua que no para para la inundación"). Esto sirve para NO repetirlo en futuros cuentos.${recentPatterns}`;
-
+  const storyModel = "gemini-3.1-pro-preview";
   const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash",
+    model: storyModel,
     contents,
     config: {
-      systemInstruction: MUNS_SYSTEM_INSTRUCTION,
+      systemInstruction: isExcluded ? MUNS_SYSTEM_INSTRUCTION + "\n\n" + MUNS_SYMBOLIC_ADDENDUM : MUNS_SYSTEM_INSTRUCTION,
       temperature: 1.0,
       responseMimeType: "application/json",
       responseSchema: {
@@ -177,6 +243,7 @@ En "key_metaphor" describí en 5-10 palabras la imagen o traducción principal q
         properties: {
           title: { type: Type.STRING },
           story: { type: Type.STRING },
+          excerpt: { type: Type.STRING },
           symbol: { type: Type.STRING },
           resolution: { type: Type.STRING },
           setting: { type: Type.STRING },
@@ -184,7 +251,7 @@ En "key_metaphor" describí en 5-10 palabras la imagen o traducción principal q
           closing_image: { type: Type.STRING },
           key_metaphor: { type: Type.STRING },
         },
-        required: ["title", "story", "symbol", "resolution", "setting", "opening_type", "closing_image", "key_metaphor"],
+        required: ["title", "story", "excerpt", "symbol", "resolution", "setting", "opening_type", "closing_image", "key_metaphor"],
       },
     },
   });
@@ -206,7 +273,101 @@ En "key_metaphor" describí en 5-10 palabras la imagen o traducción principal q
     key_metaphor: result.key_metaphor || "",
   });
 
-  return result;
+  return { ...result, analysis, costs: [analysisCost, costFromResponse(storyModel, response)] };
+}
+
+// Genera el bloque de contexto para adultos que acompaña al cuento:
+// "Esta historia está inspirada en..." + "Este cuento busca abrir una conversación sobre..."
+// El cierre fijo "Que las noticias dejen de ser solo cosa de grandes ✨" se agrega aparte, sin IA.
+async function generateContextParagraphs(newsText: string, analysis: NewsAnalysis, apiKey: string): Promise<{ inspired: string; conversation: string; cost: UsageCost }> {
+  const ai = new GoogleGenAI({ apiKey });
+  const model = "gemini-2.5-flash";
+  const isExcluded = !!analysis.excluded_topic;
+  const prompt = isExcluded
+    ? `Escribí el contexto para adultos de una nota que acompaña un cuento infantil SIMBÓLICO — NO es una adaptación de un hecho puntual, sino una pieza sobre un patrón que se repite. Este texto lo lee un adulto/curador, nunca el chico, así que nombrá el tema real sin rodeos.
+
+TEMA REAL (nombralo explícitamente, sin eufemismos — "femicidio", "trata de personas", etc. según corresponda): ${analysis.excluded_topic}
+EMOCIÓN CENTRAL: ${analysis.core_emotion}
+
+Necesito dos párrafos cortos, en tono HUMILDE y tentativo — como quien comparte por qué le pareció importante contar algo, no como un comunicado institucional ni una guía pedagógica. Voz PLURAL/colectiva siempre ("nos pareció", "nos atraviesa", "queremos contarles") — PROHIBIDO el "yo" individual y PROHIBIDO cualquier marca de género en primera persona ("como adulta", "como adulto", "como madre", etc.), esto habla como equipo, no como una persona particular. PROHIBIDO usar fórmulas de comunicado tipo "es una invitación a reflexionar", "fomentando la empatía y la prevención", "busca visibilizar", "invita a construir conciencia" — suenan a declaración de intenciones, no a alguien hablando de verdad. SIN nombres, lugares ni fechas de ninguna noticia real (el tema se nombra en general, el caso puntual no):
+1. "inspired": arranca EXACTAMENTE con "Esta historia no adapta un hecho puntual" y en 1-2 oraciones, nombrando el tema real de arriba directamente, contá que nace de lo seguido que pasa este tipo de caso — sin dar detalles de un caso específico.
+2. "conversation": en 1 oración, tono humilde y simple (ej. "nos pareció importante contar algo sobre esto" en vez de "buscamos fomentar la empatía"), sobre lo que el cuento invita a charlar con los chicos.`
+    : `Escribí el contexto para adultos de una nota que acompaña un cuento infantil inspirado en esta noticia real.
+
+NOTICIA: "${newsText.substring(0, 3000)}"
+LO QUE PASÓ: ${analysis.what}
+EMOCIÓN CENTRAL: ${analysis.core_emotion}
+
+Necesito dos párrafos cortos, en español neutro, tono cálido y editorial (no periodístico):
+1. "inspired": arranca EXACTAMENTE con "Esta historia está inspirada en" y resume en 1-2 oraciones lo que pasó en la noticia real, con los datos concretos (lugar, qué ocurrió), sin opinar.
+2. "conversation": en 1 oración, con arranque LIBRE Y VARIADO (no repitas la misma fórmula de nota a nota, como "Este cuento busca..."), describe el tema humano/emocional de fondo que el cuento invita a charlar con los chicos.`;
+  const response = await ai.models.generateContent({
+    model,
+    contents: prompt,
+    config: {
+      temperature: 0.7,
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          inspired: { type: Type.STRING },
+          conversation: { type: Type.STRING },
+        },
+        required: ["inspired", "conversation"],
+      },
+    },
+  });
+  const text = response.text;
+  if (!text) throw new Error("Gemini no devolvió el contexto");
+  const start = text.indexOf("{");
+  const end = text.lastIndexOf("}");
+  const json = start !== -1 && end > start ? text.substring(start, end + 1) : text;
+  return { ...JSON.parse(json), cost: costFromResponse(model, response) };
+}
+
+// Arma el bloque HTML de contexto: si hay contexto manual lo respeta tal cual (comportamiento legacy),
+// si no, lo genera automáticamente con el formato estándar del sitio.
+// NOTA: cada línea usa <p class="muns-context-line"> SUELTO (sin div contenedor).
+// Un <div> anidado con <p> adentro no sobrevive el editor clásico de WordPress (TinyMCE le come
+// las etiquetas internas al guardar). Usamos un shortcode ([muns_context]a|||b|||c[/muns_context])
+// en vez de HTML con clases: un shortcode es texto plano, TinyMCE no lo puede "romper" al re-serializar
+// el DOM al guardar — el recuadro se arma server-side cuando WordPress renderiza el shortcode.
+async function buildContextBlock(newsText: string, analysis: NewsAnalysis, apiKey: string, manualContext?: string): Promise<{ html: string; text: string; cost: UsageCost | null }> {
+  const closing = "Que las noticias dejen de ser solo cosa de grandes ✨";
+  if (manualContext?.trim()) {
+    const text = manualContext.trim();
+    return { html: `\n[muns_context]${text}[/muns_context]`, text, cost: null };
+  }
+  try {
+    const { inspired, conversation, cost } = await generateContextParagraphs(newsText, analysis, apiKey);
+    const html = `\n[muns_context]${inspired}|||${conversation}|||${closing}[/muns_context]`;
+    const text = `${inspired}\n\n${conversation}\n\n${closing}`;
+    return { html, text, cost };
+  } catch (e: any) {
+    console.warn("[pipeline] No se pudo generar el contexto automático:", e.message);
+    return { html: "", text: "", cost: null };
+  }
+}
+
+// Descarga la imagen original de la noticia y la sube a WordPress como foto principal
+async function uploadSourceImageAsFeatured(imageUrl: string, title: string): Promise<number | undefined> {
+  try {
+    const res = await axios.get(imageUrl, {
+      responseType: "arraybuffer",
+      timeout: 15000,
+      headers: { "User-Agent": "Mozilla/5.0" },
+    });
+    const mime = String(res.headers["content-type"] || "image/jpeg").split(";")[0];
+    const b64 = Buffer.from(res.data).toString("base64");
+    const dataUrl = `data:${mime};base64,${b64}`;
+    const ext = mime.includes("png") ? "png" : mime.includes("webp") ? "webp" : "jpg";
+    const slug = title.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").slice(0, 40);
+    const media = await uploadMedia(dataUrl, `source-${slug}.${ext}`);
+    return media?.id;
+  } catch (e: any) {
+    console.warn(`[pipeline] No se pudo subir la imagen de la fuente (${imageUrl}):`, e.message);
+    return undefined;
+  }
 }
 
 export interface PipelineResult {
@@ -216,20 +377,58 @@ export interface PipelineResult {
   errors: string[];
 }
 
-export async function processSingleUrl(url: string, apiKey: string, context?: string): Promise<{ id: number; title: string }> {
-  console.log(`[pipeline] Procesando URL manual: ${url}`);
+export interface GeneratedStory {
+  title: string;
+  content: string;
+  context: string;
+  excerpt: string;
+  imageUrl: string | null;
+  siteName: string;
+  sourceUrl: string;
+  story: string;
+  contentSuffix: string;
+  cost: { inputTokens: number; outputTokens: number; usd: number };
+  excludedTopic: string | null;
+}
+
+// Mayúscula + un <p> por párrafo — el formato que espera el theme para el cuerpo del cuento.
+// Colapsa uno o más saltos de línea seguidos en un solo corte de párrafo (el prompt le pide a
+// Gemini separar párrafos con \n\n, un reemplazo de \n suelto dejaba un <p></p> vacío en el medio).
+function wrapStoryParagraphs(story: string): string {
+  const cleanStory = story.toUpperCase().replace(/«/g, '"').replace(/»/g, '"');
+  const paragraphs = cleanStory.split(/\n+/).map(p => p.trim()).filter(Boolean);
+  return paragraphs.map(p => `<p>${p}</p>`).join("");
+}
+
+// Scrapea la URL y genera el cuento Muns, SIN publicar nada en WordPress.
+// Usado tanto por processSingleUrl (que sí publica) como por el endpoint
+// /generate-from-url (que solo devuelve el resultado para revisión manual).
+export async function generateStoryFromUrl(url: string, apiKey: string, context?: string): Promise<GeneratedStory> {
+  console.log(`[pipeline] Generando cuento desde URL: ${url}`);
 
   // 1. Scrapear el artículo
-  const page = await axios.get(url, {
-    timeout: 15000,
-    headers: {
-      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-      "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-      "Accept-Language": "es-AR,es;q=0.9",
-      "Accept-Encoding": "gzip, deflate, br",
-      "Cache-Control": "no-cache",
-    },
-  });
+  let page;
+  try {
+    page = await axios.get(url, {
+      timeout: 15000,
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "es-AR,es;q=0.9",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Cache-Control": "no-cache",
+      },
+    });
+  } catch (err: any) {
+    const status = err?.response?.status;
+    if (status === 403 || status === 401) {
+      throw new Error(`El sitio bloqueó el scraping automático (${status}). Este medio no permite acceso desde servidores — probá con otra fuente.`);
+    }
+    if (status === 404) {
+      throw new Error("La URL no existe (404). Revisá que el link sea correcto.");
+    }
+    throw new Error(`No se pudo leer el artículo (${err?.code || status || "error de red"}). Probá con otra fuente.`);
+  }
   const $ = cheerio.load(page.data);
 
   const rawTitle = $('meta[property="og:title"]').attr("content") || $("title").text() || "Sin título";
@@ -239,37 +438,56 @@ export async function processSingleUrl(url: string, apiKey: string, context?: st
     || null;
   const siteName = $('meta[property="og:site_name"]').attr("content") || new URL(url).hostname;
 
-  const bodyText = $("article p").map((_: number, el: cheerio.Element) => $(el).text()).get().join("\n")
-    || $("p").map((_: number, el: cheerio.Element) => $(el).text()).get().slice(0, 10).join("\n")
+  const bodyText = $("article p").map((_, el) => $(el).text()).get().join("\n")
+    || $("p").map((_, el) => $(el).text()).get().slice(0, 10).join("\n")
     || description;
 
   // 2. Generar historia Muns
   const newsText = `${rawTitle}\n\n${bodyText || description}`;
-  const { title, story } = await generateMunsStory(newsText, apiKey);
+  const { title, story, excerpt, analysis, costs: storyCosts } = await generateMunsStory(newsText, apiKey);
+  const excludedTopic = analysis.excluded_topic || null;
 
-  // 3. Ilustrar 1 imagen desde el cuento
+  // 3. Generar (o respetar el manual) el bloque de contexto para adultos
+  const contextBlock = await buildContextBlock(newsText, analysis, apiKey, context);
+
+  const storyHtml = wrapStoryParagraphs(story);
+  // Si el tema quedó excluido de adaptación literal, la pieza es simbólica: no lleva link a la
+  // noticia puntual (no es una adaptación de ESE hecho) ni la foto real del caso como destacada.
+  const contentSuffix = excludedTopic
+    ? contextBlock.html
+    : `
+<p><small>Fuente original (<a href="${url}" target="_blank" rel="noopener">${siteName}</a>): ${url}</small></p>${contextBlock.html}`;
+  const content = `${storyHtml}${contentSuffix}`;
+
+  const cost = sumCosts(contextBlock.cost ? [...storyCosts, contextBlock.cost] : storyCosts);
+
+  return {
+    title,
+    content,
+    context: contextBlock.text,
+    excerpt,
+    imageUrl: excludedTopic ? null : imageUrl,
+    siteName,
+    sourceUrl: url,
+    story,
+    contentSuffix,
+    cost,
+    excludedTopic,
+  };
+}
+
+export async function processSingleUrl(url: string, apiKey: string, context?: string): Promise<{ id: number; title: string }> {
+  const generated = await generateStoryFromUrl(url, apiKey, context);
+
+  // Subir la imagen de la fuente como foto principal (reemplaza la ilustración IA, desactivada por costos)
   let mediaId: number | undefined;
-  console.log(`[pipeline] Ilustrando imagen desde cuento...`);
-  const image = await generateSingleIllustration(title, story, apiKey);
-  if (image) {
-    const slug = "img-" + title.toLowerCase().replace(/[^a-z0-9]+/g, "-").substring(0, 36);
-    const media = await uploadMedia(image, slug);
-    if (media) mediaId = media.id;
+  if (generated.imageUrl) {
+    mediaId = await uploadSourceImageAsFeatured(generated.imageUrl, generated.title);
   }
 
-  // 4. Crear borrador en WordPress
-  const sourceImageComment = imageUrl ? `<!-- source-image: ${imageUrl} -->\n` : "";
-  const extraMediaComment = "";
-  const cleanStory = story.toUpperCase().replace(/«/g, '"').replace(/»/g, '"');
-  const contextBlock = context?.trim()
-    ? `\n<p><em>${context.trim()}</em></p>`
-    : "";
-  const content = `${sourceImageComment}${extraMediaComment}<p>${cleanStory.replace(/\n/g, "</p><p>")}</p>
-<p><small>Fuente original (<a href="${url}" target="_blank" rel="noopener">${siteName}</a>): ${url}</small></p>${contextBlock}`;
-
-  const draft = await createDraft(title, content, mediaId);
-  console.log(`[pipeline] ✓ Borrador manual creado: "${title}"`);
-  return { id: (draft as any).id, title };
+  const draft = await createDraft(generated.title, generated.content, mediaId);
+  console.log(`[pipeline] ✓ Borrador manual creado: "${generated.title}"`);
+  return { id: (draft as any).id, title: generated.title };
 }
 
 export async function runDailyPipeline(limit = 10): Promise<PipelineResult> {
@@ -298,29 +516,20 @@ export async function runDailyPipeline(limit = 10): Promise<PipelineResult> {
 
       // 1. Generar historia Muns
       const newsText = `${article.title}\n\n${article.content}`;
-      const { title, story } = await generateMunsStory(newsText, apiKey);
+      const { title, story, analysis } = await generateMunsStory(newsText, apiKey);
 
-      // 2. Ilustrar 1 imagen desde el cuento
+      // 2. Subir la imagen de la fuente como foto principal (reemplaza la ilustración IA, desactivada por costos)
       let mediaId: number | undefined;
-      console.log(`[pipeline] Ilustrando imagen desde cuento...`);
-      const image = await generateSingleIllustration(title, story, apiKey);
-      if (image) {
-        const slug = "img-" + title.toLowerCase().replace(/[^a-z0-9]+/g, "-").substring(0, 36);
-        const media = await uploadMedia(image, slug);
-        if (media) mediaId = media.id;
+      if (article.imageUrl) {
+        mediaId = await uploadSourceImageAsFeatured(article.imageUrl, title);
       }
 
-      // 3. Crear borrador en WordPress
-      const sourceImageComment = article.imageUrl
-        ? `<!-- source-image: ${article.imageUrl} -->\n`
-        : "";
-      const extraMediaComment = "";
-      const cleanStory = story
-        .toUpperCase()
-        .replace(/«/g, '"')
-        .replace(/»/g, '"');
-      const content = `${sourceImageComment}${extraMediaComment}<p>${cleanStory.replace(/\n/g, "</p><p>")}</p>
-<p><small>Fuente original (<a href="${article.link}" target="_blank" rel="noopener">${article.source}</a>): ${article.link}</small></p>`;
+      // 3. Generar el bloque de contexto para adultos
+      const contextBlock = await buildContextBlock(newsText, analysis, apiKey);
+
+      // 4. Crear borrador en WordPress
+      const content = `${wrapStoryParagraphs(story)}
+<p><small>Fuente original (<a href="${article.link}" target="_blank" rel="noopener">${article.source}</a>): ${article.link}</small></p>${contextBlock.html}`;
 
       await createDraft(title, content, mediaId);
       saveProcessedUrl(article.link, processedUrls);
@@ -338,4 +547,133 @@ export async function runDailyPipeline(limit = 10): Promise<PipelineResult> {
 
   console.log(`[pipeline] Completado: ${result.succeeded} ok, ${result.failed} errores`);
   return result;
+}
+
+export interface RefineResult {
+  title: string;
+  story: string;
+  content: string;
+  cost: { inputTokens: number; outputTokens: number; usd: number };
+}
+
+// Ajusta un cuento YA GENERADO según un pedido puntual del editor humano (ej. "arreglá el tiempo
+// verbal del párrafo 2"), SIN volver a correr todo el pipeline. Usado por el chat de retoque del
+// metabox "Generar con IA" en info.muns.club — solo dentro de la misma sesión de generación.
+export async function refineStory(title: string, story: string, instruction: string, apiKey: string): Promise<RefineResult> {
+  const ai = new GoogleGenAI({ apiKey });
+
+  const model = "gemini-3.1-pro-preview";
+  const response = await ai.models.generateContent({
+    model,
+    contents: `CUENTO ACTUAL:
+TÍTULO: ${title}
+CUENTO:
+${story}
+
+PEDIDO DE EDICIÓN DEL USUARIO: ${instruction}
+
+Aplicá SOLO este pedido puntual. Cambiá lo mínimo necesario para cumplirlo — no reescribas oraciones que no tienen que ver con el pedido. Mantené el resto del cuento (tono, hechos, estructura, longitud) tal como está.`,
+    config: {
+      systemInstruction: MUNS_SYSTEM_INSTRUCTION + "\n\n" + MUNS_REFINE_ADDENDUM,
+      temperature: 0.7,
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          title: { type: Type.STRING },
+          story: { type: Type.STRING },
+        },
+        required: ["title", "story"],
+      },
+    },
+  });
+
+  const text = response.text;
+  if (!text) throw new Error("Gemini no devolvió texto");
+  const start = text.indexOf("{");
+  const end = text.lastIndexOf("}");
+  const json = start !== -1 && end > start ? text.substring(start, end + 1) : text;
+  const result = JSON.parse(json);
+
+  const cost = costFromResponse(model, response);
+
+  return {
+    title: result.title,
+    story: result.story,
+    content: wrapStoryParagraphs(result.story),
+    cost,
+  };
+}
+
+export interface ChatMessage {
+  role: "user" | "assistant";
+  content: string;
+}
+
+export interface ChatResult {
+  reply: string;
+  update: { title: string; story: string; content: string } | null;
+  cost: { inputTokens: number; outputTokens: number; usd: number };
+}
+
+// Asistente de redacción conversacional (Claude) para el metabox "Generar con IA" en info.muns.club.
+// A diferencia de refineStory, mantiene historial de conversación y puede discutir con el editor
+// antes de proponer un cambio — solo actualiza el cuento cuando el modelo llama a "update_story".
+export async function chatAboutStory(
+  title: string,
+  story: string,
+  sourceContext: string,
+  history: ChatMessage[],
+  apiKey: string
+): Promise<ChatResult> {
+  const anthropic = new Anthropic({ apiKey });
+  const model = "claude-opus-5";
+
+  const contextBlock = `CUENTO ACTUAL EN EL EDITOR:
+TÍTULO: ${title}
+CUENTO:
+${story}
+${sourceContext ? `\nCONTEXTO DE LA NOTICIA ORIGINAL:\n${sourceContext}` : ""}`;
+
+  const response = await anthropic.messages.create({
+    model,
+    max_tokens: 8000,
+    system: MUNS_SYSTEM_INSTRUCTION + "\n\n" + MUNS_CHAT_ADDENDUM + "\n\n" + contextBlock,
+    messages: history.map((m) => ({ role: m.role, content: m.content })),
+    tools: [
+      {
+        name: "update_story",
+        description:
+          'Propone un borrador concreto y completo (título + cuento) para reemplazar lo que está en el editor. Llamala SOLO cuando tengas una versión terminada para proponer — no para discutir opciones o pedir aclaraciones, eso va como texto normal.',
+        input_schema: {
+          type: "object",
+          properties: {
+            title: { type: "string", description: "Título propuesto" },
+            story: { type: "string", description: "Texto completo del cuento propuesto" },
+          },
+          required: ["title", "story"],
+        },
+      },
+    ],
+  });
+
+  let reply = "";
+  let update: ChatResult["update"] = null;
+
+  for (const block of response.content) {
+    if (block.type === "text") {
+      reply += block.text;
+    } else if (block.type === "tool_use" && block.name === "update_story") {
+      const input = block.input as { title: string; story: string };
+      update = {
+        title: input.title,
+        story: input.story,
+        content: wrapStoryParagraphs(input.story),
+      };
+    }
+  }
+
+  const cost = costFromClaudeResponse(model, response);
+
+  return { reply: reply.trim(), update, cost };
 }

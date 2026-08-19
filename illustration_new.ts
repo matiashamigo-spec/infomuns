@@ -46,7 +46,7 @@ export async function illustrateImage(imageUrl: string, apiKey: string): Promise
       headers: { "User-Agent": "Mozilla/5.0" },
     });
     const photoData = Buffer.from(photo.data).toString("base64");
-    const photoMime = (photo.headers["content-type"] || "image/jpeg").split(";")[0];
+    const photoMime = String(photo.headers["content-type"] || "image/jpeg").split(";")[0];
 
     const res = await axios.post(
       `${API_BASE}${MODEL}:generateContent?key=${apiKey}`,
