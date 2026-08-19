@@ -76,9 +76,15 @@ dominios custom gratis, solo hace falta el registro CNAME en Cloudflare.
 - Si el navegador no soporta `MediaRecorder`/`getUserMedia`: mensaje pidiendo usar Chrome,
   antes de mostrar nada más.
 
+**Detección de orientación:** la app chequea en todo momento si el teléfono está en
+vertical (`matchMedia("(orientation: portrait)")` / `screen.orientation`). Si detecta
+horizontal, tapa la pantalla con un aviso "Girá tu teléfono" que bloquea el flujo
+(no deja grabar en horizontal) hasta que vuelva a vertical — reemplaza al tip pasivo
+de "poné tu teléfono vertical" del PDF por una verificación activa.
+
 **Por cada uno de los 3 pasos** (Frase de inicio / Contá la historia / Reflexión final):
 - Guía visual superpuesta sobre la cámara (encuadre de referencia "plano entrevista").
-- Tips fijos: lugar silencioso, sin luz fuerte detrás, teléfono vertical.
+- Tips fijos: lugar silencioso, sin luz fuerte detrás.
 - Para el paso 1: texto modelo ("Soy [nombre] y hoy te voy a contar...") con un contador
   de tiempo que es **solo referencia visual** (sugerencia de no pasarse de 10s) — nunca
   corta la grabación ni bloquea nada.
@@ -112,7 +118,8 @@ sitio y no un formulario genérico pegado con cinta:
   botones Aa/AA que ya están en la home.
 - Mismo celeste de acento (`#AEE1F5` aprox.) para el estado activo/CTA principal
   ("Grabar", "Usar este y seguir", "Enviar mi historia").
-- Misma tipografía redondeada/juguetona de los títulos y del logo Muns.
+- Tipografía **Nunito** (Google Fonts, gratis) para todos los textos de la app —
+  redondeada y amigable, en línea con el logo Muns.
 - Logo Muns visible en el header de la página, como en el resto del sitio.
 
 **Encuadre de cámara:** guía visual superpuesta sobre el preview de la cámara con el
