@@ -878,7 +878,7 @@ Create `public/microhistorias/index.html`:
   <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
-  <img class="mh-logo" src="https://info.muns.club/wp-content/uploads/2026/01/logo.png" alt="Muns" />
+  <img class="mh-logo" src="https://pulgardigital.org/wp-content/uploads/2026/01/logo.png" alt="Muns" />
 
   <!-- Orientation lock overlay -->
   <div id="mh-orientation-lock" class="mh-orientation-lock">

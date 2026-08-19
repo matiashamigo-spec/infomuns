@@ -238,8 +238,8 @@ async function sendRecording() {
   }
   sizeMessage.classList.add('mh-hidden');
 
-  const formData = buildUploadFormData(recordedClips, supportFiles);
   try {
+    const formData = buildUploadFormData(recordedClips, supportFiles);
     await submitRecording(N8N_WEBHOOK_URL, formData);
     showScreen('sent');
   } catch (err) {
