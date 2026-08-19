@@ -584,6 +584,8 @@ async function startServer() {
   // ── Noticias Muns ─────────────────────────────────────────────────────────
   app.use("/api/noticias", createNoticiasRouter());
 
+  // ── Micro Historias ──────────────────────────────────────────────────────
+  app.use("/microhistorias", express.static(path.join(process.cwd(), "public", "microhistorias")));
 
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
