@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
-  <img class="mh-logo" src="https://pulgardigital.org/wp-content/uploads/2026/01/logo.png" alt="Muns" />
+  <img id="mh-logo" class="mh-logo" src="https://pulgardigital.org/wp-content/uploads/2026/01/logo.png" alt="Muns" />
 
   <!-- Orientation lock overlay -->
   <div id="mh-orientation-lock" class="mh-orientation-lock">
@@ -40,11 +40,6 @@
 
   <!-- Recording screen -->
   <section id="mh-record-screen" class="mh-card mh-hidden">
-    <p id="mh-step-progress" class="mh-progress"></p>
-    <h2 id="mh-step-title"></h2>
-    <p id="mh-step-prompt" class="mh-tip"></p>
-    <p id="mh-step-timer" class="mh-tip mh-hidden"></p>
-    <p class="mh-tip">Buscá un lugar silencioso y evitá tener una luz fuerte detrás tuyo.</p>
     <div class="mh-camera-wrap">
       <video id="mh-camera-video" autoplay playsinline muted></video>
       <div class="mh-frame-guide"></div>
@@ -54,6 +49,16 @@
     <button id="mh-record-btn" class="mh-btn mh-btn--primary" type="button">Grabar</button>
     <button id="mh-stop-btn" class="mh-btn mh-hidden" type="button">Cortar</button>
   </section>
+
+  <!-- Tips popup: se muestra antes de cada paso, tapa la pantalla hasta que la cierran -->
+  <div id="mh-tips-overlay" class="mh-tips-overlay">
+    <p id="mh-step-progress" class="mh-progress"></p>
+    <h2 id="mh-step-title"></h2>
+    <p id="mh-step-prompt" class="mh-prompt-big"></p>
+    <p id="mh-step-timer" class="mh-tip mh-hidden"></p>
+    <p class="mh-tip">Buscá un lugar silencioso y evitá tener una luz fuerte detrás tuyo.</p>
+    <button id="mh-tips-continue-btn" class="mh-btn mh-btn--primary" type="button">Empezar a grabar</button>
+  </div>
 
   <!-- Clip preview screen -->
   <section id="mh-preview-screen" class="mh-card mh-hidden">
@@ -82,6 +87,7 @@
     <h2>Todo listo</h2>
     <p id="mh-final-summary" class="mh-tip"></p>
     <button id="mh-send-btn" class="mh-btn mh-btn--primary" type="button">Enviar mi historia</button>
+    <button id="mh-final-back-btn" class="mh-btn" type="button">Volver</button>
   </section>
 
   <!-- Sent confirmation -->

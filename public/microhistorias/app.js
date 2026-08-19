@@ -27,9 +27,14 @@ const screens = {
   error: el('mh-error-screen'),
 };
 
+// Pantallas donde la cámara es protagonista: se oculta el logo para que
+// el video entre completo en la pantalla sin necesidad de hacer scroll.
+const CAMERA_SCREENS = ['record', 'preview'];
+
 function showScreen(name) {
   Object.values(screens).forEach((s) => s.classList.add('mh-hidden'));
   screens[name].classList.remove('mh-hidden');
+  el('mh-logo').classList.toggle('mh-hidden', CAMERA_SCREENS.includes(name));
 }
 
 // WhatsApp links
@@ -67,11 +72,12 @@ let focusExposureButtonsWired = false;
 async function startCamera() {
   try {
     stream = await navigator.mediaDevices.getUserMedia({
-      video: {
-        facingMode: 'user',
-        width: { ideal: 1080 },
-        height: { ideal: 1920 },
-      },
+      // Sin width/height "ideal": forzar una resolución exacta hacía que el
+      // navegador recortara agresivamente el sensor para llegar a esa relación
+      // de aspecto, dando un efecto de zoom no deseado. Sin esa restricción,
+      // la cámara usa su campo de visión natural y el recorte visual queda
+      // a cargo del CSS (mh-camera-wrap con object-fit: cover).
+      video: { facingMode: 'user' },
       audio: true,
     });
     track = stream.getVideoTracks()[0];
@@ -131,12 +137,19 @@ function renderStep() {
   }
   el('mh-record-btn').classList.remove('mh-hidden');
   el('mh-stop-btn').classList.add('mh-hidden');
+  el('mh-tips-overlay').classList.add('is-visible');
 }
 
 function startRecording() {
   const mimeType = pickSupportedMimeType(VIDEO_MIME_CANDIDATES, (t) => MediaRecorder.isTypeSupported(t));
   recordedChunks = [];
-  mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+  // Sin bitrate explícito, MediaRecorder graba a una tasa muy alta por
+  // defecto (varía por navegador) y hasta clips cortos superan el límite de
+  // subida. 2.5 Mbps de video sigue siendo nítido para esta resolución y deja
+  // varios minutos de margen antes de tocar MAX_UPLOAD_BYTES.
+  const recorderOptions = { videoBitsPerSecond: 2_500_000, audioBitsPerSecond: 128_000 };
+  if (mimeType) recorderOptions.mimeType = mimeType;
+  mediaRecorder = new MediaRecorder(stream, recorderOptions);
   mediaRecorder.addEventListener('dataavailable', (e) => {
     if (e.data.size > 0) recordedChunks.push(e.data);
   });
@@ -253,6 +266,9 @@ async function sendRecording() {
 // Event wiring
 el('mh-start-btn').addEventListener('click', startCamera);
 el('mh-permission-retry-btn').addEventListener('click', startCamera);
+el('mh-tips-continue-btn').addEventListener('click', () => {
+  el('mh-tips-overlay').classList.remove('is-visible');
+});
 el('mh-record-btn').addEventListener('click', startRecording);
 el('mh-stop-btn').addEventListener('click', stopRecording);
 el('mh-repeat-btn').addEventListener('click', repeatClip);
@@ -266,5 +282,6 @@ el('mh-support-gallery-input').addEventListener('change', (e) => {
   e.target.value = '';
 });
 el('mh-support-continue-btn').addEventListener('click', goToFinalScreen);
+el('mh-final-back-btn').addEventListener('click', () => showScreen('support'));
 el('mh-send-btn').addEventListener('click', sendRecording);
 el('mh-retry-upload-btn').addEventListener('click', sendRecording);

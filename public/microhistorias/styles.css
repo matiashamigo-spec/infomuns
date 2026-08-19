@@ -92,14 +92,15 @@ p {
 
 .mh-camera-wrap {
   position: relative;
-  width: 100%;
-  max-width: 420px;
+  width: auto;
+  max-width: 380px;
+  height: min(58vh, 600px);
   aspect-ratio: 9 / 16;
   border: 4px solid var(--mh-border);
   border-radius: var(--mh-radius-card);
   overflow: hidden;
   background: #000;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .mh-camera-wrap video {
@@ -123,10 +124,21 @@ p {
   color: var(--mh-text-secondary);
 }
 
+.mh-prompt-big {
+  font-size: 22px;
+  font-weight: 900;
+  line-height: 1.35;
+  text-align: center;
+  color: var(--mh-heading);
+  margin: 8px 0 16px;
+  max-width: 340px;
+}
+
 .mh-progress {
   font-weight: 700;
   color: var(--mh-heading);
   margin-bottom: 8px;
+  text-align: center;
 }
 
 .mh-whatsapp-btn {
@@ -161,6 +173,24 @@ p {
 }
 
 .mh-orientation-lock.is-visible {
+  display: flex;
+}
+
+.mh-tips-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--mh-bg);
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  z-index: 40;
+  text-align: center;
+  padding: 24px;
+}
+
+.mh-tips-overlay.is-visible {
   display: flex;
 }
 
