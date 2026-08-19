@@ -563,6 +563,9 @@ async function startServer() {
   // ── Noticias Muns ─────────────────────────────────────────────────────────
   app.use("/api/noticias", createNoticiasRouter());
 
+  // ── Micro Historias ──────────────────────────────────────────────────────
+  app.use("/microhistorias", express.static(path.join(process.cwd(), "public", "microhistorias")));
+
   // Panel admin — protegido con HTTP Basic Auth, servido ANTES del catch-all del frontend
   // /noticias-admin redirige a /cargarnoticias para no exponer la URL vieja
   app.get("/noticias-admin", (req, res) => {
