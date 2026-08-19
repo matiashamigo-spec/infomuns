@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Micro Historias — Muns</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <img class="mh-logo" src="https://info.muns.club/wp-content/uploads/2026/01/logo.png" alt="Muns" />
+
+  <!-- Orientation lock overlay -->
+  <div id="mh-orientation-lock" class="mh-orientation-lock">
+    <h2>Girá tu teléfono</h2>
+    <p>Esta app se usa con el teléfono en vertical, como en el instructivo.</p>
+  </div>
+
+  <!-- Unsupported browser screen -->
+  <section id="mh-unsupported-screen" class="mh-card mh-hidden">
+    <h2>Tu navegador no soporta grabación</h2>
+    <p>Probá abrir este link desde Chrome (Android) o Safari (iPhone) actualizado.</p>
+  </section>
+
+  <!-- Start screen -->
+  <section id="mh-start-screen" class="mh-card mh-hidden">
+    <h1>Contá tu micro historia</h1>
+    <p>Vas a grabar 3 pasos cortos: una frase de inicio, tu historia, y una reflexión final.</p>
+    <button id="mh-start-btn" class="mh-btn mh-btn--primary" type="button">Empezar</button>
+  </section>
+
+  <!-- Camera permission error -->
+  <section id="mh-permission-error" class="mh-card mh-hidden">
+    <h2>Necesitamos tu cámara y micrófono</h2>
+    <p>Para grabar tu historia hace falta que le des permiso al navegador. Volvé a intentarlo.</p>
+    <button id="mh-permission-retry-btn" class="mh-btn mh-btn--primary" type="button">Reintentar</button>
+  </section>
+
+  <!-- Recording screen -->
+  <section id="mh-record-screen" class="mh-card mh-hidden">
+    <p id="mh-step-progress" class="mh-progress"></p>
+    <h2 id="mh-step-title"></h2>
+    <p id="mh-step-prompt" class="mh-tip"></p>
+    <p id="mh-step-timer" class="mh-tip mh-hidden"></p>
+    <p class="mh-tip">Buscá un lugar silencioso y evitá tener una luz fuerte detrás tuyo.</p>
+    <div class="mh-camera-wrap">
+      <video id="mh-camera-video" autoplay playsinline muted></video>
+      <div class="mh-frame-guide"></div>
+    </div>
+    <button id="mh-focus-lock-btn" class="mh-btn mh-hidden" type="button">Bloquear foco</button>
+    <button id="mh-exposure-lock-btn" class="mh-btn mh-hidden" type="button">Bloquear exposición</button>
+    <button id="mh-record-btn" class="mh-btn mh-btn--primary" type="button">Grabar</button>
+    <button id="mh-stop-btn" class="mh-btn mh-hidden" type="button">Cortar</button>
+  </section>
+
+  <!-- Clip preview screen -->
+  <section id="mh-preview-screen" class="mh-card mh-hidden">
+    <h2>¿Cómo quedó?</h2>
+    <div class="mh-camera-wrap">
+      <video id="mh-preview-video" controls playsinline></video>
+    </div>
+    <button id="mh-repeat-btn" class="mh-btn" type="button">Repetir</button>
+    <button id="mh-continue-btn" class="mh-btn mh-btn--primary" type="button">Usar este y seguir</button>
+  </section>
+
+  <!-- Support material screen -->
+  <section id="mh-support-screen" class="mh-card mh-hidden">
+    <h2>Material de apoyo</h2>
+    <p class="mh-tip">Si querés, compartí fotos o videos de lo que estás contando. No es obligatorio.</p>
+    <label class="mh-btn mh-btn--primary" for="mh-support-camera-input">Sacar foto/video ahora</label>
+    <input id="mh-support-camera-input" type="file" accept="image/*,video/*" capture="environment" class="mh-hidden" />
+    <label class="mh-btn" for="mh-support-gallery-input">Elegir del carrete</label>
+    <input id="mh-support-gallery-input" type="file" accept="image/*,video/*" multiple class="mh-hidden" />
+    <ul id="mh-support-list"></ul>
+    <button id="mh-support-continue-btn" class="mh-btn mh-btn--primary" type="button">Seguir</button>
+  </section>
+
+  <!-- Final / send screen -->
+  <section id="mh-final-screen" class="mh-card mh-hidden">
+    <h2>Todo listo</h2>
+    <p id="mh-final-summary" class="mh-tip"></p>
+    <button id="mh-send-btn" class="mh-btn mh-btn--primary" type="button">Enviar mi historia</button>
+  </section>
+
+  <!-- Sent confirmation -->
+  <section id="mh-sent-screen" class="mh-card mh-hidden">
+    <h2>¡Listo!</h2>
+    <p>Tu historia está en camino. ¡Gracias por contarla!</p>
+  </section>
+
+  <!-- Upload error screen -->
+  <section id="mh-error-screen" class="mh-card mh-hidden">
+    <h2>No se pudo enviar</h2>
+    <p>Tu historia sigue guardada acá, no se perdió. Probá de nuevo.</p>
+    <button id="mh-retry-upload-btn" class="mh-btn mh-btn--primary" type="button">Reintentar envío</button>
+    <a id="mh-whatsapp-error" class="mh-btn" href="#" target="_blank" rel="noopener">Escribinos por WhatsApp</a>
+  </section>
+
+  <a id="mh-whatsapp-start" class="mh-whatsapp-btn" href="#" target="_blank" rel="noopener" aria-label="Dudas por WhatsApp">💬</a>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
