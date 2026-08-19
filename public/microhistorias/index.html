@@ -6,10 +6,11 @@
   <title>Micro Historias — Muns</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" />
   <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
-  <img class="mh-logo" src="https://info.muns.club/wp-content/uploads/2026/01/logo.png" alt="Muns" />
+  <img class="mh-logo" src="https://pulgardigital.org/wp-content/uploads/2026/01/logo.png" alt="Muns" />
 
   <!-- Orientation lock overlay -->
   <div id="mh-orientation-lock" class="mh-orientation-lock">
@@ -72,7 +73,7 @@
     <input id="mh-support-camera-input" type="file" accept="image/*,video/*" capture="environment" class="mh-hidden" />
     <label class="mh-btn" for="mh-support-gallery-input">Elegir del carrete</label>
     <input id="mh-support-gallery-input" type="file" accept="image/*,video/*" multiple class="mh-hidden" />
-    <ul id="mh-support-list"></ul>
+    <ul id="mh-support-list" class="mh-support-list"></ul>
     <button id="mh-support-continue-btn" class="mh-btn mh-btn--primary" type="button">Seguir</button>
   </section>
 
@@ -93,6 +94,7 @@
   <section id="mh-error-screen" class="mh-card mh-hidden">
     <h2>No se pudo enviar</h2>
     <p>Tu historia sigue guardada acá, no se perdió. Probá de nuevo.</p>
+    <p id="mh-error-size-message" class="mh-tip mh-hidden">El archivo es demasiado grande para enviarlo. Probá sacar algún video de apoyo o grabar clips más cortos.</p>
     <button id="mh-retry-upload-btn" class="mh-btn mh-btn--primary" type="button">Reintentar envío</button>
     <a id="mh-whatsapp-error" class="mh-btn" href="#" target="_blank" rel="noopener">Escribinos por WhatsApp</a>
   </section>

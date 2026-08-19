@@ -1,7 +1,17 @@
+// Maps a Blob's `type` (e.g. "video/webm;codecs=vp9,opus" or "video/mp4") to a
+// file extension. Falls back to 'webm' when the type is empty/unrecognized,
+// matching the default candidate order in media-support.js.
+export function getExtensionForMimeType(mimeType) {
+  const subtype = (mimeType || '').split(';')[0].split('/')[1] || '';
+  if (subtype === 'mp4') return 'mp4';
+  return 'webm';
+}
+
 export function buildUploadFormData(interviewClips, supportFiles) {
   const fd = new FormData();
   interviewClips.forEach((blob, i) => {
-    fd.append(`clip${i + 1}`, blob, `clip${i + 1}.webm`);
+    const ext = getExtensionForMimeType(blob.type);
+    fd.append(`clip${i + 1}`, blob, `clip${i + 1}.${ext}`);
   });
   (supportFiles || []).forEach((file) => {
     fd.append('apoyo[]', file, file.name || 'apoyo');
