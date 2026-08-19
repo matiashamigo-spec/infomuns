@@ -57,6 +57,7 @@ const supportFiles = [];
 let mediaRecorder = null;
 let recordedChunks = [];
 let pendingClipBlob = null;
+let previewObjectUrl = null;
 
 async function startCamera() {
   try {
@@ -121,8 +122,12 @@ function startRecording() {
   });
   mediaRecorder.addEventListener('stop', () => {
     pendingClipBlob = new Blob(recordedChunks, { type: mediaRecorder.mimeType });
+    if (previewObjectUrl) {
+      URL.revokeObjectURL(previewObjectUrl);
+    }
+    previewObjectUrl = URL.createObjectURL(pendingClipBlob);
     const previewVideo = el('mh-preview-video');
-    previewVideo.src = URL.createObjectURL(pendingClipBlob);
+    previewVideo.src = previewObjectUrl;
     showScreen('preview');
   });
   mediaRecorder.start();
