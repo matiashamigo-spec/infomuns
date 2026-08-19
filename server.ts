@@ -82,6 +82,15 @@ async function startServer() {
 
   app.use(express.json({ limit: "20mb" }));
 
+  // Dominio dedicado microhistorias.muns.club: cualquier ruta que no sea
+  // ya /microhistorias redirige ahí (evita caer en el catch-all del frontend viejo)
+  app.use((req, res, next) => {
+    if (req.hostname === "microhistorias.muns.club" && !req.path.startsWith("/microhistorias")) {
+      return res.redirect(302, "/microhistorias/");
+    }
+    next();
+  });
+
   // Security headers
   app.use((_req, res, next) => {
     res.setHeader("X-Content-Type-Options", "nosniff");
