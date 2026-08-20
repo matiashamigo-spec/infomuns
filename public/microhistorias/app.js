@@ -103,19 +103,15 @@ let focusExposureButtonsWired = false;
 // En algunos Android, MediaRecorder graba el buffer crudo de la cámara sin
 // aplicar la rotación que el navegador SÍ usa para mostrar la vista en vivo
 // derecha — por eso la vista previa se ve bien pero el archivo queda de
-// costado. La primera corrección (rotar manualmente en un canvas asumiendo
-// un ángulo fijo) rotaba una imagen que ya estaba bien, así que terminaba
-// rompiendo también la vista en vivo. El fix correcto: no rotar nada
-// nosotros — simplemente "fotografiar" en un canvas lo que el navegador YA
-// muestra bien (sourceVideo.videoWidth/Height, que reflejan el tamaño ya
-// corregido) y grabar ESE stream. Sin matemática de ángulos, sin adivinar.
-function buildRelayStream(originalStream) {
-  const sourceVideo = document.createElement('video');
-  sourceVideo.muted = true;
-  sourceVideo.playsInline = true;
-  sourceVideo.srcObject = originalStream;
-
+// costado. La corrección: "fotografiar" en un canvas lo que YA se ve bien
+// en pantalla y grabar ESE stream. sourceVideo tiene que ser el <video> que
+// el usuario ya está viendo (no uno nuevo fuera del DOM) — en iOS, un video
+// desconectado del documento a veces no llega a decodificar ningún cuadro,
+// dejando el canvas en negro sin ningún error visible.
+function buildRelayStream(originalStream, sourceVideo) {
   const canvas = document.createElement('canvas');
+  canvas.width = sourceVideo.videoWidth || 720;
+  canvas.height = sourceVideo.videoHeight || 1280;
   const ctx = canvas.getContext('2d');
 
   let rafId = null;
@@ -131,17 +127,7 @@ function buildRelayStream(originalStream) {
     }
     rafId = requestAnimationFrame(drawFrame);
   }
-
-  sourceVideo.addEventListener(
-    'loadedmetadata',
-    () => {
-      sourceVideo.play().catch(() => {});
-      canvas.width = sourceVideo.videoWidth;
-      canvas.height = sourceVideo.videoHeight;
-      rafId = requestAnimationFrame(drawFrame);
-    },
-    { once: true }
-  );
+  rafId = requestAnimationFrame(drawFrame);
 
   const canvasStream = canvas.captureStream(30);
   originalStream.getAudioTracks().forEach((t) => canvasStream.addTrack(t));
@@ -151,7 +137,6 @@ function buildRelayStream(originalStream) {
     stop() {
       stopped = true;
       if (rafId) cancelAnimationFrame(rafId);
-      sourceVideo.srcObject = null;
     },
   };
 }
@@ -168,11 +153,18 @@ async function startCamera() {
       audio: true,
     });
     track = stream.getVideoTracks()[0];
-    const relay = buildRelayStream(stream);
+    const video = el('mh-camera-video');
+    // La vista en vivo muestra el stream crudo directo (el navegador ya la
+    // rota bien para mostrarla) — el canvas de buildRelayStream lee cuadros
+    // de ESTE mismo <video>, así que primero tiene que tener metadata.
+    video.srcObject = stream;
+    await new Promise((resolve) => {
+      if (video.readyState >= 1) resolve();
+      else video.addEventListener('loadedmetadata', resolve, { once: true });
+    });
+    const relay = buildRelayStream(stream, video);
     recordingStream = relay.stream;
     relayCleanup = relay.stop;
-    const video = el('mh-camera-video');
-    video.srcObject = recordingStream;
     setupFocusExposureButtons();
     renderStep();
     showScreen('record');
