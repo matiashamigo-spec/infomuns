@@ -17,30 +17,11 @@ const MAX_UPLOAD_BYTES = 500 * 1024 * 1024;
 
 const el = (id) => document.getElementById(id);
 
-// --- Diagnóstico temporal ---------------------------------------------
-// El bug de "se queda trabado" solo pasa en un iPhone real, no en pruebas
-// locales con cámara simulada, y no tenemos forma de ver la consola de ese
-// celular. Este panel muestra en pantalla lo que va pasando paso a paso,
-// para diagnosticar sin herramientas de desarrollador. Se saca una vez
-// resuelto.
-const debugEl = document.createElement('div');
-debugEl.id = 'mh-debug';
-debugEl.style.cssText =
-  'position:fixed;bottom:0;left:0;right:0;background:rgba(0,0,0,0.85);' +
-  'color:#0f0;font-size:11px;font-family:monospace;padding:6px;z-index:99999;' +
-  'max-height:140px;overflow:auto;white-space:pre-wrap;';
-document.body.appendChild(debugEl);
-function debugLog(msg) {
-  const time = new Date().toISOString().slice(11, 19);
-  debugEl.textContent += `[${time}] ${msg}\n`;
-  debugEl.scrollTop = debugEl.scrollHeight;
-}
-window.addEventListener('error', (e) => debugLog('JS ERROR: ' + e.message));
-window.addEventListener('unhandledrejection', (e) => {
-  const reason = e.reason && e.reason.message ? e.reason.message : e.reason;
-  debugLog('PROMISE ERROR: ' + reason);
-});
-// --- Fin diagnóstico temporal -------------------------------------------
+// Panel de diagnóstico temporal ya cumplió su función (confirmó que la
+// cámara y el canvas andaban bien, y que el propio panel — tapando el
+// botón de tips — era la causa del "se queda trabado"). debugLog queda
+// como no-op para no tener que tocar cada punto donde se llamaba.
+function debugLog() {}
 
 const screens = {
   unsupported: el('mh-unsupported-screen'),
