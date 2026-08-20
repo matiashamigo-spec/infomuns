@@ -17,6 +17,37 @@ const MAX_UPLOAD_BYTES = 500 * 1024 * 1024;
 
 const el = (id) => document.getElementById(id);
 
+// --- Diagnóstico temporal (v2) ------------------------------------------
+// pointer-events:none esta vez desde el arranque, para no repetir el error
+// de que el propio panel tape los toques. Además de los mismos logs de
+// antes, registra CUALQUIER click en la página con su destino real — así
+// se ve si el toque está yendo a otro elemento en vez del botón.
+const debugEl = document.createElement('div');
+debugEl.id = 'mh-debug';
+debugEl.style.cssText =
+  'position:fixed;bottom:0;left:0;right:0;background:rgba(0,0,0,0.85);' +
+  'color:#0f0;font-size:10px;font-family:monospace;padding:3px 6px;z-index:99999;' +
+  'height:18px;overflow:hidden;white-space:nowrap;pointer-events:none;';
+document.body.appendChild(debugEl);
+function debugLog(msg) {
+  const time = new Date().toISOString().slice(11, 19);
+  debugEl.textContent = `[${time}] ${msg}`;
+}
+window.addEventListener('error', (e) => debugLog('JS ERROR: ' + e.message));
+window.addEventListener('unhandledrejection', (e) => {
+  const reason = e.reason && e.reason.message ? e.reason.message : e.reason;
+  debugLog('PROMISE ERROR: ' + reason);
+});
+document.addEventListener(
+  'click',
+  (e) => {
+    const t = e.target;
+    debugLog(`click en: ${t.tagName}#${t.id || '(sin id)'}.${t.className || ''}`.slice(0, 90));
+  },
+  true
+);
+// --- Fin diagnóstico temporal ---------------------------------------------
+
 const screens = {
   unsupported: el('mh-unsupported-screen'),
   start: el('mh-start-screen'),
