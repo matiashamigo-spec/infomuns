@@ -38,10 +38,10 @@ function showScreen(name) {
   screens[name].classList.remove('mh-hidden');
   el('mh-logo').classList.toggle('mh-hidden', CAMERA_SCREENS.includes(name));
   document.body.classList.toggle('mh-compact', name === 'record');
-  // El botón de WhatsApp solo tiene sentido en el inicio (dudas antes de
-  // arrancar); en el resto de las pantallas queda flotando encima de los
-  // botones de acción, así que se oculta ahí.
-  el('mh-whatsapp-start').classList.toggle('mh-hidden', name !== 'start');
+  // El botón de WhatsApp se oculta solo en las pantallas de cámara (donde
+  // queda flotando encima de los botones de grabar/usar). En el resto —
+  // inicio, material de apoyo, envío, etc. — queda visible por si hay dudas.
+  el('mh-whatsapp-start').classList.toggle('mh-hidden', CAMERA_SCREENS.includes(name));
 }
 
 // WhatsApp links
@@ -152,7 +152,11 @@ function renderStep() {
   }
   el('mh-record-btn').classList.remove('mh-hidden');
   el('mh-stop-btn').classList.add('mh-hidden');
-  el('mh-tips-overlay').classList.add('is-visible');
+  // Los tips generales (luz, ruido, encuadre) solo se muestran antes del
+  // primer paso — repetirlos antes de cada paso resultaba redundante.
+  if (currentStepIndex === 0) {
+    el('mh-tips-overlay').classList.add('is-visible');
+  }
 }
 
 function startRecording() {

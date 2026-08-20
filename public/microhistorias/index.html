@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" />
-  <link rel="stylesheet" href="./styles.css?v=3" />
+  <link rel="stylesheet" href="./styles.css?v=4" />
 </head>
 <body>
   <img id="mh-logo" class="mh-logo" src="https://info.muns.club/wp-content/uploads/2026/07/Logo-Muns-scaled.png" alt="Muns" />
@@ -26,11 +26,11 @@
 
   <!-- Start screen -->
   <section id="mh-start-screen" class="mh-card mh-hidden">
-    <h1>Contá tu micro historia</h1>
+    <h1>Compartí tu historia</h1>
     <p>Vas a grabar 3 pasos cortos: una frase de inicio, tu historia, y una reflexión final.</p>
     <label class="mh-field-label" for="mh-phone-input">
-      Tu número de teléfono (para contactarte si hace falta)
-      <input id="mh-phone-input" type="tel" placeholder="Ej: 291 6419599" required />
+      Compartinos tu número de teléfono (para contactarte si hace falta)
+      <input id="mh-phone-input" type="tel" placeholder="Ej: 0291 4123456 (con código de área)" required />
     </label>
     <label class="mh-terms-check">
       <input id="mh-terms-checkbox" type="checkbox" />
@@ -65,8 +65,8 @@
   <!-- Tips popup: solo consejos generales, se muestra antes de cada paso -->
   <div id="mh-tips-overlay" class="mh-tips-overlay">
     <h2>Antes de grabar</h2>
-    <p class="mh-tip">Buscá un lugar silencioso y evitá tener una luz fuerte detrás tuyo.</p>
-    <p class="mh-tip">Alejá el celular lo más que te dé el brazo y que la parte de arriba de tu cabeza toque la línea punteada de arriba, para un buen plano.</p>
+    <p class="mh-tip">Buscá un lugar silencioso, evitá tener una luz fuerte detrás tuyo y limpiá el lente de cámara (la cámara selfie).</p>
+    <p class="mh-tip">Alejá el celular todo lo que te dé el brazo y ubicá tu cabeza de manera que la parte de arriba toque la línea punteada.</p>
     <button id="mh-tips-continue-btn" class="mh-btn mh-btn--primary" type="button">Listo, empezar</button>
   </div>
 
@@ -83,7 +83,7 @@
   <!-- Support material screen -->
   <section id="mh-support-screen" class="mh-card mh-hidden">
     <h2>Material de apoyo</h2>
-    <p class="mh-tip">Si querés, compartí fotos o videos de lo que estás contando. No es obligatorio.</p>
+    <p class="mh-tip">Si querés, compartí fotos o videos de lo que estás contando.</p>
     <label class="mh-btn mh-btn--primary" for="mh-support-camera-input">Sacar foto/video ahora</label>
     <input id="mh-support-camera-input" type="file" accept="image/*,video/*" capture="environment" class="mh-hidden" />
     <label class="mh-btn" for="mh-support-gallery-input">Elegir del carrete</label>
@@ -125,6 +125,6 @@
     <span class="mh-whatsapp-text">¿Tenés dudas?<br />Escribinos</span>
   </a>
 
-  <script type="module" src="./app.js?v=3"></script>
+  <script type="module" src="./app.js?v=4"></script>
 </body>
 </html>

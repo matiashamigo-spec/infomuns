@@ -51,6 +51,7 @@ h1, h2, h3 {
 
 p {
   line-height: 1.5;
+  margin: 0 0 16px;
 }
 
 .mh-card {
@@ -177,32 +178,12 @@ p {
   pointer-events: none;
 }
 
-/* Marcas de baja opacidad a la altura aproximada de los ojos, como referencia
-   visual extra para encuadrar (no es detección real, solo una guía fija). */
-.mh-frame-guide::before,
-.mh-frame-guide::after {
-  content: '';
-  position: absolute;
-  top: 30%;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.35);
-}
-
-.mh-frame-guide::before {
-  left: 28%;
-}
-
-.mh-frame-guide::after {
-  right: 28%;
-}
-
 .mh-tip {
   font-size: 14px;
   line-height: 1.4;
-  margin: 4px 0;
+  margin: 4px 0 16px;
   color: var(--mh-text-secondary);
+  text-align: center;
 }
 
 .mh-prompt-big {
@@ -339,7 +320,7 @@ p {
 
 .mh-support-list {
   list-style: none;
-  margin: 0 0 16px;
+  margin: 0 0 12px;
   padding: 0;
   display: flex;
   flex-direction: column;
