@@ -186,6 +186,44 @@ p {
   pointer-events: none;
 }
 
+.mh-recording-indicator {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.55);
+  padding: 4px 10px;
+  border-radius: 20px;
+  z-index: 5;
+}
+
+.mh-recording-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #e11d1d;
+  animation: mh-recording-pulse 1s infinite;
+}
+
+@keyframes mh-recording-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+#mh-recording-timer {
+  color: #fff;
+  font-weight: 900;
+  font-size: 13px;
+  font-family: 'Nunito', sans-serif;
+}
+
 .mh-tip {
   font-size: 14px;
   line-height: 1.4;

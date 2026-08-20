@@ -185,6 +185,33 @@ function renderStep() {
   }
 }
 
+let recordingTimerInterval = null;
+let recordingStartTime = null;
+
+function formatElapsed(totalSeconds) {
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+}
+
+function startRecordingTimer() {
+  recordingStartTime = Date.now();
+  el('mh-recording-timer').textContent = '0:00';
+  el('mh-recording-indicator').classList.remove('mh-hidden');
+  recordingTimerInterval = setInterval(() => {
+    const elapsed = Math.floor((Date.now() - recordingStartTime) / 1000);
+    el('mh-recording-timer').textContent = formatElapsed(elapsed);
+  }, 1000);
+}
+
+function stopRecordingTimer() {
+  if (recordingTimerInterval) {
+    clearInterval(recordingTimerInterval);
+    recordingTimerInterval = null;
+  }
+  el('mh-recording-indicator').classList.add('mh-hidden');
+}
+
 function startRecording() {
   const mimeType = pickSupportedMimeType(VIDEO_MIME_CANDIDATES, (t) => MediaRecorder.isTypeSupported(t));
   recordedChunks = [];
@@ -198,6 +225,7 @@ function startRecording() {
     if (e.data.size > 0) recordedChunks.push(e.data);
   });
   mediaRecorder.addEventListener('stop', () => {
+    stopRecordingTimer();
     pendingClipBlob = new Blob(recordedChunks, { type: mediaRecorder.mimeType });
     if (previewObjectUrl) {
       URL.revokeObjectURL(previewObjectUrl);
@@ -209,6 +237,7 @@ function startRecording() {
   });
   mediaRecorder.addEventListener('error', (e) => {
     console.error('microhistorias: mediaRecorder error', e.error || e);
+    stopRecordingTimer();
     // 'stop' never fires after a recorder error, so without this the person
     // is stuck on the record screen with "Cortar" showing and no way out but
     // a reload. Reset to the initial record-screen state so they can retry.
@@ -216,6 +245,7 @@ function startRecording() {
     el('mh-stop-btn').classList.add('mh-hidden');
   });
   mediaRecorder.start();
+  startRecordingTimer();
   el('mh-record-btn').classList.add('mh-hidden');
   el('mh-stop-btn').classList.remove('mh-hidden');
 }
