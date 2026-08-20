@@ -17,6 +17,31 @@ const MAX_UPLOAD_BYTES = 500 * 1024 * 1024;
 
 const el = (id) => document.getElementById(id);
 
+// --- Diagnóstico temporal ---------------------------------------------
+// El bug de "se queda trabado" solo pasa en un iPhone real, no en pruebas
+// locales con cámara simulada, y no tenemos forma de ver la consola de ese
+// celular. Este panel muestra en pantalla lo que va pasando paso a paso,
+// para diagnosticar sin herramientas de desarrollador. Se saca una vez
+// resuelto.
+const debugEl = document.createElement('div');
+debugEl.id = 'mh-debug';
+debugEl.style.cssText =
+  'position:fixed;bottom:0;left:0;right:0;background:rgba(0,0,0,0.85);' +
+  'color:#0f0;font-size:11px;font-family:monospace;padding:6px;z-index:99999;' +
+  'max-height:140px;overflow:auto;white-space:pre-wrap;';
+document.body.appendChild(debugEl);
+function debugLog(msg) {
+  const time = new Date().toISOString().slice(11, 19);
+  debugEl.textContent += `[${time}] ${msg}\n`;
+  debugEl.scrollTop = debugEl.scrollHeight;
+}
+window.addEventListener('error', (e) => debugLog('JS ERROR: ' + e.message));
+window.addEventListener('unhandledrejection', (e) => {
+  const reason = e.reason && e.reason.message ? e.reason.message : e.reason;
+  debugLog('PROMISE ERROR: ' + reason);
+});
+// --- Fin diagnóstico temporal -------------------------------------------
+
 const screens = {
   unsupported: el('mh-unsupported-screen'),
   start: el('mh-start-screen'),
@@ -80,6 +105,8 @@ const isSupported =
   typeof window.MediaRecorder !== 'undefined' &&
   !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
 
+debugLog('app.js cargado, isSupported=' + isSupported + ', captureStream=' + (typeof HTMLCanvasElement.prototype.captureStream));
+
 if (!isSupported) {
   showScreen('unsupported');
 } else {
@@ -112,10 +139,17 @@ function buildRelayStream(originalStream, sourceVideo) {
   const canvas = document.createElement('canvas');
   canvas.width = sourceVideo.videoWidth || 720;
   canvas.height = sourceVideo.videoHeight || 1280;
+  // Igual que con el <video>: en iOS un canvas nunca insertado en la página
+  // puede tener un captureStream() poco confiable. Se agrega fuera de vista
+  // pero DENTRO del documento (display:none pausa el render en cualquier
+  // navegador, por eso posición fija fuera de pantalla en vez de eso).
+  canvas.style.cssText = 'position:fixed;top:-9999px;left:-9999px;';
+  document.body.appendChild(canvas);
   const ctx = canvas.getContext('2d');
 
   let rafId = null;
   let stopped = false;
+  let frameCount = 0;
   function drawFrame() {
     if (stopped) return;
     if (sourceVideo.readyState >= 2 && sourceVideo.videoWidth) {
@@ -124,12 +158,19 @@ function buildRelayStream(originalStream, sourceVideo) {
         canvas.height = sourceVideo.videoHeight;
       }
       ctx.drawImage(sourceVideo, 0, 0, canvas.width, canvas.height);
+      frameCount += 1;
+      if (frameCount === 1) {
+        debugLog(`canvas: primer cuadro dibujado (${canvas.width}x${canvas.height})`);
+      } else if (frameCount === 30) {
+        debugLog('canvas: sigue dibujando cuadros ok');
+      }
     }
     rafId = requestAnimationFrame(drawFrame);
   }
   rafId = requestAnimationFrame(drawFrame);
 
   const canvasStream = canvas.captureStream(30);
+  debugLog('canvasStream video tracks: ' + canvasStream.getVideoTracks().length);
   originalStream.getAudioTracks().forEach((t) => canvasStream.addTrack(t));
 
   return {
@@ -137,11 +178,13 @@ function buildRelayStream(originalStream, sourceVideo) {
     stop() {
       stopped = true;
       if (rafId) cancelAnimationFrame(rafId);
+      canvas.remove();
     },
   };
 }
 
 async function startCamera() {
+  debugLog('startCamera: pidiendo permiso de cámara...');
   try {
     stream = await navigator.mediaDevices.getUserMedia({
       // Sin width/height/aspectRatio: cualquier hint de forma le pide al
@@ -152,6 +195,7 @@ async function startCamera() {
       video: { facingMode: 'user' },
       audio: true,
     });
+    debugLog('startCamera: permiso OK, track=' + stream.getVideoTracks()[0].label);
     track = stream.getVideoTracks()[0];
     const video = el('mh-camera-video');
     // La vista en vivo muestra el stream crudo directo (el navegador ya la
@@ -162,13 +206,16 @@ async function startCamera() {
       if (video.readyState >= 1) resolve();
       else video.addEventListener('loadedmetadata', resolve, { once: true });
     });
+    debugLog(`startCamera: video listo ${video.videoWidth}x${video.videoHeight}`);
     const relay = buildRelayStream(stream, video);
     recordingStream = relay.stream;
     relayCleanup = relay.stop;
     setupFocusExposureButtons();
     renderStep();
     showScreen('record');
+    debugLog('startCamera: showScreen(record) listo');
   } catch (err) {
+    debugLog('startCamera: ERROR ' + err.name + ' ' + err.message);
     if (err.name === 'NotAllowedError') {
       console.error(err);
     } else {
@@ -426,6 +473,7 @@ function saveClipsToDevice() {
 el('mh-start-btn').addEventListener('click', startCamera);
 el('mh-permission-retry-btn').addEventListener('click', startCamera);
 el('mh-tips-continue-btn').addEventListener('click', () => {
+  debugLog('tips-continue-btn: click recibido');
   el('mh-tips-overlay').classList.remove('is-visible');
   resetScrollDeferred();
 });
