@@ -130,28 +130,30 @@ function buildRelayStream(originalStream, sourceVideo) {
 
   let rafId = null;
   let stopped = false;
-  let frameCount = 0;
-  function drawFrame() {
+  // requestAnimationFrame corre al ritmo de pantalla del celular (60, hasta
+  // 120 en los con ProMotion) — dibujar un cuadro de video entero esa
+  // cantidad de veces por segundo satura el hilo principal y deja a la
+  // página lenta para responder toques, aunque funcione. 24fps alcanza de
+  // sobra para esto y es una fracción del costo.
+  const targetFrameInterval = 1000 / 24;
+  let lastDrawTime = 0;
+  function drawFrame(now) {
     if (stopped) return;
-    if (sourceVideo.readyState >= 2 && sourceVideo.videoWidth) {
-      if (canvas.width !== sourceVideo.videoWidth || canvas.height !== sourceVideo.videoHeight) {
-        canvas.width = sourceVideo.videoWidth;
-        canvas.height = sourceVideo.videoHeight;
-      }
-      ctx.drawImage(sourceVideo, 0, 0, canvas.width, canvas.height);
-      frameCount += 1;
-      if (frameCount === 1) {
-        debugLog(`canvas: primer cuadro dibujado (${canvas.width}x${canvas.height})`);
-      } else if (frameCount === 30) {
-        debugLog('canvas: sigue dibujando cuadros ok');
+    if (now - lastDrawTime >= targetFrameInterval) {
+      lastDrawTime = now;
+      if (sourceVideo.readyState >= 2 && sourceVideo.videoWidth) {
+        if (canvas.width !== sourceVideo.videoWidth || canvas.height !== sourceVideo.videoHeight) {
+          canvas.width = sourceVideo.videoWidth;
+          canvas.height = sourceVideo.videoHeight;
+        }
+        ctx.drawImage(sourceVideo, 0, 0, canvas.width, canvas.height);
       }
     }
     rafId = requestAnimationFrame(drawFrame);
   }
   rafId = requestAnimationFrame(drawFrame);
 
-  const canvasStream = canvas.captureStream(30);
-  debugLog('canvasStream video tracks: ' + canvasStream.getVideoTracks().length);
+  const canvasStream = canvas.captureStream(24);
   originalStream.getAudioTracks().forEach((t) => canvasStream.addTrack(t));
 
   return {
