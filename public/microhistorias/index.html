@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" />
-  <link rel="stylesheet" href="./styles.css" />
+  <link rel="stylesheet" href="./styles.css?v=2" />
 </head>
 <body>
   <img id="mh-logo" class="mh-logo" src="https://pulgardigital.org/wp-content/uploads/2026/01/logo.png" alt="Muns" />
@@ -28,7 +28,11 @@
   <section id="mh-start-screen" class="mh-card mh-hidden">
     <h1>Contá tu micro historia</h1>
     <p>Vas a grabar 3 pasos cortos: una frase de inicio, tu historia, y una reflexión final.</p>
-    <button id="mh-start-btn" class="mh-btn mh-btn--primary" type="button">Empezar</button>
+    <label class="mh-terms-check">
+      <input id="mh-terms-checkbox" type="checkbox" />
+      Acepto los <a href="https://muns.club/terminos-y-condiciones/" target="_blank" rel="noopener">Términos y condiciones</a>
+    </label>
+    <button id="mh-start-btn" class="mh-btn mh-btn--primary" type="button" disabled>Empezar</button>
   </section>
 
   <!-- Camera permission error -->
@@ -40,6 +44,10 @@
 
   <!-- Recording screen -->
   <section id="mh-record-screen" class="mh-card mh-hidden">
+    <p id="mh-step-progress" class="mh-progress"></p>
+    <h2 id="mh-step-title"></h2>
+    <p id="mh-step-prompt" class="mh-prompt-big"></p>
+    <p id="mh-step-timer" class="mh-tip mh-hidden"></p>
     <div class="mh-camera-wrap">
       <video id="mh-camera-video" autoplay playsinline muted></video>
       <div class="mh-frame-guide"></div>
@@ -50,14 +58,11 @@
     <button id="mh-stop-btn" class="mh-btn mh-hidden" type="button">Cortar</button>
   </section>
 
-  <!-- Tips popup: se muestra antes de cada paso, tapa la pantalla hasta que la cierran -->
+  <!-- Tips popup: solo consejos generales, se muestra antes de cada paso -->
   <div id="mh-tips-overlay" class="mh-tips-overlay">
-    <p id="mh-step-progress" class="mh-progress"></p>
-    <h2 id="mh-step-title"></h2>
-    <p id="mh-step-prompt" class="mh-prompt-big"></p>
-    <p id="mh-step-timer" class="mh-tip mh-hidden"></p>
+    <h2>Antes de grabar</h2>
     <p class="mh-tip">Buscá un lugar silencioso y evitá tener una luz fuerte detrás tuyo.</p>
-    <button id="mh-tips-continue-btn" class="mh-btn mh-btn--primary" type="button">Empezar a grabar</button>
+    <button id="mh-tips-continue-btn" class="mh-btn mh-btn--primary" type="button">Listo, empezar</button>
   </div>
 
   <!-- Clip preview screen -->
@@ -105,8 +110,11 @@
     <a id="mh-whatsapp-error" class="mh-btn" href="#" target="_blank" rel="noopener">Escribinos por WhatsApp</a>
   </section>
 
-  <a id="mh-whatsapp-start" class="mh-whatsapp-btn" href="#" target="_blank" rel="noopener" aria-label="Dudas por WhatsApp">💬</a>
+  <a id="mh-whatsapp-start" class="mh-whatsapp-bubble" href="#" target="_blank" rel="noopener" aria-label="Dudas por WhatsApp">
+    <span class="mh-whatsapp-icon">💬</span>
+    <span class="mh-whatsapp-text">¿Tenés dudas?<br />Escribinos</span>
+  </a>
 
-  <script type="module" src="./app.js"></script>
+  <script type="module" src="./app.js?v=2"></script>
 </body>
 </html>

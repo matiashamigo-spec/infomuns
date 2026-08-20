@@ -35,6 +35,7 @@ function showScreen(name) {
   Object.values(screens).forEach((s) => s.classList.add('mh-hidden'));
   screens[name].classList.remove('mh-hidden');
   el('mh-logo').classList.toggle('mh-hidden', CAMERA_SCREENS.includes(name));
+  document.body.classList.toggle('mh-compact', name === 'record');
 }
 
 // WhatsApp links
@@ -262,6 +263,11 @@ async function sendRecording() {
     retryBtn.disabled = false;
   }
 }
+
+// El botón "Empezar" queda deshabilitado hasta que acepten los términos
+el('mh-terms-checkbox').addEventListener('change', (e) => {
+  el('mh-start-btn').disabled = !e.target.checked;
+});
 
 // Event wiring
 el('mh-start-btn').addEventListener('click', startCamera);
