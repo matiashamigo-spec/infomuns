@@ -296,6 +296,8 @@ async function sendRecording() {
   const sendBtn = el('mh-send-btn');
   const retryBtn = el('mh-retry-upload-btn');
   const sizeMessage = el('mh-error-size-message');
+  const errorDetail = el('mh-error-detail');
+  errorDetail.classList.add('mh-hidden');
   const progressWrap = el('mh-progress-bar-wrap');
   const progressFill = el('mh-progress-bar-fill');
   const progressText = el('mh-progress-text');
@@ -330,6 +332,8 @@ async function sendRecording() {
     showScreen('sent');
   } catch (err) {
     console.error(err);
+    errorDetail.textContent = `Detalle técnico: ${err.name || 'Error'} — ${err.message || 'sin mensaje'}`;
+    errorDetail.classList.remove('mh-hidden');
     showScreen('error');
     sendBtn.disabled = false;
     retryBtn.disabled = false;
@@ -352,20 +356,20 @@ el('mh-terms-checkbox').addEventListener('change', updateStartButtonState);
 // del navegador (nunca se guarda solo), así que si el envío no anda, la
 // persona necesita una forma de sacarlos del celular para mandarlos a mano.
 function saveClipsToDevice() {
+  // Todas sincrónicas, sin setTimeout: Safari en iOS solo trata como
+  // "iniciada por el usuario" la descarga que dispara en el mismo tick del
+  // click — cualquiera diferida con setTimeout (aunque sea 0ms) la bloquea
+  // en silencio. Por eso antes solo bajaba el clip 1.
   recordedClips.forEach((blob, index) => {
-    setTimeout(() => {
-      const ext = blob.type.includes('mp4') ? 'mp4' : 'webm';
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `microhistoria-paso${index + 1}.${ext}`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      setTimeout(() => URL.revokeObjectURL(url), 10000);
-      // Espaciados: algunos navegadores mobile bloquean varias descargas
-      // disparadas juntas desde el mismo click.
-    }, index * 600);
+    const ext = blob.type.includes('mp4') ? 'mp4' : 'webm';
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `microhistoria-paso${index + 1}.${ext}`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
   });
 }
 
