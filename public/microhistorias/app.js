@@ -42,6 +42,9 @@ function showScreen(name) {
   // queda flotando encima de los botones de grabar/usar). En el resto —
   // inicio, material de apoyo, envío, etc. — queda visible por si hay dudas.
   el('mh-whatsapp-start').classList.toggle('mh-hidden', CAMERA_SCREENS.includes(name));
+  // En iOS, cerrar el teclado (después de cargar el teléfono) a veces deja
+  // la página con scroll residual, tapando el título de la siguiente pantalla.
+  window.scrollTo(0, 0);
 }
 
 // WhatsApp links
@@ -79,14 +82,12 @@ let focusExposureButtonsWired = false;
 async function startCamera() {
   try {
     stream = await navigator.mediaDevices.getUserMedia({
-      // Sin width/height "ideal" (forzar una resolución exacta hacía que el
-      // navegador recortara agresivamente el sensor, dando zoom no deseado).
-      // Pero sin ningún hint de orientación, varios Android graban el video
-      // en la orientación horizontal nativa del sensor y solo rotan la
-      // vista en vivo para mostrarla derecha — el archivo grabado queda de
-      // costado. aspectRatio (como sugerencia, no exacto) le pide un stream
-      // vertical sin recortar agresivamente el encuadre.
-      video: { facingMode: 'user', aspectRatio: { ideal: 9 / 16 } },
+      // Sin width/height/aspectRatio: cualquier hint de forma le pide al
+      // navegador recortar el sensor para llegar a esa relación, dando zoom
+      // no deseado (probado: hasta aspectRatio "ideal" lo dispara en algunos
+      // Android). El problema de video grabado de costado se resuelve aparte,
+      // corrigiendo la orientación del stream en software (ver rotateStreamIfNeeded).
+      video: { facingMode: 'user' },
       audio: true,
     });
     track = stream.getVideoTracks()[0];

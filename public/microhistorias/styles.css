@@ -52,6 +52,7 @@ h1, h2, h3 {
 p {
   line-height: 1.5;
   margin: 0 0 16px;
+  text-align: center;
 }
 
 .mh-card {
@@ -159,6 +160,13 @@ p {
   min-height: 0;
   height: auto;
   margin-top: 4px;
+}
+
+/* El espaciado extra de .mh-tip (para que el texto no quede pegado a los
+   botones en el resto de la app) rompe el ajuste sin-scroll acá, donde cada
+   pixel cuenta — se mantiene compacto solo en esta pantalla. */
+#mh-record-screen .mh-tip {
+  margin: 2px 0;
 }
 
 .mh-camera-wrap video {
