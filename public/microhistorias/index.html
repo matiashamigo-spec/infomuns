@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" />
-  <link rel="stylesheet" href="./styles.css?v=2" />
+  <link rel="stylesheet" href="./styles.css?v=3" />
 </head>
 <body>
   <img id="mh-logo" class="mh-logo" src="https://pulgardigital.org/wp-content/uploads/2026/01/logo.png" alt="Muns" />
@@ -28,6 +28,10 @@
   <section id="mh-start-screen" class="mh-card mh-hidden">
     <h1>Contá tu micro historia</h1>
     <p>Vas a grabar 3 pasos cortos: una frase de inicio, tu historia, y una reflexión final.</p>
+    <label class="mh-field-label" for="mh-phone-input">
+      Tu número de teléfono (para contactarte si hace falta)
+      <input id="mh-phone-input" type="tel" placeholder="Ej: 291 6419599" required />
+    </label>
     <label class="mh-terms-check">
       <input id="mh-terms-checkbox" type="checkbox" />
       Acepto los <a href="https://muns.club/terminos-y-condiciones/" target="_blank" rel="noopener">Términos y condiciones</a>
@@ -62,6 +66,7 @@
   <div id="mh-tips-overlay" class="mh-tips-overlay">
     <h2>Antes de grabar</h2>
     <p class="mh-tip">Buscá un lugar silencioso y evitá tener una luz fuerte detrás tuyo.</p>
+    <p class="mh-tip">Alejá el celular lo más que te dé el brazo y que la parte de arriba de tu cabeza toque la línea punteada de arriba, para un buen plano.</p>
     <button id="mh-tips-continue-btn" class="mh-btn mh-btn--primary" type="button">Listo, empezar</button>
   </div>
 
@@ -91,6 +96,11 @@
   <section id="mh-final-screen" class="mh-card mh-hidden">
     <h2>Todo listo</h2>
     <p id="mh-final-summary" class="mh-tip"></p>
+    <p class="mh-tip">Recomendación: conectate a WiFi antes de enviar, el archivo puede pesar bastante.</p>
+    <div id="mh-progress-bar-wrap" class="mh-progress-bar-wrap mh-hidden">
+      <div id="mh-progress-bar-fill" class="mh-progress-bar-fill"></div>
+    </div>
+    <p id="mh-progress-text" class="mh-tip mh-hidden"></p>
     <button id="mh-send-btn" class="mh-btn mh-btn--primary" type="button">Enviar mi historia</button>
     <button id="mh-final-back-btn" class="mh-btn" type="button">Volver</button>
   </section>
@@ -115,6 +125,6 @@
     <span class="mh-whatsapp-text">¿Tenés dudas?<br />Escribinos</span>
   </a>
 
-  <script type="module" src="./app.js?v=2"></script>
+  <script type="module" src="./app.js?v=3"></script>
 </body>
 </html>

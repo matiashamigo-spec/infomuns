@@ -2,16 +2,18 @@ import { INTERVIEW_STEPS, getStepByIndex, isLastStep } from './steps.js';
 import { buildWhatsAppLink } from './whatsapp.js';
 import { VIDEO_MIME_CANDIDATES, pickSupportedMimeType, getFocusExposureSupport } from './media-support.js';
 import { watchOrientation } from './orientation.js';
-import { buildUploadFormData, submitRecording } from './upload.js';
+import { buildUploadFormData, submitRecordingWithProgress } from './upload.js';
 
 // Must match the path configured on the Webhook node once the n8n workflow exists
 // (see "Setup pendiente" in the design spec) — update if that path differs.
 const N8N_WEBHOOK_URL = 'https://n8n.wips.digital/webhook/microhistorias';
 const WHATSAPP_NUMBER = '+54 9 291 6419599';
-// Safe margin under Telegram Bot API's ~50MB video upload ceiling (the real
-// downstream constraint, not n8n's configurable 16MB default). If Telegram's
-// limit ever changes, this threshold needs to change too.
-const MAX_UPLOAD_BYTES = 45 * 1024 * 1024;
+// The final video no longer goes to Telegram directly (Telegram's Bot API
+// caps uploads at 50MB regardless of video/document, which a 7-minute
+// interview blows past at any usable quality) — it's uploaded to Google
+// Drive instead, so this is just a sanity ceiling against a runaway payload,
+// not a hard downstream limit.
+const MAX_UPLOAD_BYTES = 500 * 1024 * 1024;
 
 const el = (id) => document.getElementById(id);
 
@@ -36,6 +38,10 @@ function showScreen(name) {
   screens[name].classList.remove('mh-hidden');
   el('mh-logo').classList.toggle('mh-hidden', CAMERA_SCREENS.includes(name));
   document.body.classList.toggle('mh-compact', name === 'record');
+  // El botón de WhatsApp solo tiene sentido en el inicio (dudas antes de
+  // arrancar); en el resto de las pantallas queda flotando encima de los
+  // botones de acción, así que se oculta ahí.
+  el('mh-whatsapp-start').classList.toggle('mh-hidden', name !== 'start');
 }
 
 // WhatsApp links
@@ -124,6 +130,14 @@ function setupFocusExposureButtons() {
   focusExposureButtonsWired = true;
 }
 
+function formatSuggestedDuration(seconds) {
+  if (seconds % 60 === 0) {
+    const minutes = seconds / 60;
+    return `${minutes} minuto${minutes === 1 ? '' : 's'}`;
+  }
+  return `${seconds} segundos`;
+}
+
 function renderStep() {
   const step = getStepByIndex(currentStepIndex);
   el('mh-step-progress').textContent = `Paso ${currentStepIndex + 1} de ${INTERVIEW_STEPS.length}`;
@@ -131,7 +145,7 @@ function renderStep() {
   el('mh-step-prompt').textContent = step.prompt;
   const timerEl = el('mh-step-timer');
   if (step.suggestedMaxSeconds) {
-    timerEl.textContent = `Sugerencia: no más de ${step.suggestedMaxSeconds} segundos (no es obligatorio).`;
+    timerEl.textContent = `Sugerencia: hasta ${formatSuggestedDuration(step.suggestedMaxSeconds)}.`;
     timerEl.classList.remove('mh-hidden');
   } else {
     timerEl.classList.add('mh-hidden');
@@ -144,11 +158,10 @@ function renderStep() {
 function startRecording() {
   const mimeType = pickSupportedMimeType(VIDEO_MIME_CANDIDATES, (t) => MediaRecorder.isTypeSupported(t));
   recordedChunks = [];
-  // Sin bitrate explícito, MediaRecorder graba a una tasa muy alta por
-  // defecto (varía por navegador) y hasta clips cortos superan el límite de
-  // subida. 2.5 Mbps de video sigue siendo nítido para esta resolución y deja
-  // varios minutos de margen antes de tocar MAX_UPLOAD_BYTES.
-  const recorderOptions = { videoBitsPerSecond: 2_500_000, audioBitsPerSecond: 128_000 };
+  // El video final se sube a Drive (no a Telegram), así que no hay que
+  // recortar la calidad para entrar en el límite de 50MB de Telegram — las
+  // historias se reusan en redes, así que priorizamos nitidez.
+  const recorderOptions = { videoBitsPerSecond: 4_000_000, audioBitsPerSecond: 128_000 };
   if (mimeType) recorderOptions.mimeType = mimeType;
   mediaRecorder = new MediaRecorder(stream, recorderOptions);
   mediaRecorder.addEventListener('dataavailable', (e) => {
@@ -210,11 +223,25 @@ function useClipAndContinue() {
 function renderSupportList() {
   const list = el('mh-support-list');
   list.innerHTML = '';
-  supportFiles.forEach((file) => {
+  supportFiles.forEach((file, index) => {
     const li = document.createElement('li');
-    li.textContent = file.name || 'Archivo agregado';
+    const label = document.createElement('span');
+    label.textContent = file.name || 'Archivo agregado';
+    const removeBtn = document.createElement('button');
+    removeBtn.type = 'button';
+    removeBtn.className = 'mh-support-remove-btn';
+    removeBtn.setAttribute('aria-label', 'Sacar este archivo');
+    removeBtn.textContent = '×';
+    removeBtn.addEventListener('click', () => removeSupportFile(index));
+    li.appendChild(label);
+    li.appendChild(removeBtn);
     list.appendChild(li);
   });
+}
+
+function removeSupportFile(index) {
+  supportFiles.splice(index, 1);
+  renderSupportList();
 }
 
 function addSupportFiles(fileList) {
@@ -239,6 +266,9 @@ async function sendRecording() {
   const sendBtn = el('mh-send-btn');
   const retryBtn = el('mh-retry-upload-btn');
   const sizeMessage = el('mh-error-size-message');
+  const progressWrap = el('mh-progress-bar-wrap');
+  const progressFill = el('mh-progress-bar-fill');
+  const progressText = el('mh-progress-text');
   sendBtn.disabled = true;
   retryBtn.disabled = true;
 
@@ -252,22 +282,41 @@ async function sendRecording() {
   }
   sizeMessage.classList.add('mh-hidden');
 
+  // Reintentar desde la pantalla de error vuelve acá para que la barra de
+  // progreso (que vive en la pantalla final) sea visible durante la subida.
+  showScreen('final');
+  progressWrap.classList.remove('mh-hidden');
+  progressText.classList.remove('mh-hidden');
+  progressFill.style.width = '0%';
+  progressText.textContent = 'Subiendo... 0%';
+
   try {
-    const formData = buildUploadFormData(recordedClips, supportFiles);
-    await submitRecording(N8N_WEBHOOK_URL, formData);
+    const phone = el('mh-phone-input').value.trim();
+    const formData = buildUploadFormData(recordedClips, supportFiles, phone);
+    await submitRecordingWithProgress(N8N_WEBHOOK_URL, formData, (percent) => {
+      progressFill.style.width = `${percent}%`;
+      progressText.textContent = `Subiendo... ${percent}%`;
+    });
     showScreen('sent');
   } catch (err) {
     console.error(err);
     showScreen('error');
     sendBtn.disabled = false;
     retryBtn.disabled = false;
+  } finally {
+    progressWrap.classList.add('mh-hidden');
+    progressText.classList.add('mh-hidden');
   }
 }
 
-// El botón "Empezar" queda deshabilitado hasta que acepten los términos
-el('mh-terms-checkbox').addEventListener('change', (e) => {
-  el('mh-start-btn').disabled = !e.target.checked;
-});
+// El botón "Empezar" queda deshabilitado hasta que carguen el teléfono y acepten los términos
+function updateStartButtonState() {
+  const hasPhone = el('mh-phone-input').value.trim().length > 0;
+  const hasAcceptedTerms = el('mh-terms-checkbox').checked;
+  el('mh-start-btn').disabled = !(hasPhone && hasAcceptedTerms);
+}
+el('mh-phone-input').addEventListener('input', updateStartButtonState);
+el('mh-terms-checkbox').addEventListener('change', updateStartButtonState);
 
 // Event wiring
 el('mh-start-btn').addEventListener('click', startCamera);

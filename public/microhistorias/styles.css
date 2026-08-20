@@ -134,7 +134,7 @@ p {
   border-radius: var(--mh-radius-card);
   overflow: hidden;
   background: #000;
-  margin-bottom: 12px;
+  margin: 0 auto 12px;
 }
 
 /* La pantalla de grabación necesita entrar completa (título + instrucción +
@@ -168,10 +168,34 @@ p {
 
 .mh-frame-guide {
   position: absolute;
-  inset: 12%;
+  top: 5%;
+  bottom: 8%;
+  left: 18%;
+  right: 18%;
   border: 4px dashed rgba(255, 255, 255, 0.85);
   border-radius: 24px;
   pointer-events: none;
+}
+
+/* Marcas de baja opacidad a la altura aproximada de los ojos, como referencia
+   visual extra para encuadrar (no es detección real, solo una guía fija). */
+.mh-frame-guide::before,
+.mh-frame-guide::after {
+  content: '';
+  position: absolute;
+  top: 30%;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.mh-frame-guide::before {
+  left: 28%;
+}
+
+.mh-frame-guide::after {
+  right: 28%;
 }
 
 .mh-tip {
@@ -196,6 +220,53 @@ p {
   color: var(--mh-heading);
   margin-bottom: 8px;
   text-align: center;
+}
+
+#mh-step-timer {
+  text-align: center;
+}
+
+.mh-progress-bar-wrap {
+  width: 100%;
+  max-width: 420px;
+  height: 12px;
+  border: 2px solid var(--mh-border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--mh-bg);
+  margin-bottom: 8px;
+}
+
+.mh-progress-bar-fill {
+  height: 100%;
+  width: 0%;
+  background: var(--mh-accent);
+  transition: width 0.15s ease;
+}
+
+#mh-progress-text {
+  text-align: center;
+}
+
+.mh-field-label {
+  display: block;
+  text-align: left;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--mh-text-secondary);
+  margin-bottom: 16px;
+}
+
+.mh-field-label input[type='tel'] {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+  padding: 12px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 16px;
+  border: 2px solid var(--mh-border);
+  border-radius: 12px;
+  box-sizing: border-box;
 }
 
 .mh-whatsapp-bubble {
@@ -276,6 +347,10 @@ p {
 }
 
 .mh-support-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   font-size: 14px;
   line-height: 1.4;
   color: var(--mh-text-secondary);
@@ -283,4 +358,16 @@ p {
   border: 2px solid var(--mh-border);
   border-radius: 12px;
   padding: 8px 12px;
+}
+
+.mh-support-remove-btn {
+  border: none;
+  background: transparent;
+  color: var(--mh-heading);
+  font-weight: 900;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 4px;
+  flex-shrink: 0;
 }

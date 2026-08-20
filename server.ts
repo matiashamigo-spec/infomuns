@@ -594,7 +594,19 @@ async function startServer() {
   app.use("/api/noticias", createNoticiasRouter());
 
   // ── Micro Historias ──────────────────────────────────────────────────────
-  app.use("/microhistorias", express.static(path.join(process.cwd(), "public", "microhistorias")));
+  // El HTML nunca se cachea (evita servir una versión vieja de la página
+  // mientras CSS/JS ya se actualizaron); CSS/JS quedan versionados con ?v=N
+  // en el propio HTML, así que su caché normal no genera problemas.
+  app.use(
+    "/microhistorias",
+    express.static(path.join(process.cwd(), "public", "microhistorias"), {
+      setHeaders: (res, filePath) => {
+        if (filePath.endsWith(".html")) {
+          res.setHeader("Cache-Control", "no-cache");
+        }
+      },
+    })
+  );
 
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {

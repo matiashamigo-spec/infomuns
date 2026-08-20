@@ -3,19 +3,19 @@ export const INTERVIEW_STEPS = [
     id: 'frase-inicio',
     title: 'Frase de inicio',
     prompt: 'Soy (nombre o apodo) y hoy te voy a contar el día que... (emoción o historia)',
-    suggestedMaxSeconds: 10,
+    suggestedMaxSeconds: 60,
   },
   {
     id: 'historia',
     title: 'Contá la historia',
     prompt: 'Contá tu historia con tus propias palabras.',
-    suggestedMaxSeconds: null,
+    suggestedMaxSeconds: 300,
   },
   {
     id: 'reflexion',
     title: 'Reflexión final',
     prompt: 'Contanos qué sentiste cuando te pasó.',
-    suggestedMaxSeconds: null,
+    suggestedMaxSeconds: 60,
   },
 ];
 
