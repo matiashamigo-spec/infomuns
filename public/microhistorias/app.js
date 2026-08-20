@@ -79,12 +79,14 @@ let focusExposureButtonsWired = false;
 async function startCamera() {
   try {
     stream = await navigator.mediaDevices.getUserMedia({
-      // Sin width/height "ideal": forzar una resolución exacta hacía que el
-      // navegador recortara agresivamente el sensor para llegar a esa relación
-      // de aspecto, dando un efecto de zoom no deseado. Sin esa restricción,
-      // la cámara usa su campo de visión natural y el recorte visual queda
-      // a cargo del CSS (mh-camera-wrap con object-fit: cover).
-      video: { facingMode: 'user' },
+      // Sin width/height "ideal" (forzar una resolución exacta hacía que el
+      // navegador recortara agresivamente el sensor, dando zoom no deseado).
+      // Pero sin ningún hint de orientación, varios Android graban el video
+      // en la orientación horizontal nativa del sensor y solo rotan la
+      // vista en vivo para mostrarla derecha — el archivo grabado queda de
+      // costado. aspectRatio (como sugerencia, no exacto) le pide un stream
+      // vertical sin recortar agresivamente el encuadre.
+      video: { facingMode: 'user', aspectRatio: { ideal: 9 / 16 } },
       audio: true,
     });
     track = stream.getVideoTracks()[0];
