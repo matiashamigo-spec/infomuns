@@ -17,12 +17,6 @@ const MAX_UPLOAD_BYTES = 500 * 1024 * 1024;
 
 const el = (id) => document.getElementById(id);
 
-// Panel de diagnóstico temporal ya cumplió su función (confirmó que la
-// cámara y el canvas andaban bien, y que el propio panel — tapando el
-// botón de tips — era la causa del "se queda trabado"). debugLog queda
-// como no-op para no tener que tocar cada punto donde se llamaba.
-function debugLog() {}
-
 const screens = {
   unsupported: el('mh-unsupported-screen'),
   start: el('mh-start-screen'),
@@ -86,8 +80,6 @@ const isSupported =
   typeof window.MediaRecorder !== 'undefined' &&
   !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
 
-debugLog('app.js cargado, isSupported=' + isSupported + ', captureStream=' + (typeof HTMLCanvasElement.prototype.captureStream));
-
 if (!isSupported) {
   showScreen('unsupported');
 } else {
@@ -97,7 +89,6 @@ if (!isSupported) {
 // App state
 let stream = null;
 let recordingStream = null;
-let relayCleanup = null;
 let track = null;
 let currentStepIndex = 0;
 const recordedClips = [];
@@ -108,97 +99,27 @@ let pendingClipBlob = null;
 let previewObjectUrl = null;
 let focusExposureButtonsWired = false;
 
-// En algunos Android, MediaRecorder graba el buffer crudo de la cámara sin
-// aplicar la rotación que el navegador SÍ usa para mostrar la vista en vivo
-// derecha — por eso la vista previa se ve bien pero el archivo queda de
-// costado. La corrección: "fotografiar" en un canvas lo que YA se ve bien
-// en pantalla y grabar ESE stream. sourceVideo tiene que ser el <video> que
-// el usuario ya está viendo (no uno nuevo fuera del DOM) — en iOS, un video
-// desconectado del documento a veces no llega a decodificar ningún cuadro,
-// dejando el canvas en negro sin ningún error visible.
-function buildRelayStream(originalStream, sourceVideo) {
-  const canvas = document.createElement('canvas');
-  canvas.width = sourceVideo.videoWidth || 720;
-  canvas.height = sourceVideo.videoHeight || 1280;
-  // Igual que con el <video>: en iOS un canvas nunca insertado en la página
-  // puede tener un captureStream() poco confiable. Se agrega fuera de vista
-  // pero DENTRO del documento (display:none pausa el render en cualquier
-  // navegador, por eso posición fija fuera de pantalla en vez de eso).
-  canvas.style.cssText = 'position:fixed;top:-9999px;left:-9999px;';
-  document.body.appendChild(canvas);
-  const ctx = canvas.getContext('2d');
-
-  let rafId = null;
-  let stopped = false;
-  // requestAnimationFrame corre al ritmo de pantalla del celular (60, hasta
-  // 120 en los con ProMotion) — dibujar un cuadro de video entero esa
-  // cantidad de veces por segundo satura el hilo principal y deja a la
-  // página lenta para responder toques, aunque funcione. 24fps alcanza de
-  // sobra para esto y es una fracción del costo.
-  const targetFrameInterval = 1000 / 24;
-  let lastDrawTime = 0;
-  function drawFrame(now) {
-    if (stopped) return;
-    if (now - lastDrawTime >= targetFrameInterval) {
-      lastDrawTime = now;
-      if (sourceVideo.readyState >= 2 && sourceVideo.videoWidth) {
-        if (canvas.width !== sourceVideo.videoWidth || canvas.height !== sourceVideo.videoHeight) {
-          canvas.width = sourceVideo.videoWidth;
-          canvas.height = sourceVideo.videoHeight;
-        }
-        ctx.drawImage(sourceVideo, 0, 0, canvas.width, canvas.height);
-      }
-    }
-    rafId = requestAnimationFrame(drawFrame);
-  }
-  rafId = requestAnimationFrame(drawFrame);
-
-  const canvasStream = canvas.captureStream(24);
-  originalStream.getAudioTracks().forEach((t) => canvasStream.addTrack(t));
-
-  return {
-    stream: canvasStream,
-    stop() {
-      stopped = true;
-      if (rafId) cancelAnimationFrame(rafId);
-      canvas.remove();
-    },
-  };
-}
-
 async function startCamera() {
-  debugLog('startCamera: pidiendo permiso de cámara...');
   try {
     stream = await navigator.mediaDevices.getUserMedia({
       // Sin width/height/aspectRatio: cualquier hint de forma le pide al
       // navegador recortar el sensor para llegar a esa relación, dando zoom
-      // no deseado (probado: hasta aspectRatio "ideal" lo dispara en algunos
-      // Android). El problema de video grabado de costado se resuelve aparte
-      // (buildRelayStream), sin tocar los constraints de la cámara.
+      // no deseado. Se probó corregir la orientación con un canvas de por
+      // medio (dibujar cada cuadro antes de grabarlo), pero eso sobrecarga
+      // el procesador del celular y deja toda la app lenta — peor que el
+      // problema que intentaba arreglar. Se graba el stream crudo directo;
+      // el video puede salir de costado en algunos Android, pendiente.
       video: { facingMode: 'user' },
       audio: true,
     });
-    debugLog('startCamera: permiso OK, track=' + stream.getVideoTracks()[0].label);
     track = stream.getVideoTracks()[0];
+    recordingStream = stream;
     const video = el('mh-camera-video');
-    // La vista en vivo muestra el stream crudo directo (el navegador ya la
-    // rota bien para mostrarla) — el canvas de buildRelayStream lee cuadros
-    // de ESTE mismo <video>, así que primero tiene que tener metadata.
     video.srcObject = stream;
-    await new Promise((resolve) => {
-      if (video.readyState >= 1) resolve();
-      else video.addEventListener('loadedmetadata', resolve, { once: true });
-    });
-    debugLog(`startCamera: video listo ${video.videoWidth}x${video.videoHeight}`);
-    const relay = buildRelayStream(stream, video);
-    recordingStream = relay.stream;
-    relayCleanup = relay.stop;
     setupFocusExposureButtons();
     renderStep();
     showScreen('record');
-    debugLog('startCamera: showScreen(record) listo');
   } catch (err) {
-    debugLog('startCamera: ERROR ' + err.name + ' ' + err.message);
     if (err.name === 'NotAllowedError') {
       console.error(err);
     } else {
@@ -320,10 +241,6 @@ function useClipAndContinue() {
     // it's safe to unconditionally release the camera/mic here.
     if (stream) {
       stream.getTracks().forEach((t) => t.stop());
-    }
-    if (relayCleanup) {
-      relayCleanup();
-      relayCleanup = null;
     }
     showScreen('support');
   } else {
@@ -456,7 +373,6 @@ function saveClipsToDevice() {
 el('mh-start-btn').addEventListener('click', startCamera);
 el('mh-permission-retry-btn').addEventListener('click', startCamera);
 el('mh-tips-continue-btn').addEventListener('click', () => {
-  debugLog('tips-continue-btn: click recibido');
   el('mh-tips-overlay').classList.remove('is-visible');
   resetScrollDeferred();
 });
