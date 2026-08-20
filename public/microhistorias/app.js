@@ -33,6 +33,16 @@ const screens = {
 // el video entre completo en la pantalla sin necesidad de hacer scroll.
 const CAMERA_SCREENS = ['record', 'preview'];
 
+// En iOS/Android, cerrar el teclado o un overlay de pantalla completa a
+// veces deja la página con scroll residual, tapando el título de la
+// siguiente pantalla. document.documentElement/body además de window
+// porque el mobile Safari no siempre respeta uno solo de los tres.
+function resetScroll() {
+  window.scrollTo(0, 0);
+  document.documentElement.scrollTop = 0;
+  document.body.scrollTop = 0;
+}
+
 function showScreen(name) {
   Object.values(screens).forEach((s) => s.classList.add('mh-hidden'));
   screens[name].classList.remove('mh-hidden');
@@ -42,9 +52,8 @@ function showScreen(name) {
   // queda flotando encima de los botones de grabar/usar). En el resto —
   // inicio, material de apoyo, envío, etc. — queda visible por si hay dudas.
   el('mh-whatsapp-start').classList.toggle('mh-hidden', CAMERA_SCREENS.includes(name));
-  // En iOS, cerrar el teclado (después de cargar el teléfono) a veces deja
-  // la página con scroll residual, tapando el título de la siguiente pantalla.
-  window.scrollTo(0, 0);
+  resetScroll();
+  requestAnimationFrame(resetScroll);
 }
 
 // WhatsApp links
@@ -69,6 +78,8 @@ if (!isSupported) {
 
 // App state
 let stream = null;
+let recordingStream = null;
+let rotationCleanup = null;
 let track = null;
 let currentStepIndex = 0;
 const recordedClips = [];
@@ -79,6 +90,51 @@ let pendingClipBlob = null;
 let previewObjectUrl = null;
 let focusExposureButtonsWired = false;
 
+// En algunos Android la cámara frontal entrega el stream con el ancho y el
+// alto invertidos (horizontal) aunque el teléfono esté en vertical: la vista
+// en vivo se ve bien porque el navegador la rota solo para mostrarla, pero
+// el archivo grabado queda de costado. Se corrige dibujando cada cuadro
+// rotado 90° en un canvas y grabando ESE stream en vez del crudo.
+function buildRotatedStream(originalStream, srcWidth, srcHeight) {
+  const canvas = document.createElement('canvas');
+  canvas.width = srcHeight;
+  canvas.height = srcWidth;
+  const ctx = canvas.getContext('2d');
+
+  const sourceVideo = document.createElement('video');
+  sourceVideo.muted = true;
+  sourceVideo.playsInline = true;
+  sourceVideo.srcObject = originalStream;
+  sourceVideo.play().catch(() => {});
+
+  let rafId = null;
+  let stopped = false;
+  function drawFrame() {
+    if (stopped) return;
+    if (sourceVideo.readyState >= 2) {
+      ctx.save();
+      ctx.translate(canvas.width / 2, canvas.height / 2);
+      ctx.rotate(Math.PI / 2);
+      ctx.drawImage(sourceVideo, -srcWidth / 2, -srcHeight / 2, srcWidth, srcHeight);
+      ctx.restore();
+    }
+    rafId = requestAnimationFrame(drawFrame);
+  }
+  rafId = requestAnimationFrame(drawFrame);
+
+  const canvasStream = canvas.captureStream(30);
+  originalStream.getAudioTracks().forEach((t) => canvasStream.addTrack(t));
+
+  return {
+    stream: canvasStream,
+    stop() {
+      stopped = true;
+      if (rafId) cancelAnimationFrame(rafId);
+      sourceVideo.srcObject = null;
+    },
+  };
+}
+
 async function startCamera() {
   try {
     stream = await navigator.mediaDevices.getUserMedia({
@@ -86,13 +142,22 @@ async function startCamera() {
       // navegador recortar el sensor para llegar a esa relación, dando zoom
       // no deseado (probado: hasta aspectRatio "ideal" lo dispara en algunos
       // Android). El problema de video grabado de costado se resuelve aparte,
-      // corrigiendo la orientación del stream en software (ver rotateStreamIfNeeded).
+      // corrigiendo la orientación del stream en software (buildRotatedStream).
       video: { facingMode: 'user' },
       audio: true,
     });
     track = stream.getVideoTracks()[0];
+    const settings = track.getSettings();
+    if (settings.width && settings.height && settings.width > settings.height) {
+      const rotated = buildRotatedStream(stream, settings.width, settings.height);
+      recordingStream = rotated.stream;
+      rotationCleanup = rotated.stop;
+    } else {
+      recordingStream = stream;
+      rotationCleanup = null;
+    }
     const video = el('mh-camera-video');
-    video.srcObject = stream;
+    video.srcObject = recordingStream;
     setupFocusExposureButtons();
     renderStep();
     showScreen('record');
@@ -170,7 +235,7 @@ function startRecording() {
   // historias se reusan en redes, así que priorizamos nitidez.
   const recorderOptions = { videoBitsPerSecond: 4_000_000, audioBitsPerSecond: 128_000 };
   if (mimeType) recorderOptions.mimeType = mimeType;
-  mediaRecorder = new MediaRecorder(stream, recorderOptions);
+  mediaRecorder = new MediaRecorder(recordingStream, recorderOptions);
   mediaRecorder.addEventListener('dataavailable', (e) => {
     if (e.data.size > 0) recordedChunks.push(e.data);
   });
@@ -218,6 +283,10 @@ function useClipAndContinue() {
     // it's safe to unconditionally release the camera/mic here.
     if (stream) {
       stream.getTracks().forEach((t) => t.stop());
+    }
+    if (rotationCleanup) {
+      rotationCleanup();
+      rotationCleanup = null;
     }
     showScreen('support');
   } else {
@@ -330,6 +399,7 @@ el('mh-start-btn').addEventListener('click', startCamera);
 el('mh-permission-retry-btn').addEventListener('click', startCamera);
 el('mh-tips-continue-btn').addEventListener('click', () => {
   el('mh-tips-overlay').classList.remove('is-visible');
+  resetScroll();
 });
 el('mh-record-btn').addEventListener('click', startRecording);
 el('mh-stop-btn').addEventListener('click', stopRecording);
