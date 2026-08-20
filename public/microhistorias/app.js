@@ -54,6 +54,23 @@ function resetScrollDeferred() {
   setTimeout(resetScroll, 400);
 }
 
+// 100dvh/100vh no se comportaban igual en todos los celulares (algunos
+// seguían contando la barra de direcciones como parte del alto visible),
+// dejando la pantalla de grabación más alta de lo que en verdad se veía —
+// por eso "aparecía scrolleada" y el botón "Grabar" quedaba tapado.
+// window.innerHeight sí refleja el alto real visible en cada momento.
+function fitRecordScreen() {
+  el('mh-record-screen').style.height = `${window.innerHeight - 16}px`;
+}
+window.addEventListener('resize', () => {
+  if (!el('mh-record-screen').classList.contains('mh-hidden')) fitRecordScreen();
+});
+window.addEventListener('orientationchange', () => {
+  setTimeout(() => {
+    if (!el('mh-record-screen').classList.contains('mh-hidden')) fitRecordScreen();
+  }, 300);
+});
+
 function showScreen(name) {
   Object.values(screens).forEach((s) => s.classList.add('mh-hidden'));
   screens[name].classList.remove('mh-hidden');
@@ -63,6 +80,7 @@ function showScreen(name) {
   // queda flotando encima de los botones de grabar/usar). En el resto —
   // inicio, material de apoyo, envío, etc. — queda visible por si hay dudas.
   el('mh-whatsapp-start').classList.toggle('mh-hidden', CAMERA_SCREENS.includes(name));
+  if (name === 'record') fitRecordScreen();
   resetScrollDeferred();
 }
 
