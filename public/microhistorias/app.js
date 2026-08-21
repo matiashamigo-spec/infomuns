@@ -5,16 +5,16 @@
 // el módulo en silencio, dejando la página sin mostrar ninguna pantalla
 // (ni el formulario ni el aviso de girar el teléfono). Bumpear la versión
 // acá es tan importante como bumpearla en el <script> de index.html.
-import { INTERVIEW_STEPS, getStepByIndex, isLastStep } from './steps.js?v=29';
-import { buildWhatsAppLink } from './whatsapp.js?v=29';
-import { VIDEO_MIME_CANDIDATES, pickSupportedMimeType } from './media-support.js?v=29';
-import { watchOrientation } from './orientation.js?v=29';
+import { INTERVIEW_STEPS, getStepByIndex, isLastStep } from './steps.js?v=30';
+import { buildWhatsAppLink } from './whatsapp.js?v=30';
+import { VIDEO_MIME_CANDIDATES, pickSupportedMimeType } from './media-support.js?v=30';
+import { watchOrientation } from './orientation.js?v=30';
 import {
   batchSupportFiles,
   buildClipBatchFormData,
   buildSupportBatchFormData,
   submitBatchesWithProgress,
-} from './upload.js?v=29';
+} from './upload.js?v=30';
 
 // Must match the path configured on the Webhook node once the n8n workflow exists
 // (see "Setup pendiente" in the design spec) — update if that path differs.
@@ -193,7 +193,7 @@ function renderStep() {
   el('mh-step-prompt').textContent = step.prompt;
   const timerEl = el('mh-step-timer');
   if (step.suggestedMaxSeconds) {
-    timerEl.textContent = `Sugerencia: hasta ${formatSuggestedDuration(step.suggestedMaxSeconds)}.`;
+    timerEl.textContent = `Se corta sola a los ${formatSuggestedDuration(step.suggestedMaxSeconds)}.`;
     timerEl.classList.remove('mh-hidden');
   } else {
     timerEl.classList.add('mh-hidden');
@@ -216,13 +216,20 @@ function formatElapsed(totalSeconds) {
   return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 }
 
-function startRecordingTimer() {
+// maxSeconds corta la grabación sola al llegar al límite del paso — no es
+// solo el texto de sugerencia, un video largo a esta resolución puede
+// tardar mucho en codificarse del lado del servidor (confirmado en
+// pruebas reales: sin este corte, el servidor se queda sin recursos).
+function startRecordingTimer(maxSeconds) {
   recordingStartTime = Date.now();
   el('mh-recording-timer').textContent = '0:00';
   el('mh-recording-indicator').classList.remove('mh-hidden');
   recordingTimerInterval = setInterval(() => {
     const elapsed = Math.floor((Date.now() - recordingStartTime) / 1000);
     el('mh-recording-timer').textContent = formatElapsed(elapsed);
+    if (maxSeconds && elapsed >= maxSeconds) {
+      stopRecording();
+    }
   }, 1000);
 }
 
@@ -267,7 +274,7 @@ function startRecording() {
     el('mh-stop-btn').classList.add('mh-hidden');
   });
   mediaRecorder.start();
-  startRecordingTimer();
+  startRecordingTimer(getStepByIndex(currentStepIndex).suggestedMaxSeconds);
   el('mh-record-btn').classList.add('mh-hidden');
   el('mh-stop-btn').classList.remove('mh-hidden');
 }

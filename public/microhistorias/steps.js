@@ -9,7 +9,7 @@ export const INTERVIEW_STEPS = [
     id: 'historia',
     title: 'Contá tu historia',
     prompt: 'Antes de grabar, organizá en tu cabeza lo que querés contar.',
-    suggestedMaxSeconds: 300,
+    suggestedMaxSeconds: 240,
   },
   {
     id: 'reflexion',
