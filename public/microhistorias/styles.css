@@ -72,6 +72,16 @@ p {
   margin-bottom: 16px;
 }
 
+/* La página entera no scrollea (a propósito), pero acá adentro la lista de
+   archivos agregados puede crecer sin límite — si no puede scrollear ELLA,
+   el botón "Seguir" queda inalcanzable con muchos archivos agregados. */
+.mh-support-screen {
+  max-height: calc(100vh - 32px);
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 .mh-btn {
   display: inline-flex;
   align-items: center;
