@@ -2,7 +2,6 @@ import { describe, it, expect } from 'vitest';
 import {
   VIDEO_MIME_CANDIDATES,
   pickSupportedMimeType,
-  getFocusExposureSupport,
 } from '../../public/microhistorias/media-support.js';
 
 describe('pickSupportedMimeType', () => {
@@ -18,28 +17,5 @@ describe('pickSupportedMimeType', () => {
 
   it('returns null when nothing is supported', () => {
     expect(pickSupportedMimeType(VIDEO_MIME_CANDIDATES, () => false)).toBeNull();
-  });
-});
-
-describe('getFocusExposureSupport', () => {
-  it('detects manual focus and exposure support (Android/Chrome-like capabilities)', () => {
-    const result = getFocusExposureSupport({
-      focusMode: ['continuous', 'manual'],
-      exposureMode: ['continuous', 'manual'],
-    });
-    expect(result).toEqual({ canLockFocus: true, canLockExposure: true });
-  });
-
-  it('reports no support for an empty capabilities object (iPhone/Safari-like)', () => {
-    expect(getFocusExposureSupport({})).toEqual({ canLockFocus: false, canLockExposure: false });
-  });
-
-  it('reports no support when given undefined', () => {
-    expect(getFocusExposureSupport(undefined)).toEqual({ canLockFocus: false, canLockExposure: false });
-  });
-
-  it('reports no support when the mode list does not include manual', () => {
-    const result = getFocusExposureSupport({ focusMode: ['continuous'], exposureMode: ['continuous'] });
-    expect(result).toEqual({ canLockFocus: false, canLockExposure: false });
   });
 });

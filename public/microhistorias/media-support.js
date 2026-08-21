@@ -12,12 +12,3 @@ export function pickSupportedMimeType(candidates, isTypeSupportedFn) {
   return null;
 }
 
-export function getFocusExposureSupport(capabilities) {
-  const c = capabilities || {};
-  const focusModes = Array.isArray(c.focusMode) ? c.focusMode : [];
-  const exposureModes = Array.isArray(c.exposureMode) ? c.exposureMode : [];
-  return {
-    canLockFocus: focusModes.includes('manual'),
-    canLockExposure: exposureModes.includes('manual'),
-  };
-}

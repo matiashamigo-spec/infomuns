@@ -5,16 +5,16 @@
 // el módulo en silencio, dejando la página sin mostrar ninguna pantalla
 // (ni el formulario ni el aviso de girar el teléfono). Bumpear la versión
 // acá es tan importante como bumpearla en el <script> de index.html.
-import { INTERVIEW_STEPS, getStepByIndex, isLastStep } from './steps.js?v=25';
-import { buildWhatsAppLink } from './whatsapp.js?v=25';
-import { VIDEO_MIME_CANDIDATES, pickSupportedMimeType, getFocusExposureSupport } from './media-support.js?v=25';
-import { watchOrientation } from './orientation.js?v=25';
+import { INTERVIEW_STEPS, getStepByIndex, isLastStep } from './steps.js?v=28';
+import { buildWhatsAppLink } from './whatsapp.js?v=28';
+import { VIDEO_MIME_CANDIDATES, pickSupportedMimeType } from './media-support.js?v=28';
+import { watchOrientation } from './orientation.js?v=28';
 import {
   batchSupportFiles,
   buildClipBatchFormData,
   buildSupportBatchFormData,
   submitBatchesWithProgress,
-} from './upload.js?v=25';
+} from './upload.js?v=28';
 
 // Must match the path configured on the Webhook node once the n8n workflow exists
 // (see "Setup pendiente" in the design spec) — update if that path differs.
@@ -131,7 +131,6 @@ let mediaRecorder = null;
 let recordedChunks = [];
 let pendingClipBlob = null;
 let previewObjectUrl = null;
-let focusExposureButtonsWired = false;
 // submissionCtx guarda el folderId que devuelve la tanda de clips (para
 // que las tandas de apoyo sepan a qué carpeta subir). nextBatchIndex es lo
 // que permite que un reintento arranque justo donde falló, en vez de
@@ -163,7 +162,6 @@ async function startCamera() {
     const settings = track.getSettings();
     console.log('microhistorias: camera track settings', settings);
     el('mh-camera-debug').textContent = `${settings.width || '?'}x${settings.height || '?'}`;
-    setupFocusExposureButtons();
     renderStep();
     showScreen('record');
   } catch (err) {
@@ -178,29 +176,6 @@ async function startCamera() {
     }
     showScreen('permissionError');
   }
-}
-
-function setupFocusExposureButtons() {
-  if (focusExposureButtonsWired) return;
-  const focusBtn = el('mh-focus-lock-btn');
-  const exposureBtn = el('mh-exposure-lock-btn');
-  if (!track || typeof track.getCapabilities !== 'function') return;
-  const capabilities = track.getCapabilities();
-  const support = getFocusExposureSupport(capabilities);
-
-  if (support.canLockFocus) {
-    focusBtn.classList.remove('mh-hidden');
-    focusBtn.addEventListener('click', () => {
-      track.applyConstraints({ advanced: [{ focusMode: 'manual' }] });
-    });
-  }
-  if (support.canLockExposure) {
-    exposureBtn.classList.remove('mh-hidden');
-    exposureBtn.addEventListener('click', () => {
-      track.applyConstraints({ advanced: [{ exposureMode: 'manual' }] });
-    });
-  }
-  focusExposureButtonsWired = true;
 }
 
 function formatSuggestedDuration(seconds) {
