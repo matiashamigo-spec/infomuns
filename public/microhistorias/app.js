@@ -142,14 +142,22 @@ let nextBatchIndex = 0;
 async function startCamera() {
   try {
     stream = await navigator.mediaDevices.getUserMedia({
-      // Sin width/height/aspectRatio: cualquier hint de forma le pide al
+      // width/height/aspectRatio solos (sin resizeMode) le piden al
       // navegador recortar el sensor para llegar a esa relación, dando zoom
-      // no deseado. Se probó corregir la orientación con un canvas de por
-      // medio (dibujar cada cuadro antes de grabarlo), pero eso sobrecarga
-      // el procesador del celular y deja toda la app lenta — peor que el
-      // problema que intentaba arreglar. Se graba el stream crudo directo;
-      // el video puede salir de costado en algunos Android, pendiente.
-      video: { facingMode: 'user' },
+      // no deseado — por eso antes se sacaron por completo, a costa de
+      // quedar con el default chico (640x480). resizeMode:'none' es la
+      // forma correcta de pedir alta resolución SIN ese recorte: le dice
+      // al navegador que no escale/recorte el sensor, así que si no puede
+      // entregar 1080x1920 tal cual, debería caer al nativo en vez de
+      // cortar para forzar esa relación. 'ideal' (no 'exact') en todo para
+      // no fallar duro si el dispositivo no lo soporta. Pendiente: el
+      // video puede salir de costado en algunos Android.
+      video: {
+        facingMode: 'user',
+        width: { ideal: 1080 },
+        height: { ideal: 1920 },
+        resizeMode: { ideal: 'none' },
+      },
       audio: true,
     });
     track = stream.getVideoTracks()[0];
