@@ -59,16 +59,25 @@ export function batchSupportFiles(supportFiles) {
   return batches;
 }
 
-// La tanda de clips siempre va primero: crea la carpeta en Drive del lado
-// de n8n, que responde con esa carpeta (su `id` incluido) apenas la crea
-// — sin esperar a que termine ffmpeg. El teléfono va en TODAS las tandas
-// (no solo en la de clips): cada tanda es una ejecución de n8n aislada, y
-// el mensaje de Telegram final puede terminar disparándose desde la última
-// tanda de apoyo, que necesita el teléfono disponible en su propia data.
-export function buildClipsBatchFormData(interviewClips, phone, isLastBatch) {
-  const fd = buildUploadFormData(interviewClips, [], phone);
-  fd.append('kind', 'clips');
+// Cada clip va en SU PROPIO pedido, no los 3 juntos: un solo paso largo
+// (el de "contá tu historia" sugiere hasta 5 minutos) puede pesar bastante
+// más de 100MB él solo a buena calidad, y disparar la misma condición de
+// carrera que el material de apoyo — partir por cantidad de archivos no
+// alcanza si UN archivo ya es grande. El clip 1 crea la carpeta en Drive
+// (responde con su `id` apenas la crea, sin esperar a que termine nada);
+// los clips 2 y 3 ya vienen con ese folderId. El teléfono va en todos los
+// pedidos (clips y apoyo): cada uno es una ejecución de n8n aislada, y el
+// mensaje de Telegram final puede terminar disparándose desde cualquiera.
+export function buildClipBatchFormData(clipBlob, clipIndex, phone, folderId, isLastClip, isLastBatch) {
+  const fd = new FormData();
+  const ext = getExtensionForMimeType(clipBlob.type);
+  fd.append('clip', clipBlob, `clip${clipIndex}.${ext}`);
+  fd.append('kind', 'clip');
+  fd.append('clipIndex', String(clipIndex));
+  fd.append('isLastClip', isLastClip ? 'true' : 'false');
   fd.append('isLastBatch', isLastBatch ? 'true' : 'false');
+  if (folderId) fd.append('folderId', folderId);
+  if (phone) fd.append('telefono', phone);
   return fd;
 }
 

@@ -5,7 +5,7 @@ import {
   submitRecordingWithProgress,
   getExtensionForMimeType,
   batchSupportFiles,
-  buildClipsBatchFormData,
+  buildClipBatchFormData,
   buildSupportBatchFormData,
   submitBatchesWithProgress,
   SUPPORT_BATCH_MAX_BYTES,
@@ -188,15 +188,31 @@ describe('batchSupportFiles', () => {
   });
 });
 
-describe('buildClipsBatchFormData / buildSupportBatchFormData', () => {
-  it('tags the clips batch with kind=clips and isLastBatch', () => {
-    const clips = [new Blob(['a']), new Blob(['b']), new Blob(['c'])];
-    const fd = buildClipsBatchFormData(clips, '291 6419599', true);
-    expect(fd.get('kind')).toBe('clips');
-    expect(fd.get('isLastBatch')).toBe('true');
+describe('buildClipBatchFormData / buildSupportBatchFormData', () => {
+  it('tags a clip batch with kind=clip, its index, isLastClip and isLastBatch', () => {
+    const clip = new Blob(['a'], { type: 'video/webm' });
+    const fd = buildClipBatchFormData(clip, 2, '291 6419599', 'folder-abc', false, false);
+    expect(fd.get('kind')).toBe('clip');
+    expect(fd.get('clipIndex')).toBe('2');
+    expect(fd.get('isLastClip')).toBe('false');
+    expect(fd.get('isLastBatch')).toBe('false');
+    expect(fd.get('folderId')).toBe('folder-abc');
     expect(fd.get('telefono')).toBe('291 6419599');
-    expect(fd.get('clip1')).toBeInstanceOf(Blob);
-    expect(fd.getAll('apoyo[]')).toHaveLength(0);
+    expect(fd.get('clip')).toBeInstanceOf(Blob);
+  });
+
+  it('omits folderId on the first clip (no folder exists yet)', () => {
+    const clip = new Blob(['a'], { type: 'video/webm' });
+    const fd = buildClipBatchFormData(clip, 1, '291 6419599', undefined, false, false);
+    expect(fd.get('folderId')).toBeNull();
+  });
+
+  it('marks the last clip with isLastClip=true', () => {
+    const clip = new Blob(['a'], { type: 'video/mp4' });
+    const fd = buildClipBatchFormData(clip, 3, '291 6419599', 'folder-abc', true, true);
+    expect(fd.get('isLastClip')).toBe('true');
+    expect(fd.get('isLastBatch')).toBe('true');
+    expect(fd.get('clip').name).toBe('clip3.mp4');
   });
 
   it('tags a support batch with kind=apoyo, its files, the folderId and phone', () => {

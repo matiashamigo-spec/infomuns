@@ -5,16 +5,16 @@
 // el módulo en silencio, dejando la página sin mostrar ninguna pantalla
 // (ni el formulario ni el aviso de girar el teléfono). Bumpear la versión
 // acá es tan importante como bumpearla en el <script> de index.html.
-import { INTERVIEW_STEPS, getStepByIndex, isLastStep } from './steps.js?v=24';
-import { buildWhatsAppLink } from './whatsapp.js?v=24';
-import { VIDEO_MIME_CANDIDATES, pickSupportedMimeType, getFocusExposureSupport } from './media-support.js?v=24';
-import { watchOrientation } from './orientation.js?v=24';
+import { INTERVIEW_STEPS, getStepByIndex, isLastStep } from './steps.js?v=25';
+import { buildWhatsAppLink } from './whatsapp.js?v=25';
+import { VIDEO_MIME_CANDIDATES, pickSupportedMimeType, getFocusExposureSupport } from './media-support.js?v=25';
+import { watchOrientation } from './orientation.js?v=25';
 import {
   batchSupportFiles,
-  buildClipsBatchFormData,
+  buildClipBatchFormData,
   buildSupportBatchFormData,
   submitBatchesWithProgress,
-} from './upload.js?v=24';
+} from './upload.js?v=25';
 
 // Must match the path configured on the Webhook node once the n8n workflow exists
 // (see "Setup pendiente" in the design spec) — update if that path differs.
@@ -362,23 +362,27 @@ function getTotalUploadBytes() {
   return clipBytes + supportBytes;
 }
 
-// Arma la lista de tandas a mandar: primero los 3 clips (crea la carpeta
-// del lado de n8n), después el material de apoyo partido en tandas chicas.
-// El form-data de cada tanda de apoyo se arma recién al mandarla (usa
-// ctx.folderId, que solo existe después de que la tanda de clips
-// respondió) — por eso son funciones (buildFormData), no FormData ya
-// armado. Se reconstruye igual en cada intento — mismo orden siempre —
-// para que nextBatchIndex pueda saltarse las tandas ya mandadas.
+// Arma la lista de tandas a mandar: cada clip por separado primero (el
+// clip 1 crea la carpeta del lado de n8n; los clips 2 y 3 usan el
+// ctx.folderId que dejó la respuesta del clip 1), después el material de
+// apoyo partido en tandas chicas. Nunca se mandan los 3 clips juntos en un
+// solo pedido — un paso largo grabado a buena calidad puede pesar bastante
+// más de 100MB él solo. El form-data de cada tanda se arma recién al
+// mandarla (usa ctx.folderId) — por eso son funciones (buildFormData), no
+// FormData ya armado. Se reconstruye igual en cada intento — mismo orden
+// siempre — para que nextBatchIndex pueda saltarse las tandas ya mandadas.
 function buildBatches(phone) {
-  const clipsBytes = recordedClips.reduce((sum, blob) => sum + (blob ? blob.size : 0), 0);
   const supportBatchesFiles = batchSupportFiles(supportFiles);
   const hasSupport = supportBatchesFiles.length > 0;
-  const batches = [
-    {
-      buildFormData: () => buildClipsBatchFormData(recordedClips, phone, !hasSupport),
-      sizeBytes: clipsBytes,
-    },
-  ];
+  const batches = recordedClips.map((blob, index) => {
+    const clipIndex = index + 1;
+    const isLastClip = clipIndex === recordedClips.length;
+    const isLastBatch = isLastClip && !hasSupport;
+    return {
+      buildFormData: (ctx) => buildClipBatchFormData(blob, clipIndex, phone, ctx.folderId, isLastClip, isLastBatch),
+      sizeBytes: blob ? blob.size : 0,
+    };
+  });
   supportBatchesFiles.forEach((files, index) => {
     const isLast = index === supportBatchesFiles.length - 1;
     const bytes = files.reduce((sum, f) => sum + (f ? f.size : 0), 0);
@@ -509,12 +513,18 @@ async function saveClipsToDevice() {
   // El share nativo (si el navegador lo soporta con archivos) abre el menú
   // de "Compartir" del celular con los 3 videos juntos en una sola acción,
   // y desde ahí se puede elegir "Guardar en Fotos/Carrete" para los tres a
-  // la vez. Si no está disponible, se cae a la descarga de a uno (guarda en
-  // Archivos, no en Fotos, pero al menos los 3 llegan).
+  // la vez. OJO: que navigator.share() resuelva sin error solo confirma que
+  // el sistema operativo aceptó el pedido y lo entregó a la app elegida —
+  // NO que esa app (p.ej. Fotos) haya terminado de guardar de verdad. No
+  // hay forma de saber desde acá si el guardado final se completó, así que
+  // además se dispara SIEMPRE la descarga directa como respaldo (por más
+  // que el cartel nativo se haya cerrado "bien"), para que quede un camino
+  // garantizado además del share.
   if (navigator.canShare && navigator.canShare({ files })) {
     try {
       await navigator.share({ files, title: 'Micro Historia' });
-      showSaveDeviceStatus('Listo, se abrió el cartel para guardar tus 3 videos.');
+      downloadClipsSeparately();
+      showSaveDeviceStatus('Se abrió el cartel para guardar tus 3 videos y además los descargamos directo — revisá Fotos y también la app Archivos/tus descargas.');
       return;
     } catch (err) {
       // El usuario canceló el cartel de compartir, o el navegador lo
