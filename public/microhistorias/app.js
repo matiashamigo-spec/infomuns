@@ -142,21 +142,17 @@ let nextBatchIndex = 0;
 async function startCamera() {
   try {
     stream = await navigator.mediaDevices.getUserMedia({
-      // width/height/aspectRatio solos (sin resizeMode) le piden al
-      // navegador recortar el sensor para llegar a esa relación, dando zoom
-      // no deseado — por eso antes se sacaron por completo, a costa de
-      // quedar con el default chico (640x480). resizeMode:'none' es la
-      // forma correcta de pedir alta resolución SIN ese recorte: le dice
-      // al navegador que no escale/recorte el sensor, así que si no puede
-      // entregar 1080x1920 tal cual, debería caer al nativo en vez de
-      // cortar para forzar esa relación. 'ideal' (no 'exact') en todo para
-      // no fallar duro si el dispositivo no lo soporta. Pendiente: el
-      // video puede salir de costado en algunos Android.
+      // Pedir width+height juntos define una relación de aspecto exacta —
+      // eso fue lo que disparó el zoom (confirmado en dispositivo real,
+      // con y sin resizeMode:'none', que no evitó el recorte). Pedir SOLO
+      // la altura no define una "forma" de dos dimensiones, así que el
+      // navegador no tiene una relación exacta que forzar recortando —
+      // en teoría alcanza resolución más alta sin ese recorte. 'ideal'
+      // (no 'exact') para no fallar duro si el dispositivo no lo soporta.
+      // Pendiente: el video puede salir de costado en algunos Android.
       video: {
         facingMode: 'user',
-        width: { ideal: 1080 },
         height: { ideal: 1920 },
-        resizeMode: { ideal: 'none' },
       },
       audio: true,
     });
@@ -164,6 +160,9 @@ async function startCamera() {
     recordingStream = stream;
     const video = el('mh-camera-video');
     video.srcObject = stream;
+    const settings = track.getSettings();
+    console.log('microhistorias: camera track settings', settings);
+    el('mh-camera-debug').textContent = `${settings.width || '?'}x${settings.height || '?'}`;
     setupFocusExposureButtons();
     renderStep();
     showScreen('record');

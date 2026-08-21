@@ -217,6 +217,20 @@ p {
   pointer-events: none;
 }
 
+/* Temporal: muestra la resolución real de cámara mientras probamos que no
+   haga zoom. Sacar una vez confirmado en dispositivo real. */
+.mh-camera-debug {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 10px;
+  z-index: 5;
+}
+
 .mh-recording-indicator {
   position: absolute;
   top: 12px;
