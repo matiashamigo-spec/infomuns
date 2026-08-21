@@ -1,13 +1,20 @@
-import { INTERVIEW_STEPS, getStepByIndex, isLastStep } from './steps.js';
-import { buildWhatsAppLink } from './whatsapp.js';
-import { VIDEO_MIME_CANDIDATES, pickSupportedMimeType, getFocusExposureSupport } from './media-support.js';
-import { watchOrientation } from './orientation.js';
+// Los imports locales llevan el mismo ?v= que este archivo en index.html:
+// sin eso, un navegador que ya haya cacheado una copia vieja de upload.js
+// (por ejemplo) puede seguir usándola aunque app.js se actualice — y si
+// cambiaron los nombres exportados entre versiones, el import rompe todo
+// el módulo en silencio, dejando la página sin mostrar ninguna pantalla
+// (ni el formulario ni el aviso de girar el teléfono). Bumpear la versión
+// acá es tan importante como bumpearla en el <script> de index.html.
+import { INTERVIEW_STEPS, getStepByIndex, isLastStep } from './steps.js?v=24';
+import { buildWhatsAppLink } from './whatsapp.js?v=24';
+import { VIDEO_MIME_CANDIDATES, pickSupportedMimeType, getFocusExposureSupport } from './media-support.js?v=24';
+import { watchOrientation } from './orientation.js?v=24';
 import {
   batchSupportFiles,
   buildClipsBatchFormData,
   buildSupportBatchFormData,
   submitBatchesWithProgress,
-} from './upload.js';
+} from './upload.js?v=24';
 
 // Must match the path configured on the Webhook node once the n8n workflow exists
 // (see "Setup pendiente" in the design spec) — update if that path differs.
