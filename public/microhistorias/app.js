@@ -403,11 +403,13 @@ el('mh-terms-checkbox').addEventListener('change', updateStartButtonState);
 // Respaldo por si el envío falla: cada clip grabado solo existe en memoria
 // del navegador (nunca se guarda solo), así que si el envío no anda, la
 // persona necesita una forma de sacarlos del celular para mandarlos a mano.
-function saveClipsToDevice() {
+function downloadClipsSeparately() {
   // Todas sincrónicas, sin setTimeout: Safari en iOS solo trata como
   // "iniciada por el usuario" la descarga que dispara en el mismo tick del
   // click — cualquiera diferida con setTimeout (aunque sea 0ms) la bloquea
-  // en silencio. Por eso antes solo bajaba el clip 1.
+  // en silencio. Por eso antes solo bajaba el clip 1. Esto guarda en la app
+  // Archivos, no en Fotos (limitación del navegador, no hay forma de elegir
+  // el destino desde acá).
   recordedClips.forEach((blob, index) => {
     const ext = blob.type.includes('mp4') ? 'mp4' : 'webm';
     const url = URL.createObjectURL(blob);
@@ -419,6 +421,30 @@ function saveClipsToDevice() {
     document.body.removeChild(a);
     setTimeout(() => URL.revokeObjectURL(url), 10000);
   });
+}
+
+async function saveClipsToDevice() {
+  const files = recordedClips.map((blob, index) => {
+    const ext = blob.type.includes('mp4') ? 'mp4' : 'webm';
+    return new File([blob], `microhistoria-paso${index + 1}.${ext}`, { type: blob.type });
+  });
+  // El share nativo (si el navegador lo soporta con archivos) abre el menú
+  // de "Compartir" del celular con los 3 videos juntos en una sola acción,
+  // y desde ahí se puede elegir "Guardar en Fotos/Carrete" para los tres a
+  // la vez. Si no está disponible, se cae a la descarga de a uno (guarda en
+  // Archivos, no en Fotos, pero al menos los 3 llegan).
+  if (navigator.canShare && navigator.canShare({ files })) {
+    try {
+      await navigator.share({ files, title: 'Micro Historia' });
+      return;
+    } catch (err) {
+      // El usuario canceló el cartel de compartir, o el navegador lo
+      // rechazó a último momento: no es un error real, no hace falta avisar.
+      if (err.name === 'AbortError') return;
+      console.error('microhistorias: navigator.share failed, falling back', err);
+    }
+  }
+  downloadClipsSeparately();
 }
 
 // Event wiring

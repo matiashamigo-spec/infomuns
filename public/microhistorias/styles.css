@@ -20,7 +20,14 @@ html, body {
   background: var(--mh-bg);
   font-family: 'Nunito', sans-serif;
   color: #1a1a1a;
-  min-height: 100vh;
+  height: 100%;
+  /* position:fixed + overflow:hidden es la combinación que de verdad evita
+     el scroll/rebote en mobile Safari — overflow:hidden solo no alcanza,
+     el navegador igual permite un "rebote" al arrastrar. Cada pantalla
+     tiene que entrar entera, sin scrollear, siempre. */
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
 }
 
 body {
@@ -147,6 +154,12 @@ p {
   display: flex;
   flex-direction: column;
   align-items: center;
+  /* Altura real fijada por JS (fitRecordScreen en app.js) con
+     window.innerHeight — 100dvh/100vh no se comportaban igual en todos los
+     celulares (algunos seguían contando el alto de la barra de direcciones
+     como visible), dejando la pantalla más alta de lo que en verdad se ve
+     y por eso "aparecía scrolleada". Estos valores son solo el respaldo
+     hasta que ese cálculo corra. */
   height: calc(100vh - 16px);
   height: calc(100dvh - 16px);
   max-height: calc(100vh - 16px);
