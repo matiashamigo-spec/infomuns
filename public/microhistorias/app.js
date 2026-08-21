@@ -5,16 +5,16 @@
 // el módulo en silencio, dejando la página sin mostrar ninguna pantalla
 // (ni el formulario ni el aviso de girar el teléfono). Bumpear la versión
 // acá es tan importante como bumpearla en el <script> de index.html.
-import { INTERVIEW_STEPS, getStepByIndex, isLastStep } from './steps.js?v=30';
-import { buildWhatsAppLink } from './whatsapp.js?v=30';
-import { VIDEO_MIME_CANDIDATES, pickSupportedMimeType } from './media-support.js?v=30';
-import { watchOrientation } from './orientation.js?v=30';
+import { INTERVIEW_STEPS, getStepByIndex, isLastStep } from './steps.js?v=31';
+import { buildWhatsAppLink } from './whatsapp.js?v=31';
+import { VIDEO_MIME_CANDIDATES, pickSupportedMimeType } from './media-support.js?v=31';
+import { watchOrientation } from './orientation.js?v=31';
 import {
   batchSupportFiles,
   buildClipBatchFormData,
   buildSupportBatchFormData,
   submitBatchesWithProgress,
-} from './upload.js?v=30';
+} from './upload.js?v=31';
 
 // Must match the path configured on the Webhook node once the n8n workflow exists
 // (see "Setup pendiente" in the design spec) — update if that path differs.
@@ -159,9 +159,6 @@ async function startCamera() {
     recordingStream = stream;
     const video = el('mh-camera-video');
     video.srcObject = stream;
-    const settings = track.getSettings();
-    console.log('microhistorias: camera track settings', settings);
-    el('mh-camera-debug').textContent = `${settings.width || '?'}x${settings.height || '?'}`;
     renderStep();
     showScreen('record');
   } catch (err) {
@@ -392,6 +389,7 @@ async function sendRecording() {
   const progressWrap = el('mh-progress-bar-wrap');
   const progressFill = el('mh-progress-bar-fill');
   const progressText = el('mh-progress-text');
+  const progressPatience = el('mh-progress-patience');
   sendBtn.disabled = true;
   retryBtn.disabled = true;
 
@@ -410,6 +408,7 @@ async function sendRecording() {
   showScreen('final');
   progressWrap.classList.remove('mh-hidden');
   progressText.classList.remove('mh-hidden');
+  progressPatience.classList.remove('mh-hidden');
   progressFill.style.width = '0%';
   progressText.textContent = 'Subiendo... 0%';
 
@@ -443,6 +442,7 @@ async function sendRecording() {
   } finally {
     progressWrap.classList.add('mh-hidden');
     progressText.classList.add('mh-hidden');
+    progressPatience.classList.add('mh-hidden');
   }
 }
 
@@ -463,9 +463,10 @@ function downloadClipsSeparately() {
   // suele ignorarlo y no pasa nada, o abre el video sin bajarlo) — es una
   // limitación del navegador, no hay forma de forzar una descarga real de
   // ahí. target="_blank" abre cada clip en su propia pestaña con el
-  // reproductor nativo, y desde ahí el ícono de compartir/guardar de esa
-  // pestaña SÍ deja guardarlo en Fotos — un toque más, pero el único
-  // camino que funciona de verdad en iOS. Todas sincrónicas, sin
+  // reproductor nativo — desde ahí, mantener el dedo apretado sobre el
+  // video (no tocar un ícono: es un long-press) abre el menú nativo de
+  // iOS con la opción "Guardar video", que sí lo manda a Fotos. Es el
+  // único camino que funciona de verdad en iOS. Todas sincrónicas, sin
   // setTimeout: Safari solo trata como "iniciado por el usuario" lo que
   // dispara en el mismo tick del click.
   recordedClips.forEach((blob, index) => {
@@ -516,7 +517,7 @@ async function saveClipsToDevice() {
     try {
       await navigator.share({ files, title: 'Micro Historia' });
       downloadClipsSeparately();
-      showSaveDeviceStatus('Se abrió el cartel para guardar tus 3 videos, y además se abrió cada uno en una pestaña nueva por las dudas — desde ahí tocá el ícono de compartir/guardar para mandarlo a Fotos.');
+      showSaveDeviceStatus('Se abrió el cartel para guardar tus 3 videos, y además se abrió cada uno en una pestaña nueva por las dudas — en cada una, mantené el dedo apretado sobre el video y elegí "Guardar video" para mandarlo a Fotos.');
       return;
     } catch (err) {
       // El usuario canceló el cartel de compartir, o el navegador lo
@@ -526,7 +527,7 @@ async function saveClipsToDevice() {
     }
   }
   downloadClipsSeparately();
-  showSaveDeviceStatus('Se abrió cada video en una pestaña nueva — tocá el ícono de compartir/guardar del reproductor en cada una para mandarlo a Fotos.');
+  showSaveDeviceStatus('Se abrió cada video en una pestaña nueva — mantené el dedo apretado sobre el video en cada una y elegí "Guardar video" para mandarlo a Fotos.');
 }
 
 // Event wiring
