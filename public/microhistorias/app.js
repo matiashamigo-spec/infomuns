@@ -5,16 +5,16 @@
 // el módulo en silencio, dejando la página sin mostrar ninguna pantalla
 // (ni el formulario ni el aviso de girar el teléfono). Bumpear la versión
 // acá es tan importante como bumpearla en el <script> de index.html.
-import { INTERVIEW_STEPS, getStepByIndex, isLastStep } from './steps.js?v=28';
-import { buildWhatsAppLink } from './whatsapp.js?v=28';
-import { VIDEO_MIME_CANDIDATES, pickSupportedMimeType } from './media-support.js?v=28';
-import { watchOrientation } from './orientation.js?v=28';
+import { INTERVIEW_STEPS, getStepByIndex, isLastStep } from './steps.js?v=29';
+import { buildWhatsAppLink } from './whatsapp.js?v=29';
+import { VIDEO_MIME_CANDIDATES, pickSupportedMimeType } from './media-support.js?v=29';
+import { watchOrientation } from './orientation.js?v=29';
 import {
   batchSupportFiles,
   buildClipBatchFormData,
   buildSupportBatchFormData,
   submitBatchesWithProgress,
-} from './upload.js?v=28';
+} from './upload.js?v=29';
 
 // Must match the path configured on the Webhook node once the n8n workflow exists
 // (see "Setup pendiente" in the design spec) — update if that path differs.
@@ -452,22 +452,25 @@ el('mh-terms-checkbox').addEventListener('change', updateStartButtonState);
 // del navegador (nunca se guarda solo), así que si el envío no anda, la
 // persona necesita una forma de sacarlos del celular para mandarlos a mano.
 function downloadClipsSeparately() {
-  // Todas sincrónicas, sin setTimeout: Safari en iOS solo trata como
-  // "iniciada por el usuario" la descarga que dispara en el mismo tick del
-  // click — cualquiera diferida con setTimeout (aunque sea 0ms) la bloquea
-  // en silencio. Por eso antes solo bajaba el clip 1. Esto guarda en la app
-  // Archivos, no en Fotos (limitación del navegador, no hay forma de elegir
-  // el destino desde acá).
+  // El atributo download NO es confiable para video en Safari/iOS (WebKit
+  // suele ignorarlo y no pasa nada, o abre el video sin bajarlo) — es una
+  // limitación del navegador, no hay forma de forzar una descarga real de
+  // ahí. target="_blank" abre cada clip en su propia pestaña con el
+  // reproductor nativo, y desde ahí el ícono de compartir/guardar de esa
+  // pestaña SÍ deja guardarlo en Fotos — un toque más, pero el único
+  // camino que funciona de verdad en iOS. Todas sincrónicas, sin
+  // setTimeout: Safari solo trata como "iniciado por el usuario" lo que
+  // dispara en el mismo tick del click.
   recordedClips.forEach((blob, index) => {
-    const ext = blob.type.includes('mp4') ? 'mp4' : 'webm';
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `microhistoria-paso${index + 1}.${ext}`;
+    a.target = '_blank';
+    a.rel = 'noopener';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 10000);
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
   });
 }
 
@@ -506,7 +509,7 @@ async function saveClipsToDevice() {
     try {
       await navigator.share({ files, title: 'Micro Historia' });
       downloadClipsSeparately();
-      showSaveDeviceStatus('Se abrió el cartel para guardar tus 3 videos y además los descargamos directo — revisá Fotos y también la app Archivos/tus descargas.');
+      showSaveDeviceStatus('Se abrió el cartel para guardar tus 3 videos, y además se abrió cada uno en una pestaña nueva por las dudas — desde ahí tocá el ícono de compartir/guardar para mandarlo a Fotos.');
       return;
     } catch (err) {
       // El usuario canceló el cartel de compartir, o el navegador lo
@@ -516,7 +519,7 @@ async function saveClipsToDevice() {
     }
   }
   downloadClipsSeparately();
-  showSaveDeviceStatus('Descargamos tus 3 videos (revisá la app Archivos o tus descargas).');
+  showSaveDeviceStatus('Se abrió cada video en una pestaña nueva — tocá el ícono de compartir/guardar del reproductor en cada una para mandarlo a Fotos.');
 }
 
 // Event wiring
