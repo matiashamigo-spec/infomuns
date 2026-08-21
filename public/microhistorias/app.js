@@ -8,12 +8,14 @@ import { buildUploadFormData, submitRecordingWithProgress } from './upload.js';
 // (see "Setup pendiente" in the design spec) — update if that path differs.
 const N8N_WEBHOOK_URL = 'https://n8n.wips.digital/webhook/microhistorias';
 const WHATSAPP_NUMBER = '+54 9 291 6419599';
-// The final video no longer goes to Telegram directly (Telegram's Bot API
-// caps uploads at 50MB regardless of video/document, which a 7-minute
-// interview blows past at any usable quality) — it's uploaded to Google
-// Drive instead, so this is just a sanity ceiling against a runaway payload,
-// not a hard downstream limit.
-const MAX_UPLOAD_BYTES = 500 * 1024 * 1024;
+// n8n's propio nodo Webhook (no nginx, ya resuelto aparte con
+// client_max_body_size) tira ENOENT en '/tmp/<random>' al parsear el
+// multipart cuando el payload total es grande — confirmado con pruebas
+// directas contra el webhook de producción: 100MB pasa limpio, 200MB
+// rompe siempre con ese mismo ENOENT. Sin SSH al server no se puede tocar
+// el límite interno de n8n, así que el corte real vive acá: hay que avisar
+// ANTES de subir, no dejar que la persona choque contra un 500 críptico.
+const MAX_UPLOAD_BYTES = 100 * 1024 * 1024;
 
 const el = (id) => document.getElementById(id);
 
