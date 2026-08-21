@@ -78,10 +78,12 @@ function showScreen(name) {
   screens[name].classList.remove('mh-hidden');
   el('mh-logo').classList.toggle('mh-hidden', CAMERA_SCREENS.includes(name));
   document.body.classList.toggle('mh-compact', name === 'record');
-  // El botón de WhatsApp se oculta solo en las pantallas de cámara (donde
-  // queda flotando encima de los botones de grabar/usar). En el resto —
-  // inicio, material de apoyo, envío, etc. — queda visible por si hay dudas.
-  el('mh-whatsapp-start').classList.toggle('mh-hidden', CAMERA_SCREENS.includes(name));
+  // El botón de WhatsApp se oculta en las pantallas de cámara (donde queda
+  // flotando encima de los botones de grabar/usar) y en la de error: ahí
+  // ya hay un botón de WhatsApp inline en la tarjeta, y la burbuja fija
+  // (bottom:16px; right:16px) podía terminar tapando el tap sobre "Guardar
+  // mis videos en el celular", el botón del medio de esa pantalla.
+  el('mh-whatsapp-start').classList.toggle('mh-hidden', CAMERA_SCREENS.includes(name) || name === 'error');
   if (name === 'record') fitRecordScreen();
   resetScrollDeferred();
 }
@@ -425,10 +427,26 @@ function downloadClipsSeparately() {
   });
 }
 
+// Sin esto la persona no tiene forma de saber si tocar el botón hizo algo
+// o no — "no pasó nada visible" fue justamente el reporte que llegó antes
+// de agregar este feedback en pantalla.
+function showSaveDeviceStatus(text) {
+  const status = el('mh-save-device-status');
+  status.textContent = text;
+  status.classList.remove('mh-hidden');
+}
+
 async function saveClipsToDevice() {
+  const status = el('mh-save-device-status');
+  status.classList.add('mh-hidden');
   const files = recordedClips.map((blob, index) => {
     const ext = blob.type.includes('mp4') ? 'mp4' : 'webm';
     return new File([blob], `microhistoria-paso${index + 1}.${ext}`, { type: blob.type });
+  });
+  console.log('microhistorias: saveClipsToDevice', {
+    canShare: !!navigator.canShare,
+    canShareFiles: !!(navigator.canShare && navigator.canShare({ files })),
+    clipCount: files.length,
   });
   // El share nativo (si el navegador lo soporta con archivos) abre el menú
   // de "Compartir" del celular con los 3 videos juntos en una sola acción,
@@ -438,6 +456,7 @@ async function saveClipsToDevice() {
   if (navigator.canShare && navigator.canShare({ files })) {
     try {
       await navigator.share({ files, title: 'Micro Historia' });
+      showSaveDeviceStatus('Listo, se abrió el cartel para guardar tus 3 videos.');
       return;
     } catch (err) {
       // El usuario canceló el cartel de compartir, o el navegador lo
@@ -447,6 +466,7 @@ async function saveClipsToDevice() {
     }
   }
   downloadClipsSeparately();
+  showSaveDeviceStatus('Descargamos tus 3 videos (revisá la app Archivos o tus descargas).');
 }
 
 // Event wiring
