@@ -2,20 +2,25 @@ import { INTERVIEW_STEPS, getStepByIndex, isLastStep } from './steps.js';
 import { buildWhatsAppLink } from './whatsapp.js';
 import { VIDEO_MIME_CANDIDATES, pickSupportedMimeType, getFocusExposureSupport } from './media-support.js';
 import { watchOrientation } from './orientation.js';
-import { buildUploadFormData, submitRecordingWithProgress } from './upload.js';
+import {
+  batchSupportFiles,
+  buildClipsBatchFormData,
+  buildSupportBatchFormData,
+  submitBatchesWithProgress,
+} from './upload.js';
 
 // Must match the path configured on the Webhook node once the n8n workflow exists
 // (see "Setup pendiente" in the design spec) — update if that path differs.
 const N8N_WEBHOOK_URL = 'https://n8n.wips.digital/webhook/microhistorias';
 const WHATSAPP_NUMBER = '+54 9 291 6419599';
-// n8n's propio nodo Webhook (no nginx, ya resuelto aparte con
-// client_max_body_size) tira ENOENT en '/tmp/<random>' al parsear el
-// multipart cuando el payload total es grande — confirmado con pruebas
-// directas contra el webhook de producción: 100MB pasa limpio, 200MB
-// rompe siempre con ese mismo ENOENT. Sin SSH al server no se puede tocar
-// el límite interno de n8n, así que el corte real vive acá: hay que avisar
-// ANTES de subir, no dejar que la persona choque contra un 500 críptico.
-const MAX_UPLOAD_BYTES = 100 * 1024 * 1024;
+// El envío se parte en tandas (ver upload.js: batchSupportFiles) justamente
+// para evitar el techo real, que es un bug de carrera adentro del nodo
+// Webhook de n8n con payloads grandes de muchos archivos — no un tamaño
+// fijo. Con las tandas bien chicas, lo único que queda como techo es el
+// client_max_body_size de nginx (500M, configurado aparte), muy por encima
+// de lo que cualquier tanda individual pesa. Esto es solo un freno de
+// sanidad para un caso realmente descontrolado.
+const MAX_UPLOAD_BYTES = 500 * 1024 * 1024;
 
 const el = (id) => document.getElementById(id);
 
@@ -120,6 +125,12 @@ let recordedChunks = [];
 let pendingClipBlob = null;
 let previewObjectUrl = null;
 let focusExposureButtonsWired = false;
+// submissionCtx guarda el folderId que devuelve la tanda de clips (para
+// que las tandas de apoyo sepan a qué carpeta subir). nextBatchIndex es lo
+// que permite que un reintento arranque justo donde falló, en vez de
+// repetir desde cero (y duplicar el video final ya subido en Drive).
+let submissionCtx = {};
+let nextBatchIndex = 0;
 
 async function startCamera() {
   try {
@@ -344,6 +355,34 @@ function getTotalUploadBytes() {
   return clipBytes + supportBytes;
 }
 
+// Arma la lista de tandas a mandar: primero los 3 clips (crea la carpeta
+// del lado de n8n), después el material de apoyo partido en tandas chicas.
+// El form-data de cada tanda de apoyo se arma recién al mandarla (usa
+// ctx.folderId, que solo existe después de que la tanda de clips
+// respondió) — por eso son funciones (buildFormData), no FormData ya
+// armado. Se reconstruye igual en cada intento — mismo orden siempre —
+// para que nextBatchIndex pueda saltarse las tandas ya mandadas.
+function buildBatches(phone) {
+  const clipsBytes = recordedClips.reduce((sum, blob) => sum + (blob ? blob.size : 0), 0);
+  const supportBatchesFiles = batchSupportFiles(supportFiles);
+  const hasSupport = supportBatchesFiles.length > 0;
+  const batches = [
+    {
+      buildFormData: () => buildClipsBatchFormData(recordedClips, phone, !hasSupport),
+      sizeBytes: clipsBytes,
+    },
+  ];
+  supportBatchesFiles.forEach((files, index) => {
+    const isLast = index === supportBatchesFiles.length - 1;
+    const bytes = files.reduce((sum, f) => sum + (f ? f.size : 0), 0);
+    batches.push({
+      buildFormData: (ctx) => buildSupportBatchFormData(files, ctx.folderId, phone, isLast),
+      sizeBytes: bytes,
+    });
+  });
+  return batches;
+}
+
 async function sendRecording() {
   const sendBtn = el('mh-send-btn');
   const retryBtn = el('mh-retry-upload-btn');
@@ -376,14 +415,26 @@ async function sendRecording() {
 
   try {
     const phone = el('mh-phone-input').value.trim();
-    const formData = buildUploadFormData(recordedClips, supportFiles, phone);
-    await submitRecordingWithProgress(N8N_WEBHOOK_URL, formData, (percent) => {
-      progressFill.style.width = `${percent}%`;
-      progressText.textContent = `Subiendo... ${percent}%`;
-    });
+    const batches = buildBatches(phone);
+    await submitBatchesWithProgress(
+      N8N_WEBHOOK_URL,
+      batches,
+      (percent) => {
+        progressFill.style.width = `${percent}%`;
+        progressText.textContent = `Subiendo... ${percent}%`;
+      },
+      nextBatchIndex,
+      submissionCtx,
+    );
+    nextBatchIndex = 0;
+    submissionCtx = {};
     showScreen('sent');
   } catch (err) {
     console.error(err);
+    // Si ya se mandaron tandas antes de que esta fallara, un reintento
+    // arranca desde la que falló — no desde cero — para no duplicar el
+    // video final (y cualquier apoyo ya subido) en la carpeta de Drive.
+    if (typeof err.failedAtIndex === 'number') nextBatchIndex = err.failedAtIndex;
     errorDetail.textContent = `Detalle técnico: ${err.name || 'Error'} — ${err.message || 'sin mensaje'}`;
     errorDetail.classList.remove('mh-hidden');
     showScreen('error');
