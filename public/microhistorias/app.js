@@ -5,28 +5,22 @@
 // el módulo en silencio, dejando la página sin mostrar ninguna pantalla
 // (ni el formulario ni el aviso de girar el teléfono). Bumpear la versión
 // acá es tan importante como bumpearla en el <script> de index.html.
-import { INTERVIEW_STEPS, getStepByIndex, isLastStep } from './steps.js?v=31';
-import { buildWhatsAppLink } from './whatsapp.js?v=31';
-import { VIDEO_MIME_CANDIDATES, pickSupportedMimeType } from './media-support.js?v=31';
-import { watchOrientation } from './orientation.js?v=31';
-import {
-  batchSupportFiles,
-  buildClipBatchFormData,
-  buildSupportBatchFormData,
-  submitBatchesWithProgress,
-} from './upload.js?v=31';
+import { INTERVIEW_STEPS, getStepByIndex, isLastStep } from './steps.js?v=32';
+import { buildWhatsAppLink } from './whatsapp.js?v=32';
+import { VIDEO_MIME_CANDIDATES, pickSupportedMimeType } from './media-support.js?v=32';
+import { watchOrientation } from './orientation.js?v=32';
+import { buildClipBatchFormData, submitBatchesWithProgress } from './upload.js?v=32';
 
 // Must match the path configured on the Webhook node once the n8n workflow exists
 // (see "Setup pendiente" in the design spec) — update if that path differs.
 const N8N_WEBHOOK_URL = 'https://n8n.wips.digital/webhook/microhistorias';
 const WHATSAPP_NUMBER = '+54 9 291 6419599';
-// El envío se parte en tandas (ver upload.js: batchSupportFiles) justamente
-// para evitar el techo real, que es un bug de carrera adentro del nodo
-// Webhook de n8n con payloads grandes de muchos archivos — no un tamaño
-// fijo. Con las tandas bien chicas, lo único que queda como techo es el
-// client_max_body_size de nginx (500M, configurado aparte), muy por encima
-// de lo que cualquier tanda individual pesa. Esto es solo un freno de
-// sanidad para un caso realmente descontrolado.
+// Cada clip se manda en su propio pedido (ver upload.js) justamente para
+// evitar el techo real, que es un bug de carrera adentro del nodo Webhook
+// de n8n con payloads grandes — no un tamaño fijo. Con cada pedido bien
+// chico, lo único que queda como techo es el client_max_body_size de nginx
+// (500M, configurado aparte), muy por encima de lo que un clip pesa. Esto
+// es solo un freno de sanidad para un caso realmente descontrolado.
 const MAX_UPLOAD_BYTES = 500 * 1024 * 1024;
 
 const el = (id) => document.getElementById(id);
@@ -37,7 +31,6 @@ const screens = {
   permissionError: el('mh-permission-error'),
   record: el('mh-record-screen'),
   preview: el('mh-preview-screen'),
-  support: el('mh-support-screen'),
   final: el('mh-final-screen'),
   sent: el('mh-sent-screen'),
   error: el('mh-error-screen'),
@@ -126,16 +119,18 @@ let recordingStream = null;
 let track = null;
 let currentStepIndex = 0;
 const recordedClips = [];
-const supportFiles = [];
 let mediaRecorder = null;
 let recordedChunks = [];
 let pendingClipBlob = null;
 let previewObjectUrl = null;
-// submissionCtx guarda el folderId que devuelve la tanda de clips (para
-// que las tandas de apoyo sepan a qué carpeta subir). nextBatchIndex es lo
-// que permite que un reintento arranque justo donde falló, en vez de
-// repetir desde cero (y duplicar el video final ya subido en Drive).
-let submissionCtx = {};
+// submissionId identifica esta entrega para que los 3 clips (cada uno un
+// pedido HTTP separado, cada uno una ejecución de n8n aislada) se puedan
+// agrupar del lado del servidor. Se genera una sola vez, al primer intento
+// de envío, y se reusa en los reintentos (generar uno nuevo en un retry
+// dejaría huérfanos los clips ya mandados con el id viejo). nextBatchIndex
+// es lo que permite que un reintento arranque justo donde falló, en vez de
+// repetir desde cero.
+let submissionId = null;
 let nextBatchIndex = 0;
 
 async function startCamera() {
@@ -241,9 +236,9 @@ function stopRecordingTimer() {
 function startRecording() {
   const mimeType = pickSupportedMimeType(VIDEO_MIME_CANDIDATES, (t) => MediaRecorder.isTypeSupported(t));
   recordedChunks = [];
-  // El video final se sube a Drive (no a Telegram), así que no hay que
-  // recortar la calidad para entrar en el límite de 50MB de Telegram — las
-  // historias se reusan en redes, así que priorizamos nitidez.
+  // El video final se manda por Telegram, que tiene un techo de 50MB — los
+  // topes de duración de cada paso (steps.js) están pensados para que el
+  // video final quede bien por debajo de eso a este bitrate.
   const recorderOptions = { videoBitsPerSecond: 4_000_000, audioBitsPerSecond: 128_000 };
   if (mimeType) recorderOptions.mimeType = mimeType;
   mediaRecorder = new MediaRecorder(recordingStream, recorderOptions);
@@ -293,12 +288,12 @@ function useClipAndContinue() {
   recordedClips.push(pendingClipBlob);
   pendingClipBlob = null;
   if (isLastStep(currentStepIndex)) {
-    // No path leads back to recording from the support-material screen, so
-    // it's safe to unconditionally release the camera/mic here.
+    // No path leads back to recording from the final screen, so it's safe
+    // to unconditionally release the camera/mic here.
     if (stream) {
       stream.getTracks().forEach((t) => t.stop());
     }
-    showScreen('support');
+    goToFinalScreen();
   } else {
     currentStepIndex += 1;
     renderStep();
@@ -306,78 +301,29 @@ function useClipAndContinue() {
   }
 }
 
-function renderSupportList() {
-  const list = el('mh-support-list');
-  list.innerHTML = '';
-  supportFiles.forEach((file, index) => {
-    const li = document.createElement('li');
-    const label = document.createElement('span');
-    label.textContent = file.name || 'Archivo agregado';
-    const removeBtn = document.createElement('button');
-    removeBtn.type = 'button';
-    removeBtn.className = 'mh-support-remove-btn';
-    removeBtn.setAttribute('aria-label', 'Sacar este archivo');
-    removeBtn.textContent = '×';
-    removeBtn.addEventListener('click', () => removeSupportFile(index));
-    li.appendChild(label);
-    li.appendChild(removeBtn);
-    list.appendChild(li);
-  });
-}
-
-function removeSupportFile(index) {
-  supportFiles.splice(index, 1);
-  renderSupportList();
-}
-
-function addSupportFiles(fileList) {
-  Array.from(fileList || []).forEach((file) => supportFiles.push(file));
-  renderSupportList();
-}
-
 function goToFinalScreen() {
-  el('mh-final-summary').textContent =
-    `Grabaste ${recordedClips.length} pasos de tu historia` +
-    (supportFiles.length ? ` y agregaste ${supportFiles.length} archivo(s) de apoyo.` : '.');
+  el('mh-final-summary').textContent = `Grabaste ${recordedClips.length} pasos de tu historia.`;
   showScreen('final');
 }
 
 function getTotalUploadBytes() {
-  const clipBytes = recordedClips.reduce((sum, blob) => sum + (blob ? blob.size : 0), 0);
-  const supportBytes = supportFiles.reduce((sum, file) => sum + (file ? file.size : 0), 0);
-  return clipBytes + supportBytes;
+  return recordedClips.reduce((sum, blob) => sum + (blob ? blob.size : 0), 0);
 }
 
-// Arma la lista de tandas a mandar: cada clip por separado primero (el
-// clip 1 crea la carpeta del lado de n8n; los clips 2 y 3 usan el
-// ctx.folderId que dejó la respuesta del clip 1), después el material de
-// apoyo partido en tandas chicas. Nunca se mandan los 3 clips juntos en un
-// solo pedido — un paso largo grabado a buena calidad puede pesar bastante
-// más de 100MB él solo. El form-data de cada tanda se arma recién al
-// mandarla (usa ctx.folderId) — por eso son funciones (buildFormData), no
-// FormData ya armado. Se reconstruye igual en cada intento — mismo orden
-// siempre — para que nextBatchIndex pueda saltarse las tandas ya mandadas.
+// Arma la lista de tandas a mandar: cada clip en su propio pedido — nunca
+// los 3 juntos, un solo paso largo grabado a buena calidad puede pesar
+// bastante más de 100MB él solo. Se reconstruye igual en cada intento —
+// mismo orden siempre — para que nextBatchIndex pueda saltarse las tandas
+// ya mandadas.
 function buildBatches(phone) {
-  const supportBatchesFiles = batchSupportFiles(supportFiles);
-  const hasSupport = supportBatchesFiles.length > 0;
-  const batches = recordedClips.map((blob, index) => {
+  return recordedClips.map((blob, index) => {
     const clipIndex = index + 1;
     const isLastClip = clipIndex === recordedClips.length;
-    const isLastBatch = isLastClip && !hasSupport;
     return {
-      buildFormData: (ctx) => buildClipBatchFormData(blob, clipIndex, phone, ctx.folderId, isLastClip, isLastBatch),
+      buildFormData: () => buildClipBatchFormData(blob, clipIndex, phone, submissionId, isLastClip),
       sizeBytes: blob ? blob.size : 0,
     };
   });
-  supportBatchesFiles.forEach((files, index) => {
-    const isLast = index === supportBatchesFiles.length - 1;
-    const bytes = files.reduce((sum, f) => sum + (f ? f.size : 0), 0);
-    batches.push({
-      buildFormData: (ctx) => buildSupportBatchFormData(files, ctx.folderId, phone, isLast),
-      sizeBytes: bytes,
-    });
-  });
-  return batches;
 }
 
 async function sendRecording() {
@@ -413,6 +359,7 @@ async function sendRecording() {
   progressText.textContent = 'Subiendo... 0%';
 
   try {
+    if (!submissionId) submissionId = crypto.randomUUID();
     const phone = el('mh-phone-input').value.trim();
     const batches = buildBatches(phone);
     await submitBatchesWithProgress(
@@ -423,16 +370,15 @@ async function sendRecording() {
         progressText.textContent = `Subiendo... ${percent}%`;
       },
       nextBatchIndex,
-      submissionCtx,
     );
     nextBatchIndex = 0;
-    submissionCtx = {};
+    submissionId = null;
     showScreen('sent');
   } catch (err) {
     console.error(err);
-    // Si ya se mandaron tandas antes de que esta fallara, un reintento
-    // arranca desde la que falló — no desde cero — para no duplicar el
-    // video final (y cualquier apoyo ya subido) en la carpeta de Drive.
+    // Si ya se mandaron clips antes de que este fallara, un reintento
+    // arranca desde el que falló — no desde cero — para no duplicar
+    // trabajo ya hecho del lado del servidor.
     if (typeof err.failedAtIndex === 'number') nextBatchIndex = err.failedAtIndex;
     errorDetail.textContent = `Detalle técnico: ${err.name || 'Error'} — ${err.message || 'sin mensaje'}`;
     errorDetail.classList.remove('mh-hidden');
@@ -546,16 +492,6 @@ el('mh-record-btn').addEventListener('click', startRecording);
 el('mh-stop-btn').addEventListener('click', stopRecording);
 el('mh-repeat-btn').addEventListener('click', repeatClip);
 el('mh-continue-btn').addEventListener('click', useClipAndContinue);
-el('mh-support-camera-input').addEventListener('change', (e) => {
-  addSupportFiles(e.target.files);
-  e.target.value = '';
-});
-el('mh-support-gallery-input').addEventListener('change', (e) => {
-  addSupportFiles(e.target.files);
-  e.target.value = '';
-});
-el('mh-support-continue-btn').addEventListener('click', goToFinalScreen);
-el('mh-final-back-btn').addEventListener('click', () => showScreen('support'));
 el('mh-send-btn').addEventListener('click', sendRecording);
 el('mh-retry-upload-btn').addEventListener('click', sendRecording);
 el('mh-save-device-btn').addEventListener('click', saveClipsToDevice);

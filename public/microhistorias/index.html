@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" />
-  <link rel="stylesheet" href="./styles.css?v=13" />
+  <link rel="stylesheet" href="./styles.css?v=14" />
 </head>
 <body>
   <img id="mh-logo" class="mh-logo" src="https://info.muns.club/wp-content/uploads/2026/07/Logo-Muns-scaled.png" alt="Muns" />
@@ -83,18 +83,6 @@
     <button id="mh-continue-btn" class="mh-btn mh-btn--primary" type="button">Usar este y seguir</button>
   </section>
 
-  <!-- Support material screen -->
-  <section id="mh-support-screen" class="mh-card mh-support-screen mh-hidden">
-    <h2>Material de apoyo</h2>
-    <p class="mh-tip">Si querés, compartí fotos o videos de lo que estás contando.</p>
-    <label class="mh-btn mh-btn--primary" for="mh-support-camera-input">Sacar foto/video ahora</label>
-    <input id="mh-support-camera-input" type="file" accept="image/*,video/*" capture="environment" class="mh-hidden" />
-    <label class="mh-btn" for="mh-support-gallery-input">Elegir del carrete</label>
-    <input id="mh-support-gallery-input" type="file" accept="image/*,video/*" multiple class="mh-hidden" />
-    <ul id="mh-support-list" class="mh-support-list"></ul>
-    <button id="mh-support-continue-btn" class="mh-btn mh-btn--primary" type="button">Seguir</button>
-  </section>
-
   <!-- Final / send screen -->
   <section id="mh-final-screen" class="mh-card mh-hidden">
     <h2>Todo listo</h2>
@@ -106,7 +94,6 @@
     <p id="mh-progress-text" class="mh-tip mh-hidden"></p>
     <p id="mh-progress-patience" class="mh-tip mh-hidden">Este proceso puede tardar varios minutos según tu conexión. No cierres ni recargues la página — tu historia se sigue subiendo aunque la barra parezca detenida.</p>
     <button id="mh-send-btn" class="mh-btn mh-btn--primary" type="button">Enviar mi historia</button>
-    <button id="mh-final-back-btn" class="mh-btn" type="button">Volver</button>
   </section>
 
   <!-- Sent confirmation -->
@@ -132,6 +119,6 @@
     <span class="mh-whatsapp-text">¿Tenés dudas?<br />Escribinos</span>
   </a>
 
-  <script type="module" src="./app.js?v=31"></script>
+  <script type="module" src="./app.js?v=32"></script>
 </body>
 </html>

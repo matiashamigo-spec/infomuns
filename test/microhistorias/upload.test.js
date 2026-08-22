@@ -1,15 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import {
-  buildUploadFormData,
   submitRecording,
   submitRecordingWithProgress,
   getExtensionForMimeType,
-  batchSupportFiles,
   buildClipBatchFormData,
-  buildSupportBatchFormData,
   submitBatchesWithProgress,
-  SUPPORT_BATCH_MAX_BYTES,
-  SUPPORT_BATCH_MAX_FILES,
 } from '../../public/microhistorias/upload.js';
 
 function createFakeXhr({ status = 200, simulateNetworkError = false, responseText = '' } = {}) {
@@ -37,54 +32,6 @@ function createFakeXhr({ status = 200, simulateNetworkError = false, responseTex
     },
   };
 }
-
-describe('buildUploadFormData', () => {
-  it('appends each interview clip as clip1, clip2, clip3', () => {
-    const clips = [new Blob(['a']), new Blob(['b']), new Blob(['c'])];
-    const fd = buildUploadFormData(clips, []);
-    expect(fd.get('clip1')).toBeInstanceOf(Blob);
-    expect(fd.get('clip2')).toBeInstanceOf(Blob);
-    expect(fd.get('clip3')).toBeInstanceOf(Blob);
-    expect(fd.get('clip4')).toBeNull();
-  });
-
-  it('appends each support file under apoyo[]', () => {
-    const clips = [new Blob(['a']), new Blob(['b']), new Blob(['c'])];
-    const supportFiles = [new Blob(['x']), new Blob(['y'])];
-    const fd = buildUploadFormData(clips, supportFiles);
-    expect(fd.getAll('apoyo[]')).toHaveLength(2);
-  });
-
-  it('works with no support files', () => {
-    const clips = [new Blob(['a']), new Blob(['b']), new Blob(['c'])];
-    const fd = buildUploadFormData(clips, []);
-    expect(fd.getAll('apoyo[]')).toHaveLength(0);
-  });
-
-  it('appends the phone number when provided', () => {
-    const clips = [new Blob(['a']), new Blob(['b']), new Blob(['c'])];
-    const fd = buildUploadFormData(clips, [], '291 6419599');
-    expect(fd.get('telefono')).toBe('291 6419599');
-  });
-
-  it('omits the phone field when not provided', () => {
-    const clips = [new Blob(['a']), new Blob(['b']), new Blob(['c'])];
-    const fd = buildUploadFormData(clips, []);
-    expect(fd.get('telefono')).toBeNull();
-  });
-
-  it('names webm clips with a .webm extension', () => {
-    const clips = [new Blob(['a'], { type: 'video/webm;codecs=vp9,opus' })];
-    const fd = buildUploadFormData(clips, []);
-    expect(fd.get('clip1').name).toBe('clip1.webm');
-  });
-
-  it('names mp4 clips (Safari/iOS) with a .mp4 extension', () => {
-    const clips = [new Blob(['a'], { type: 'video/mp4' })];
-    const fd = buildUploadFormData(clips, []);
-    expect(fd.get('clip1').name).toBe('clip1.mp4');
-  });
-});
 
 describe('getExtensionForMimeType', () => {
   it('extracts webm from a codec-qualified webm type', () => {
@@ -150,84 +97,27 @@ describe('submitRecordingWithProgress', () => {
   });
 });
 
-describe('batchSupportFiles', () => {
-  it('returns no batches for an empty list', () => {
-    expect(batchSupportFiles([])).toEqual([]);
-  });
-
-  it('groups small files into a single batch', () => {
-    const files = [{ size: 1024 }, { size: 1024 }, { size: 1024 }];
-    const batches = batchSupportFiles(files);
-    expect(batches).toHaveLength(1);
-    expect(batches[0]).toHaveLength(3);
-  });
-
-  it('splits into a new batch once the file-count cap is hit', () => {
-    const files = Array.from({ length: SUPPORT_BATCH_MAX_FILES + 1 }, () => ({ size: 1024 }));
-    const batches = batchSupportFiles(files);
-    expect(batches).toHaveLength(2);
-    expect(batches[0]).toHaveLength(SUPPORT_BATCH_MAX_FILES);
-    expect(batches[1]).toHaveLength(1);
-  });
-
-  it('splits into a new batch once the byte cap would be exceeded', () => {
-    const files = [
-      { size: SUPPORT_BATCH_MAX_BYTES - 100 },
-      { size: 200 },
-    ];
-    const batches = batchSupportFiles(files);
-    expect(batches).toHaveLength(2);
-    expect(batches[0]).toEqual([files[0]]);
-    expect(batches[1]).toEqual([files[1]]);
-  });
-
-  it('keeps a single file larger than the byte cap in its own batch instead of dropping it', () => {
-    const hugeFile = { size: SUPPORT_BATCH_MAX_BYTES * 3 };
-    const batches = batchSupportFiles([hugeFile]);
-    expect(batches).toEqual([[hugeFile]]);
-  });
-});
-
-describe('buildClipBatchFormData / buildSupportBatchFormData', () => {
-  it('tags a clip batch with kind=clip, its index, isLastClip and isLastBatch', () => {
+describe('buildClipBatchFormData', () => {
+  it('tags a clip batch with its index, submissionId and isLastClip', () => {
     const clip = new Blob(['a'], { type: 'video/webm' });
-    const fd = buildClipBatchFormData(clip, 2, '291 6419599', 'folder-abc', false, false);
-    expect(fd.get('kind')).toBe('clip');
+    const fd = buildClipBatchFormData(clip, 2, '291 6419599', 'submission-abc', false);
     expect(fd.get('clipIndex')).toBe('2');
+    expect(fd.get('submissionId')).toBe('submission-abc');
     expect(fd.get('isLastClip')).toBe('false');
-    expect(fd.get('isLastBatch')).toBe('false');
-    expect(fd.get('folderId')).toBe('folder-abc');
     expect(fd.get('telefono')).toBe('291 6419599');
     expect(fd.get('clip')).toBeInstanceOf(Blob);
   });
 
-  it('omits folderId on the first clip (no folder exists yet)', () => {
-    const clip = new Blob(['a'], { type: 'video/webm' });
-    const fd = buildClipBatchFormData(clip, 1, '291 6419599', undefined, false, false);
-    expect(fd.get('folderId')).toBeNull();
-  });
-
   it('marks the last clip with isLastClip=true', () => {
     const clip = new Blob(['a'], { type: 'video/mp4' });
-    const fd = buildClipBatchFormData(clip, 3, '291 6419599', 'folder-abc', true, true);
+    const fd = buildClipBatchFormData(clip, 3, '291 6419599', 'submission-abc', true);
     expect(fd.get('isLastClip')).toBe('true');
-    expect(fd.get('isLastBatch')).toBe('true');
     expect(fd.get('clip').name).toBe('clip3.mp4');
   });
 
-  it('tags a support batch with kind=apoyo, its files, the folderId and phone', () => {
-    const files = [new Blob(['x']), new Blob(['y'])];
-    const fd = buildSupportBatchFormData(files, 'folder-abc', '291 6419599', false);
-    expect(fd.get('kind')).toBe('apoyo');
-    expect(fd.get('folderId')).toBe('folder-abc');
-    expect(fd.get('isLastBatch')).toBe('false');
-    expect(fd.get('telefono')).toBe('291 6419599');
-    expect(fd.getAll('apoyo[]')).toHaveLength(2);
-  });
-
-  it('omits the phone field on a support batch when not provided', () => {
-    const files = [new Blob(['x'])];
-    const fd = buildSupportBatchFormData(files, 'folder-abc', '', true);
+  it('omits the phone field when not provided', () => {
+    const clip = new Blob(['a'], { type: 'video/webm' });
+    const fd = buildClipBatchFormData(clip, 1, '', 'submission-abc', false);
     expect(fd.get('telefono')).toBeNull();
   });
 });
@@ -249,7 +139,7 @@ describe('submitBatchesWithProgress', () => {
         originalSend.call(this);
       };
     });
-    await submitBatchesWithProgress('https://example.com/webhook', batches, () => {}, 0, {}, xhrFactory);
+    await submitBatchesWithProgress('https://example.com/webhook', batches, () => {}, 0, xhrFactory);
     expect(sentBodies).toEqual(['batch-0', 'batch-1']);
   });
 
@@ -267,7 +157,6 @@ describe('submitBatchesWithProgress', () => {
       batches,
       (percent) => progressUpdates.push(percent),
       0,
-      {},
       xhrFactory
     );
     // Cada tanda reporta dos veces: una en vivo (evento "progress" del fake
@@ -288,7 +177,7 @@ describe('submitBatchesWithProgress', () => {
     ];
     let caught;
     try {
-      await submitBatchesWithProgress('https://example.com/webhook', batches, () => {}, 0, {}, xhrFactory);
+      await submitBatchesWithProgress('https://example.com/webhook', batches, () => {}, 0, xhrFactory);
     } catch (err) {
       caught = err;
     }
@@ -308,42 +197,7 @@ describe('submitBatchesWithProgress', () => {
       { buildFormData: () => 'batch-0', sizeBytes: 50 },
       { buildFormData: () => 'batch-1', sizeBytes: 50 },
     ];
-    await submitBatchesWithProgress('https://example.com/webhook', batches, () => {}, 1, {}, () => fakeXhr);
+    await submitBatchesWithProgress('https://example.com/webhook', batches, () => {}, 1, () => fakeXhr);
     expect(sentBodies).toEqual(['batch-1']);
-  });
-
-  it('extracts folderId from the first batch response and passes it to the next batch builder', async () => {
-    const receivedFolderIds = [];
-    const xhrs = [
-      createFakeXhr({ status: 200, responseText: JSON.stringify({ id: 'folder-xyz' }) }),
-      createFakeXhr({ status: 200 }),
-    ];
-    let call = 0;
-    const xhrFactory = () => xhrs[call++];
-    const batches = [
-      { buildFormData: () => ({}), sizeBytes: 50 },
-      {
-        buildFormData: (ctx) => {
-          receivedFolderIds.push(ctx.folderId);
-          return {};
-        },
-        sizeBytes: 50,
-      },
-    ];
-    const ctx = await submitBatchesWithProgress('https://example.com/webhook', batches, () => {}, 0, {}, xhrFactory);
-    expect(receivedFolderIds).toEqual(['folder-xyz']);
-    expect(ctx.folderId).toBe('folder-xyz');
-  });
-
-  it('does not overwrite an already-known folderId with a later response', async () => {
-    const xhrs = [
-      createFakeXhr({ status: 200, responseText: JSON.stringify({ id: 'should-not-be-used' }) }),
-    ];
-    const ctx = { folderId: 'already-known' };
-    let call = 0;
-    const xhrFactory = () => xhrs[call++];
-    const batches = [{ buildFormData: () => ({}), sizeBytes: 50 }];
-    await submitBatchesWithProgress('https://example.com/webhook', batches, () => {}, 0, ctx, xhrFactory);
-    expect(ctx.folderId).toBe('already-known');
   });
 });

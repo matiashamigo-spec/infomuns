@@ -7,91 +7,20 @@ export function getExtensionForMimeType(mimeType) {
   return 'webm';
 }
 
-export function buildUploadFormData(interviewClips, supportFiles, phone) {
-  const fd = new FormData();
-  interviewClips.forEach((blob, i) => {
-    const ext = getExtensionForMimeType(blob.type);
-    fd.append(`clip${i + 1}`, blob, `clip${i + 1}.${ext}`);
-  });
-  (supportFiles || []).forEach((file) => {
-    fd.append('apoyo[]', file, file.name || 'apoyo');
-  });
-  if (phone) {
-    fd.append('telefono', phone);
-  }
-  return fd;
-}
-
-// n8n rompe con ENOENT cuando le llegan muchos archivos juntos en un mismo
-// pedido (bug de carrera interno, confirmado con pruebas contra el webhook
-// de producción: no es un límite configurable, es la copia interna de n8n
-// perdiendo la carrera contra la limpieza de sus propios temp files). No
-// se puede evitar con un timer — pasa en menos de un segundo, y ocurre
-// adentro del nodo Webhook antes de que corra cualquier nodo nuestro, así
-// que no hay forma de meter una espera en el medio. La única forma real de
-// evitarlo es no mandarle tantos archivos juntos de una: se parte el envío
-// en varios pedidos chicos, todos a la misma carpeta de Drive.
-//
-// Techo empírico seguro por tanda: en las pruebas contra producción, 100MB
-// en 5 archivos pasó siempre limpio y 200MB en 10 archivos rompió siempre.
-// Se deja bastante margen debajo de ese punto (no es un límite exacto, es
-// una condición de carrera cuya probabilidad crece con tamaño y cantidad).
-export const SUPPORT_BATCH_MAX_BYTES = 40 * 1024 * 1024;
-export const SUPPORT_BATCH_MAX_FILES = 4;
-
-export function batchSupportFiles(supportFiles) {
-  const batches = [];
-  let current = [];
-  let currentBytes = 0;
-  (supportFiles || []).forEach((file) => {
-    const wouldOverflow =
-      current.length > 0 &&
-      (current.length >= SUPPORT_BATCH_MAX_FILES || currentBytes + file.size > SUPPORT_BATCH_MAX_BYTES);
-    if (wouldOverflow) {
-      batches.push(current);
-      current = [];
-      currentBytes = 0;
-    }
-    current.push(file);
-    currentBytes += file.size;
-  });
-  if (current.length > 0) batches.push(current);
-  return batches;
-}
-
 // Cada clip va en SU PROPIO pedido, no los 3 juntos: un solo paso largo
-// (el de "contá tu historia" sugiere hasta 5 minutos) puede pesar bastante
-// más de 100MB él solo a buena calidad, y disparar la misma condición de
-// carrera que el material de apoyo — partir por cantidad de archivos no
-// alcanza si UN archivo ya es grande. El clip 1 crea la carpeta en Drive
-// (responde con su `id` apenas la crea, sin esperar a que termine nada);
-// los clips 2 y 3 ya vienen con ese folderId. El teléfono va en todos los
-// pedidos (clips y apoyo): cada uno es una ejecución de n8n aislada, y el
-// mensaje de Telegram final puede terminar disparándose desde cualquiera.
-export function buildClipBatchFormData(clipBlob, clipIndex, phone, folderId, isLastClip, isLastBatch) {
+// puede pesar bastante más de 100MB él solo a buena calidad, y disparar un
+// bug de carrera en el nodo Webhook de n8n con payloads grandes. submissionId
+// se genera una sola vez del lado del cliente (no lo devuelve el servidor)
+// y viaja en los 3 pedidos, para que n8n sepa que son la misma entrega
+// aunque lleguen en 3 ejecuciones separadas. El teléfono va en todos los
+// pedidos: cada uno es una ejecución de n8n aislada.
+export function buildClipBatchFormData(clipBlob, clipIndex, phone, submissionId, isLastClip) {
   const fd = new FormData();
   const ext = getExtensionForMimeType(clipBlob.type);
   fd.append('clip', clipBlob, `clip${clipIndex}.${ext}`);
-  fd.append('kind', 'clip');
   fd.append('clipIndex', String(clipIndex));
+  fd.append('submissionId', submissionId);
   fd.append('isLastClip', isLastClip ? 'true' : 'false');
-  fd.append('isLastBatch', isLastBatch ? 'true' : 'false');
-  if (folderId) fd.append('folderId', folderId);
-  if (phone) fd.append('telefono', phone);
-  return fd;
-}
-
-// Cada tanda de apoyo va sola, sin clips, con el folderId que devolvió la
-// tanda de clips (o una tanda de apoyo anterior, da igual — siempre es el
-// mismo valor recibido en la respuesta de esa primera tanda).
-export function buildSupportBatchFormData(files, folderId, phone, isLastBatch) {
-  const fd = new FormData();
-  (files || []).forEach((file) => {
-    fd.append('apoyo[]', file, file.name || 'apoyo');
-  });
-  fd.append('folderId', folderId);
-  fd.append('kind', 'apoyo');
-  fd.append('isLastBatch', isLastBatch ? 'true' : 'false');
   if (phone) fd.append('telefono', phone);
   return fd;
 }
@@ -144,43 +73,26 @@ function sendOneBatch(webhookUrl, formData, xhrFactory, onBatchProgress) {
   });
 }
 
-function parseJsonSafe(text) {
-  try {
-    return JSON.parse(text);
-  } catch {
-    return null;
-  }
-}
-
-// Manda las tandas una por una, en orden (la de clips va primero: crea la
-// carpeta y devuelve su `id`, que las tandas de apoyo siguientes necesitan
-// para saber a dónde subir). Cada elemento de `batches` es
-// `{ buildFormData(ctx), sizeBytes }` — el form-data se arma recién antes
-// de mandar esa tanda, no antes, porque las tandas de apoyo necesitan el
-// `folderId` que trae `ctx` después de que la tanda de clips respondió.
+// Manda los clips uno por uno, en orden. Cada elemento de `batches` es
+// `{ buildFormData(), sizeBytes }`.
 //
-// Si una tanda falla, el error lleva `failedAtIndex` para que un reintento
-// pueda arrancar justo ahí (con el mismo `ctx`, ya con el folderId adentro)
-// — repetir desde cero duplicaría el video final en la carpeta de Drive.
-export async function submitBatchesWithProgress(webhookUrl, batches, onProgress, startIndex = 0, ctx = {}, xhrFactory = () => new XMLHttpRequest()) {
+// Si un clip falla, el error lleva `failedAtIndex` para que un reintento
+// pueda arrancar justo ahí, en vez de repetir desde cero.
+export async function submitBatchesWithProgress(webhookUrl, batches, onProgress, startIndex = 0, xhrFactory = () => new XMLHttpRequest()) {
   const totalBytes = batches.reduce((sum, b) => sum + b.sizeBytes, 0) || 1;
   let bytesDoneBefore = batches.slice(0, startIndex).reduce((sum, b) => sum + b.sizeBytes, 0);
   for (let i = startIndex; i < batches.length; i++) {
     const batch = batches[i];
-    const formData = batch.buildFormData(ctx);
-    let responseText;
+    const formData = batch.buildFormData();
     try {
-      responseText = await sendOneBatch(webhookUrl, formData, xhrFactory, (loaded) => {
+      await sendOneBatch(webhookUrl, formData, xhrFactory, (loaded) => {
         if (onProgress) onProgress(Math.round(((bytesDoneBefore + loaded) / totalBytes) * 100));
       });
     } catch (err) {
       err.failedAtIndex = i;
       throw err;
     }
-    const body = parseJsonSafe(responseText);
-    if (body && body.id && !ctx.folderId) ctx.folderId = body.id;
     bytesDoneBefore += batch.sizeBytes;
     if (onProgress) onProgress(Math.round((bytesDoneBefore / totalBytes) * 100));
   }
-  return ctx;
 }
