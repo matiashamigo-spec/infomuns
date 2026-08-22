@@ -5,11 +5,11 @@
 // el módulo en silencio, dejando la página sin mostrar ninguna pantalla
 // (ni el formulario ni el aviso de girar el teléfono). Bumpear la versión
 // acá es tan importante como bumpearla en el <script> de index.html.
-import { INTERVIEW_STEPS, getStepByIndex, isLastStep } from './steps.js?v=33';
-import { buildWhatsAppLink } from './whatsapp.js?v=33';
-import { VIDEO_MIME_CANDIDATES, pickSupportedMimeType } from './media-support.js?v=33';
-import { watchOrientation } from './orientation.js?v=33';
-import { buildClipBatchFormData, submitBatchesWithProgress } from './upload.js?v=33';
+import { INTERVIEW_STEPS, getStepByIndex, isLastStep } from './steps.js?v=34';
+import { buildWhatsAppLink } from './whatsapp.js?v=34';
+import { VIDEO_MIME_CANDIDATES, pickSupportedMimeType } from './media-support.js?v=34';
+import { watchOrientation } from './orientation.js?v=34';
+import { buildClipBatchFormData, submitBatchesWithProgress } from './upload.js?v=34';
 
 // Must match the path configured on the Webhook node once the n8n workflow exists
 // (see "Setup pendiente" in the design spec) — update if that path differs.
