@@ -21,6 +21,11 @@ export function buildClipBatchFormData(clipBlob, clipIndex, phone, submissionId,
   fd.append('clipIndex', String(clipIndex));
   fd.append('submissionId', submissionId);
   fd.append('isLastClip', isLastClip ? 'true' : 'false');
+  // El servidor manda cada clip a Telegram apenas llega (ya no hay fusión
+  // server-side con ffmpeg — esa era la única pieza que podía fallar sola).
+  // Le mandamos el tamaño ya calculado acá para que n8n decida si entra en
+  // el límite de 50MB de Telegram sin tener que leer el archivo del disco.
+  fd.append('sizeBytes', String(clipBlob.size));
   if (phone) fd.append('telefono', phone);
   return fd;
 }
