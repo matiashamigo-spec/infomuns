@@ -56,13 +56,23 @@
     <div class="mh-camera-wrap">
       <video id="mh-camera-video" autoplay playsinline muted></video>
       <div class="mh-frame-guide"></div>
+      <div id="mh-recording-indicator" class="mh-recording-indicator mh-hidden">
+        <span class="mh-recording-dot"></span>
+        <span id="mh-recording-timer">0:00</span>
+      </div>
     </div>
     <button id="mh-record-btn" class="mh-btn mh-btn--primary" type="button">Grabar</button>
-    <!-- La grabación real la hace la cámara nativa del celular (mejor calidad y
-         frame rate estable que MediaRecorder en el navegador) — este input queda
-         oculto, "Grabar" lo dispara por código. accept+capture abren directo la
-         cámara frontal en vez del selector de archivos genérico. -->
+    <!-- Solo se muestra/usa en iOS (grabación vía MediaRecorder+canvas) -->
+    <button id="mh-stop-btn" class="mh-btn mh-hidden" type="button">Cortar</button>
+    <!-- Solo se usa en Android: la cámara nativa da mejor calidad que
+         MediaRecorder ahí. En iOS el input capture graba fijo a 360x480
+         (limitación documentada de Safari, no arreglable desde HTML), así
+         que iOS graba con MediaRecorder+canvas en vez de esto. -->
     <input id="mh-camera-capture-input" type="file" accept="video/*" capture="user" class="mh-hidden" />
+    <!-- Pipeline de grabación en iOS: dibuja el frame más reciente de
+         mh-camera-video acá a ritmo fijo, y captureStream() de esto fuerza
+         un frame rate constante real, en vez del VFR crudo de la cámara. -->
+    <canvas id="mh-record-canvas" class="mh-offscreen"></canvas>
   </section>
 
   <!-- Tips popup: solo consejos generales, se muestra antes de cada paso -->
@@ -120,6 +130,6 @@
     <span class="mh-whatsapp-text">¿Tenés dudas?<br />Escribinos</span>
   </a>
 
-  <script type="module" src="./app.js?v=39"></script>
+  <script type="module" src="./app.js?v=40"></script>
 </body>
 </html>

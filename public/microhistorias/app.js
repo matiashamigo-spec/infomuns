@@ -5,10 +5,22 @@
 // el módulo en silencio, dejando la página sin mostrar ninguna pantalla
 // (ni el formulario ni el aviso de girar el teléfono). Bumpear la versión
 // acá es tan importante como bumpearla en el <script> de index.html.
-import { INTERVIEW_STEPS, getStepByIndex, isLastStep } from './steps.js?v=39';
-import { buildWhatsAppLink } from './whatsapp.js?v=39';
-import { watchOrientation } from './orientation.js?v=39';
-import { buildClipBatchFormData, submitBatchesWithProgress } from './upload.js?v=39';
+import { INTERVIEW_STEPS, getStepByIndex, isLastStep } from './steps.js?v=40';
+import { buildWhatsAppLink } from './whatsapp.js?v=40';
+import { watchOrientation } from './orientation.js?v=40';
+import { buildClipBatchFormData, submitBatchesWithProgress } from './upload.js?v=40';
+import { VIDEO_MIME_CANDIDATES, pickSupportedMimeType } from './media-support.js?v=40';
+
+// iOS: el input capture graba fijo a 360x480 (limitación documentada de
+// Safari, no arreglable desde HTML — ver Ajustes > Cámara del sistema, algo
+// que no podemos pedirle a cada persona que usa el formulario). Android no
+// tiene evidencia de ese mismo problema, pero SÍ tenía el frame rate real
+// bajísimo (~2.5fps) grabando con MediaRecorder en este dispositivo de
+// prueba (iPhone, dato importante: esa prueba tampoco fue en Android). Sin
+// datos reales de Android todavía, se mantiene la cámara nativa ahí (mejor
+// calidad esperada) y se vuelve a MediaRecorder+canvas solo en iOS, que es
+// donde SÍ está confirmado que la cámara nativa da un resultado inservible.
+const IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
 // Must match the path configured on the Webhook node once the n8n workflow exists
 // (see "Setup pendiente" in the design spec) — update if that path differs.
@@ -127,19 +139,20 @@ let previewObjectUrl = null;
 let submissionId = null;
 let nextBatchIndex = 0;
 
-// Esto es SOLO para la vista previa en vivo (encuadrarse antes de grabar) —
-// la grabación real la hace la cámara nativa del celular, no este stream,
-// así que no hace falta pedir audio acá (la vista previa es muda). Pedir
-// width+height juntos define una relación de aspecto exacta — eso fue lo
-// que disparó el zoom en su momento (confirmado en dispositivo real).
-// Pedir SOLO la altura no define una "forma" que el navegador tenga que
-// forzar recortando.
+// En Android esto es SOLO para la vista previa (la graba la cámara nativa,
+// audio no hace falta). En iOS este MISMO stream es lo que se graba de
+// verdad con MediaRecorder — por eso pide audio ahí. Pedir width+height
+// juntos define una relación de aspecto exacta — eso fue lo que disparó el
+// zoom en su momento (confirmado en dispositivo real). Pedir SOLO la altura
+// no define una "forma" que el navegador tenga que forzar recortando.
 function acquireCameraStream() {
   return navigator.mediaDevices.getUserMedia({
     video: {
       facingMode: 'user',
       height: { ideal: 1920 },
+      frameRate: { ideal: 30 },
     },
+    audio: IS_IOS,
   });
 }
 
@@ -208,6 +221,9 @@ function renderStep() {
   } else {
     timerEl.classList.add('mh-hidden');
   }
+  // Reset por si el paso anterior (en iOS) quedó a mitad de grabar.
+  el('mh-record-btn').classList.remove('mh-hidden');
+  el('mh-stop-btn').classList.add('mh-hidden');
   // Los tips generales (luz, ruido, encuadre) solo se muestran antes del
   // primer paso — repetirlos antes de cada paso resultaba redundante.
   if (currentStepIndex === 0) {
@@ -215,16 +231,126 @@ function renderStep() {
   }
 }
 
-// La grabación la hace la app de cámara nativa del celular (input file con
-// capture), no MediaRecorder en la página. Motivo: con MediaRecorder acá
-// mismo, clips reales de este proyecto llegaban a solo ~2.5 frames reales
-// por segundo pese a pedir 30fps — un video ilegible, "se traba todo" — y
-// ni subir el bitrate ni forzar frameRate lo arreglaba, porque el problema
-// es cuántos frames reales entrega la cámara vía getUserMedia en este
-// dispositivo, no cómo se codifican después. La cámara nativa usa el
-// pipeline de hardware completo del teléfono, sin esa limitación.
+// Solo Android: abre la cámara nativa vía el input file con capture. En
+// iOS esto graba fijo a 360x480 (ver nota de IS_IOS más arriba), así que
+// ahí se usa startRecording() (MediaRecorder+canvas) en su lugar.
 function openNativeCamera() {
   el('mh-camera-capture-input').click();
+}
+
+// --- Grabación en iOS: MediaRecorder sobre un canvas, no sobre la cámara
+// cruda. Motivo: grabando directo desde el stream de getUserMedia, clips
+// reales de este proyecto llegaban a solo ~2.5 frames reales por segundo
+// pese a pedir 30fps (VFR severo, "se traba todo") — el navegador reduce
+// agresivamente el frame rate cuando la imagen cambia poco, y ni el bitrate
+// ni el frameRate hint de getUserMedia lo evitan. El canvas dibuja el
+// último frame disponible de mh-camera-video a un ritmo fijo (setInterval,
+// no requestAnimationFrame sin throttle — eso saturaba el hilo principal en
+// un intento anterior de este mismo proyecto, ver HANDOFF.md) y
+// captureStream(30) de ESE canvas entrega 30fps constantes de verdad,
+// duplicando el último frame real cuando hace falta en vez de dejar huecos
+// irregulares.
+const RECORD_FPS = 30;
+let canvasDrawInterval = null;
+let mediaRecorder = null;
+let recordedChunks = [];
+let recordingTimerInterval = null;
+let recordingStartTime = null;
+
+function startCanvasFeed() {
+  const video = el('mh-camera-video');
+  const canvas = el('mh-record-canvas');
+  canvas.width = video.videoWidth || 1080;
+  canvas.height = video.videoHeight || 1920;
+  const ctx = canvas.getContext('2d');
+  canvasDrawInterval = setInterval(() => {
+    if (video.readyState >= 2) {
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    }
+  }, 1000 / RECORD_FPS);
+  return canvas.captureStream(RECORD_FPS);
+}
+
+function stopCanvasFeed() {
+  if (canvasDrawInterval) {
+    clearInterval(canvasDrawInterval);
+    canvasDrawInterval = null;
+  }
+}
+
+function formatElapsed(totalSeconds) {
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+}
+
+// maxSeconds corta la grabación sola al llegar al límite del paso — no es
+// solo el texto de sugerencia, un video largo a esta resolución puede
+// quedar demasiado pesado para subir (ver MAX_CLIP_BYTES más abajo).
+function startRecordingTimer(maxSeconds) {
+  recordingStartTime = Date.now();
+  el('mh-recording-timer').textContent = '0:00';
+  el('mh-recording-indicator').classList.remove('mh-hidden');
+  recordingTimerInterval = setInterval(() => {
+    const elapsed = Math.floor((Date.now() - recordingStartTime) / 1000);
+    el('mh-recording-timer').textContent = formatElapsed(elapsed);
+    if (maxSeconds && elapsed >= maxSeconds) {
+      stopRecording();
+    }
+  }, 1000);
+}
+
+function stopRecordingTimer() {
+  if (recordingTimerInterval) {
+    clearInterval(recordingTimerInterval);
+    recordingTimerInterval = null;
+  }
+  el('mh-recording-indicator').classList.add('mh-hidden');
+}
+
+function startRecording() {
+  const canvasStream = startCanvasFeed();
+  const audioTracks = stream ? stream.getAudioTracks() : [];
+  const combinedStream = new MediaStream([...canvasStream.getVideoTracks(), ...audioTracks]);
+  const mimeType = pickSupportedMimeType(VIDEO_MIME_CANDIDATES, (t) => MediaRecorder.isTypeSupported(t));
+  recordedChunks = [];
+  const recorderOptions = { videoBitsPerSecond: 16_000_000, audioBitsPerSecond: 192_000 };
+  if (mimeType) recorderOptions.mimeType = mimeType;
+  mediaRecorder = new MediaRecorder(combinedStream, recorderOptions);
+  mediaRecorder.addEventListener('dataavailable', (e) => {
+    if (e.data.size > 0) recordedChunks.push(e.data);
+  });
+  mediaRecorder.addEventListener('stop', () => {
+    stopRecordingTimer();
+    stopCanvasFeed();
+    const blob = new Blob(recordedChunks, { type: mediaRecorder.mimeType });
+    handleCapturedFile(blob);
+  });
+  mediaRecorder.addEventListener('error', (e) => {
+    console.error('microhistorias: mediaRecorder error', e.error || e);
+    stopRecordingTimer();
+    stopCanvasFeed();
+    el('mh-record-btn').classList.remove('mh-hidden');
+    el('mh-stop-btn').classList.add('mh-hidden');
+  });
+  mediaRecorder.start();
+  startRecordingTimer(getStepByIndex(currentStepIndex).suggestedMaxSeconds);
+  el('mh-record-btn').classList.add('mh-hidden');
+  el('mh-stop-btn').classList.remove('mh-hidden');
+}
+
+function stopRecording() {
+  if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+    mediaRecorder.stop();
+  }
+}
+
+function handleRecordButtonClick() {
+  if (IS_IOS) {
+    startRecording();
+  } else {
+    openNativeCamera();
+  }
 }
 
 // No hay forma de cortar la grabación sola al límite del paso (la maneja la
@@ -481,7 +607,8 @@ el('mh-tips-overlay').addEventListener('click', () => {
   el('mh-tips-overlay').classList.remove('is-visible');
   resetScrollDeferred();
 });
-el('mh-record-btn').addEventListener('click', openNativeCamera);
+el('mh-record-btn').addEventListener('click', handleRecordButtonClick);
+el('mh-stop-btn').addEventListener('click', stopRecording);
 el('mh-camera-capture-input').addEventListener('change', (e) => {
   const file = e.target.files && e.target.files[0];
   // Reset inmediato: si no, elegir el MISMO archivo (o volver a grabar y

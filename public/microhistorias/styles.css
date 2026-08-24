@@ -385,3 +385,13 @@ p {
   display: none !important;
 }
 
+/* display:none puede hacer que un <canvas>/<video> deje de decodificar
+   frames en iOS (confirmado en este proyecto, ver HANDOFF.md) — para el
+   canvas del pipeline de grabación necesita seguir "renderizado" aunque
+   no se vea, así que se oculta sacándolo de pantalla, no con display:none. */
+.mh-offscreen {
+  position: fixed;
+  top: -9999px;
+  left: -9999px;
+}
+
