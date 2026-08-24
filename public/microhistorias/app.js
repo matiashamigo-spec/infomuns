@@ -270,10 +270,13 @@ function startRecording() {
   cameraInterrupted = false;
   const mimeType = pickSupportedMimeType(VIDEO_MIME_CANDIDATES, (t) => MediaRecorder.isTypeSupported(t));
   recordedChunks = [];
-  // El video final se manda por Telegram, que tiene un techo de 50MB — los
-  // topes de duración de cada paso (steps.js) están pensados para que el
-  // video final quede bien por debajo de eso a este bitrate.
-  const recorderOptions = { videoBitsPerSecond: 4_000_000, audioBitsPerSecond: 128_000 };
+  // Antes esto estaba limitado a 4Mbps porque el video se mandaba directo
+  // por Telegram (techo de 49MB). Desde que el envío pasó a ser siempre por
+  // link de descarga (sin límite de tamaño más que MAX_UPLOAD_BYTES/nginx),
+  // esa restricción no aplica más — se sube el bitrate a lo máximo que tiene
+  // sentido para esta resolución sin arriesgar que un celular viejo no
+  // pueda codificar en tiempo real.
+  const recorderOptions = { videoBitsPerSecond: 16_000_000, audioBitsPerSecond: 192_000 };
   if (mimeType) recorderOptions.mimeType = mimeType;
   mediaRecorder = new MediaRecorder(recordingStream, recorderOptions);
   mediaRecorder.addEventListener('dataavailable', (e) => {
