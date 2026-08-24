@@ -5,10 +5,10 @@
 // el módulo en silencio, dejando la página sin mostrar ninguna pantalla
 // (ni el formulario ni el aviso de girar el teléfono). Bumpear la versión
 // acá es tan importante como bumpearla en el <script> de index.html.
-import { INTERVIEW_STEPS, getStepByIndex, isLastStep } from './steps.js?v=42';
-import { buildWhatsAppLink } from './whatsapp.js?v=42';
-import { watchOrientation } from './orientation.js?v=42';
-import { buildClipBatchFormData, submitBatchesWithProgress } from './upload.js?v=42';
+import { INTERVIEW_STEPS, getStepByIndex, isLastStep } from './steps.js?v=43';
+import { buildWhatsAppLink } from './whatsapp.js?v=43';
+import { watchOrientation } from './orientation.js?v=43';
+import { buildClipBatchFormData, submitBatchesWithProgress } from './upload.js?v=43';
 
 // Historial de por qué esta app NO graba nada dentro de la página (ni con
 // getUserMedia+MediaRecorder, ni con la cámara nativa vía <input capture>,
@@ -153,14 +153,10 @@ function renderStep() {
   } else {
     timerEl.classList.add('mh-hidden');
   }
-  // El ejemplo de encuadre solo se muestra en el paso 1 — para el 2 y el 3
-  // ya se entendió, repetirlo era redundante.
-  const isFirstStep = currentStepIndex === 0;
-  el('mh-framing-label').classList.toggle('mh-hidden', !isFirstStep);
-  el('mh-record-framing-wrap').classList.toggle('mh-hidden', !isFirstStep);
-  // Los tips generales (luz, ruido, encuadre) solo se muestran antes del
-  // primer paso — repetirlos antes de cada paso resultaba redundante.
-  if (isFirstStep) {
+  // Los tips generales (luz, ruido, encuadre, ejemplo de plano) solo se
+  // muestran antes del primer paso, en el popup — repetirlos en la pantalla
+  // de cada paso (o incluso solo en el paso 1) resultaba redundante.
+  if (currentStepIndex === 0) {
     el('mh-tips-overlay').classList.add('is-visible');
   }
 }
