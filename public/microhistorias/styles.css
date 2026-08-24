@@ -304,6 +304,30 @@ p {
   box-sizing: border-box;
 }
 
+.mh-translate-widget {
+  position: fixed;
+  top: 8px;
+  right: 8px;
+  z-index: 50;
+  max-width: 120px;
+  font-size: 11px;
+}
+
+/* El widget de Google inyecta su propio iframe/select con estilos que no
+   controlamos del todo -- achicado para que no compita visualmente con la
+   marca ni tape nada en las pantallas ajustadas sin scroll. */
+.mh-translate-widget .goog-te-gadget {
+  font-family: 'Nunito', sans-serif !important;
+  font-size: 0 !important;
+}
+.mh-translate-widget .goog-te-gadget-simple {
+  border: 2px solid var(--mh-border);
+  border-radius: 8px;
+  padding: 2px 4px;
+  background: #fff;
+  font-size: 11px !important;
+}
+
 .mh-whatsapp-bubble {
   position: fixed;
   bottom: 16px;

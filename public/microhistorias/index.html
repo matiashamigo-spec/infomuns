@@ -7,9 +7,21 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" />
-  <link rel="stylesheet" href="./styles.css?v=20" />
+  <link rel="stylesheet" href="./styles.css?v=21" />
 </head>
 <body>
+  <!-- Mismo mecanismo que GTranslate en info.muns.club (WordPress) por
+       debajo: el widget publico de Google Translate. Fijo, en su propia
+       esquina, fuera del flujo de pantallas -- asi queda disponible sin
+       importar en que paso este la persona. -->
+  <div id="google_translate_element" class="mh-translate-widget"></div>
+  <script type="text/javascript">
+    function googleTranslateElementInit() {
+      new google.translate.TranslateElement({ pageLanguage: 'es', layout: google.translate.TranslateElement.InlineLayout.SIMPLE }, 'google_translate_element');
+    }
+  </script>
+  <script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+
   <img id="mh-logo" class="mh-logo" src="https://info.muns.club/wp-content/uploads/2026/07/Logo-Muns-scaled.png" alt="Muns" />
 
   <!-- Orientation lock overlay -->
