@@ -44,8 +44,10 @@
     <p id="mh-step-prompt" class="mh-prompt-big"></p>
     <p id="mh-step-timer" class="mh-tip mh-hidden"></p>
     <p class="mh-tip">Grabá este paso con la Cámara de tu celular (no en esta página) y volvé acá para elegir el video.</p>
-    <p class="mh-tip mh-framing-label">Plano sugerido:</p>
-    <div class="mh-camera-wrap">
+    <!-- Solo se muestra en el paso 1 -- para el 2 y el 3 ya se entendió el
+         encuadre, repetirlo era redundante. -->
+    <p id="mh-framing-label" class="mh-tip mh-framing-label">Plano sugerido:</p>
+    <div id="mh-record-framing-wrap" class="mh-camera-wrap">
       <img src="./encuadre-ejemplo.jpg?v=41" alt="Ejemplo de encuadre: cabeza y hombros centrados, mirando a cámara" class="mh-framing-example" />
     </div>
     <button id="mh-record-btn" class="mh-btn mh-btn--primary" type="button">Ya lo grabé, elegir video</button>
@@ -113,6 +115,6 @@
     <span class="mh-whatsapp-text">¿Tenés dudas?<br />Escribinos</span>
   </a>
 
-  <script type="module" src="./app.js?v=41"></script>
+  <script type="module" src="./app.js?v=42"></script>
 </body>
 </html>
