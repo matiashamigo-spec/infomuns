@@ -5,10 +5,10 @@
 // el módulo en silencio, dejando la página sin mostrar ninguna pantalla
 // (ni el formulario ni el aviso de girar el teléfono). Bumpear la versión
 // acá es tan importante como bumpearla en el <script> de index.html.
-import { INTERVIEW_STEPS, getStepByIndex, isLastStep } from './steps.js?v=50';
-import { buildWhatsAppLink } from './whatsapp.js?v=50';
-import { watchOrientation } from './orientation.js?v=50';
-import { buildClipUploadUrl, submitBatchesWithProgress } from './upload.js?v=50';
+import { INTERVIEW_STEPS, getStepByIndex, isLastStep } from './steps.js?v=51';
+import { buildWhatsAppLink } from './whatsapp.js?v=51';
+import { watchOrientation } from './orientation.js?v=51';
+import { buildClipUploadUrl, submitBatchesWithProgress } from './upload.js?v=51';
 
 // Historial de por qué esta app NO graba nada dentro de la página (ni con
 // getUserMedia+MediaRecorder, ni con la cámara nativa vía <input capture>,

@@ -26,7 +26,11 @@
   <!-- Interfaz propia, estilo GTranslate: setea la cookie googtrans (el
        mismo mecanismo que usa Google Translate para recordar el idioma
        elegido) y recarga -- confirmado que funciona con una prueba real. -->
-  <div id="mh-lang-switcher" class="mh-lang-switcher">
+  <!-- notranslate + translate="no": sin esto, Google Translate escanea
+       tambien ESTE selector como si fuera contenido de la pagina -- "EN"
+       es tambien una palabra española real (significa "in"), y Google la
+       traducia a si misma ("EN" -> "IN"), confirmado real con una prueba. -->
+  <div id="mh-lang-switcher" class="mh-lang-switcher notranslate" translate="no">
     <button id="mh-lang-current" class="mh-lang-current" type="button">
       <span id="mh-lang-flag">🇪🇸</span>
       <span id="mh-lang-code">ES</span>
@@ -144,6 +148,6 @@
     <span class="mh-whatsapp-text">¿Tenés dudas?<br />Escribinos</span>
   </a>
 
-  <script type="module" src="./app.js?v=50"></script>
+  <script type="module" src="./app.js?v=51"></script>
 </body>
 </html>
