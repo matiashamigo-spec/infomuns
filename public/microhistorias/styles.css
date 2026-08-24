@@ -77,6 +77,15 @@ p {
   padding: 24px;
   width: 100%;
   max-width: 420px;
+  /* html/body bloquean el scroll de la página a propósito (evita el rebote
+     en Safari) -- pero si el contenido de una tarjeta crece más que la
+     pantalla (confirmado real: el aviso de baja calidad tapaba el botón
+     "Repetir" sin ninguna forma de llegar a él), hace falta un escape. La
+     tarjeta misma scrollea puertas adentro en vez de la página entera. */
+  max-height: calc(100vh - 48px);
+  max-height: calc(100dvh - 48px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   margin-bottom: 16px;
 }
 
