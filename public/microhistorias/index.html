@@ -43,18 +43,19 @@
     <h2 id="mh-step-title"></h2>
     <p id="mh-step-prompt" class="mh-prompt-big"></p>
     <p id="mh-step-timer" class="mh-tip mh-hidden"></p>
-    <p class="mh-tip">Grabá este paso con la Cámara de tu celular (no en esta página) y volvé acá para elegir el video.</p>
+    <p class="mh-tip">Al tocar el botón se abre un menú: si elegís <strong>Fototeca</strong>, elegís un video que ya grabaste con la Cámara (mejor calidad). Si elegís <strong>Tomar foto o video</strong>, graba ahí mismo pero con calidad más baja. Recomendado: grabá antes con la Cámara y elegí Fototeca acá.</p>
     <!-- Solo se muestra en el paso 1 -- para el 2 y el 3 ya se entendió el
          encuadre, repetirlo era redundante. -->
     <p id="mh-framing-label" class="mh-tip mh-framing-label">Plano sugerido:</p>
     <div id="mh-record-framing-wrap" class="mh-camera-wrap">
       <img src="./encuadre-ejemplo.jpg?v=41" alt="Ejemplo de encuadre: cabeza y hombros centrados, mirando a cámara" class="mh-framing-example" />
     </div>
-    <button id="mh-record-btn" class="mh-btn mh-btn--primary" type="button">Ya lo grabé, elegir video</button>
-    <!-- Sin el atributo capture: es un selector de archivos normal (Fototeca/
-         Galería), no el modo de captura en vivo — así se evita el techo de
-         calidad que Safari fuerza en iOS cuando graba en vivo desde acá
-         (confirmado real: un clip llegó a 360x480, ver historial del proyecto). -->
+    <button id="mh-record-btn" class="mh-btn mh-btn--primary" type="button">Grabar o elegir video</button>
+    <!-- Sin el atributo capture: deja elegir entre Fototeca (buena calidad,
+         recomendado) y Tomar foto o video (graba ahí mismo, pero con el
+         techo de calidad que Safari fuerza en iOS para grabación en vivo —
+         confirmado real: un clip llegó a 360x480). No hay forma de ocultar
+         la opción de grabar en vivo del menú sin perder también Fototeca. -->
     <input id="mh-camera-capture-input" type="file" accept="video/*" class="mh-hidden" />
   </section>
 
@@ -62,7 +63,7 @@
   <div id="mh-tips-overlay" class="mh-tips-overlay">
     <h2>Antes de grabar</h2>
     <p class="mh-tip">Buscá un lugar silencioso, evitá tener una luz fuerte detrás tuyo y limpiá el lente de cámara (la cámara selfie).</p>
-    <p class="mh-tip">Cada paso lo grabás con la Cámara de tu celular (no acá) — después volvés a esta página y elegís el video que grabaste.</p>
+    <p class="mh-tip">Para mejor calidad: grabá cada paso antes con la Cámara de tu celular, y cuando toques el botón acá elegí "Fototeca" para usar ese video (no "Tomar foto o video", que graba con menos calidad).</p>
     <p class="mh-tip mh-framing-label">Plano sugerido:</p>
     <img src="./encuadre-ejemplo.jpg?v=41" alt="Ejemplo de encuadre: cabeza y hombros centrados, mirando a cámara" class="mh-framing-example" />
     <button id="mh-tips-continue-btn" class="mh-btn mh-btn--primary" type="button">Listo, empezar</button>
