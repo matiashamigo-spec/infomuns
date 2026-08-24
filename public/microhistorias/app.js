@@ -5,10 +5,10 @@
 // el módulo en silencio, dejando la página sin mostrar ninguna pantalla
 // (ni el formulario ni el aviso de girar el teléfono). Bumpear la versión
 // acá es tan importante como bumpearla en el <script> de index.html.
-import { INTERVIEW_STEPS, getStepByIndex, isLastStep } from './steps.js?v=38';
-import { buildWhatsAppLink } from './whatsapp.js?v=38';
-import { watchOrientation } from './orientation.js?v=38';
-import { buildClipBatchFormData, submitBatchesWithProgress } from './upload.js?v=38';
+import { INTERVIEW_STEPS, getStepByIndex, isLastStep } from './steps.js?v=39';
+import { buildWhatsAppLink } from './whatsapp.js?v=39';
+import { watchOrientation } from './orientation.js?v=39';
+import { buildClipBatchFormData, submitBatchesWithProgress } from './upload.js?v=39';
 
 // Must match the path configured on the Webhook node once the n8n workflow exists
 // (see "Setup pendiente" in the design spec) — update if that path differs.
@@ -127,23 +127,26 @@ let previewObjectUrl = null;
 let submissionId = null;
 let nextBatchIndex = 0;
 
+// Esto es SOLO para la vista previa en vivo (encuadrarse antes de grabar) —
+// la grabación real la hace la cámara nativa del celular, no este stream,
+// así que no hace falta pedir audio acá (la vista previa es muda). Pedir
+// width+height juntos define una relación de aspecto exacta — eso fue lo
+// que disparó el zoom en su momento (confirmado en dispositivo real).
+// Pedir SOLO la altura no define una "forma" que el navegador tenga que
+// forzar recortando.
+function acquireCameraStream() {
+  return navigator.mediaDevices.getUserMedia({
+    video: {
+      facingMode: 'user',
+      height: { ideal: 1920 },
+    },
+  });
+}
+
 async function startCamera() {
   try {
-    stream = await navigator.mediaDevices.getUserMedia({
-      // Esto es SOLO para la vista previa en vivo (encuadrarse antes de
-      // grabar) — la grabación real la hace la cámara nativa del celular,
-      // no este stream, así que no hace falta pedir audio acá (la vista
-      // previa es muda). Pedir width+height juntos define una relación de
-      // aspecto exacta — eso fue lo que disparó el zoom en su momento
-      // (confirmado en dispositivo real). Pedir SOLO la altura no define
-      // una "forma" que el navegador tenga que forzar recortando.
-      video: {
-        facingMode: 'user',
-        height: { ideal: 1920 },
-      },
-    });
-    const video = el('mh-camera-video');
-    video.srcObject = stream;
+    stream = await acquireCameraStream();
+    el('mh-camera-video').srcObject = stream;
     renderStep();
     showScreen('record');
   } catch (err) {
@@ -157,6 +160,26 @@ async function startCamera() {
       console.error('microhistorias: getUserMedia failed (not a permission denial):', err.name, err);
     }
     showScreen('permissionError');
+  }
+}
+
+// La app de cámara nativa toma control EXCLUSIVO del hardware de cámara
+// mientras está abierta — el stream de vista previa que ya teníamos queda
+// huérfano en ese momento y no se reactiva solo al volver (confirmado real:
+// "en paso 2 ya no veo la previa de la cámara", justo después de usar la
+// cámara nativa en el paso 1). Por eso se vuelve a pedir un stream fresco
+// cada vez que se vuelve a la pantalla de grabar, en vez de asumir que el
+// viejo sigue sirviendo. Si falla, no cortamos el flujo — la vista previa
+// es un plus, "Grabar" funciona igual sin ella (no depende de este stream).
+async function refreshCameraPreview() {
+  try {
+    if (stream) {
+      stream.getTracks().forEach((t) => t.stop());
+    }
+    stream = await acquireCameraStream();
+    el('mh-camera-video').srcObject = stream;
+  } catch (err) {
+    console.error('microhistorias: no se pudo refrescar la vista previa', err.name, err);
   }
 }
 
@@ -260,6 +283,7 @@ function repeatClip() {
   el('mh-continue-btn').classList.remove('mh-hidden');
   showScreen('record');
   renderStep();
+  refreshCameraPreview();
 }
 
 function useClipAndContinue() {
@@ -277,6 +301,7 @@ function useClipAndContinue() {
     currentStepIndex += 1;
     renderStep();
     showScreen('record');
+    refreshCameraPreview();
   }
 }
 
