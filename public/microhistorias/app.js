@@ -5,10 +5,10 @@
 // el módulo en silencio, dejando la página sin mostrar ninguna pantalla
 // (ni el formulario ni el aviso de girar el teléfono). Bumpear la versión
 // acá es tan importante como bumpearla en el <script> de index.html.
-import { INTERVIEW_STEPS, getStepByIndex, isLastStep } from './steps.js?v=46';
-import { buildWhatsAppLink } from './whatsapp.js?v=46';
-import { watchOrientation } from './orientation.js?v=46';
-import { buildClipUploadUrl, submitBatchesWithProgress } from './upload.js?v=46';
+import { INTERVIEW_STEPS, getStepByIndex, isLastStep } from './steps.js?v=47';
+import { buildWhatsAppLink } from './whatsapp.js?v=47';
+import { watchOrientation } from './orientation.js?v=47';
+import { buildClipUploadUrl, submitBatchesWithProgress } from './upload.js?v=47';
 
 // Historial de por qué esta app NO graba nada dentro de la página (ni con
 // getUserMedia+MediaRecorder, ni con la cámara nativa vía <input capture>,
@@ -173,7 +173,7 @@ function renderStep() {
   el('mh-step-prompt').textContent = step.prompt;
   const timerEl = el('mh-step-timer');
   if (step.suggestedMaxSeconds) {
-    timerEl.textContent = `No te recomendamos pasarte de ${formatSuggestedDuration(step.suggestedMaxSeconds)}: un video muy largo puede quedar demasiado pesado para subirlo.`;
+    timerEl.textContent = `Que no dure más de ${formatSuggestedDuration(step.suggestedMaxSeconds)}.`;
     timerEl.classList.remove('mh-hidden');
   } else {
     timerEl.classList.add('mh-hidden');
