@@ -18,12 +18,6 @@
     <p>Esta app se usa con el teléfono en vertical, como en el instructivo.</p>
   </div>
 
-  <!-- Unsupported browser screen -->
-  <section id="mh-unsupported-screen" class="mh-card mh-hidden">
-    <h2>Tu navegador no soporta grabación</h2>
-    <p>Probá abrir este link desde Chrome (Android) o Safari (iPhone) actualizado.</p>
-  </section>
-
   <!-- Start screen -->
   <section id="mh-start-screen" class="mh-card mh-hidden">
     <p class="mh-tagline">Una historia puede cambiar el mundo</p>
@@ -40,46 +34,34 @@
     <button id="mh-start-btn" class="mh-btn mh-btn--primary" type="button" disabled>Empezar</button>
   </section>
 
-  <!-- Camera permission error -->
-  <section id="mh-permission-error" class="mh-card mh-hidden">
-    <h2>Necesitamos tu cámara y micrófono</h2>
-    <p>Para grabar tu historia hace falta que le des permiso al navegador. Volvé a intentarlo.</p>
-    <button id="mh-permission-retry-btn" class="mh-btn mh-btn--primary" type="button">Reintentar</button>
-  </section>
-
-  <!-- Recording screen -->
+  <!-- Recording screen: la grabación pasa por la Cámara nativa del celular,
+       fuera de esta página (ver notas de app.js sobre por qué) — acá solo
+       se muestran las instrucciones y el selector para elegir el video ya
+       grabado. -->
   <section id="mh-record-screen" class="mh-card mh-hidden">
     <p id="mh-step-progress" class="mh-progress"></p>
     <h2 id="mh-step-title"></h2>
     <p id="mh-step-prompt" class="mh-prompt-big"></p>
     <p id="mh-step-timer" class="mh-tip mh-hidden"></p>
+    <p class="mh-tip">Grabá este paso con la Cámara de tu celular (no en esta página) y volvé acá para elegir el video.</p>
     <div class="mh-camera-wrap">
-      <video id="mh-camera-video" autoplay playsinline muted></video>
-      <div class="mh-frame-guide"></div>
-      <div id="mh-recording-indicator" class="mh-recording-indicator mh-hidden">
-        <span class="mh-recording-dot"></span>
-        <span id="mh-recording-timer">0:00</span>
-      </div>
+      <img src="./encuadre-ejemplo.jpg?v=41" alt="Ejemplo de encuadre: cabeza y hombros centrados, mirando a cámara" class="mh-framing-example" />
     </div>
-    <button id="mh-record-btn" class="mh-btn mh-btn--primary" type="button">Grabar</button>
-    <!-- Solo se muestra/usa en iOS (grabación vía MediaRecorder+canvas) -->
-    <button id="mh-stop-btn" class="mh-btn mh-hidden" type="button">Cortar</button>
-    <!-- Solo se usa en Android: la cámara nativa da mejor calidad que
-         MediaRecorder ahí. En iOS el input capture graba fijo a 360x480
-         (limitación documentada de Safari, no arreglable desde HTML), así
-         que iOS graba con MediaRecorder+canvas en vez de esto. -->
-    <input id="mh-camera-capture-input" type="file" accept="video/*" capture="user" class="mh-hidden" />
-    <!-- Pipeline de grabación en iOS: dibuja el frame más reciente de
-         mh-camera-video acá a ritmo fijo, y captureStream() de esto fuerza
-         un frame rate constante real, en vez del VFR crudo de la cámara. -->
-    <canvas id="mh-record-canvas" class="mh-offscreen"></canvas>
+    <button id="mh-record-btn" class="mh-btn mh-btn--primary" type="button">Ya lo grabé, elegir video</button>
+    <!-- Sin el atributo capture: es un selector de archivos normal (Fototeca/
+         Galería), no el modo de captura en vivo — así se evita el techo de
+         calidad que Safari fuerza en iOS cuando graba en vivo desde acá
+         (confirmado real: un clip llegó a 360x480, ver historial del proyecto). -->
+    <input id="mh-camera-capture-input" type="file" accept="video/*" class="mh-hidden" />
   </section>
 
-  <!-- Tips popup: solo consejos generales, se muestra antes de cada paso -->
+  <!-- Tips popup: se muestra una sola vez, antes del primer paso -->
   <div id="mh-tips-overlay" class="mh-tips-overlay">
     <h2>Antes de grabar</h2>
+    <img src="./encuadre-ejemplo.jpg?v=41" alt="Ejemplo de encuadre: cabeza y hombros centrados, mirando a cámara" class="mh-framing-example" />
     <p class="mh-tip">Buscá un lugar silencioso, evitá tener una luz fuerte detrás tuyo y limpiá el lente de cámara (la cámara selfie).</p>
-    <p class="mh-tip">Alejá el celular todo lo que te dé el brazo y ubicá tu cabeza de manera que la parte de arriba toque la línea punteada.</p>
+    <p class="mh-tip">Encuadrate como en la foto: cabeza y hombros centrados, mirando derecho a la cámara.</p>
+    <p class="mh-tip">Cada paso lo grabás con la Cámara de tu celular (no acá) — después volvés a esta página y elegís el video que grabaste.</p>
     <button id="mh-tips-continue-btn" class="mh-btn mh-btn--primary" type="button">Listo, empezar</button>
   </div>
 
@@ -130,6 +112,6 @@
     <span class="mh-whatsapp-text">¿Tenés dudas?<br />Escribinos</span>
   </a>
 
-  <script type="module" src="./app.js?v=40"></script>
+  <script type="module" src="./app.js?v=41"></script>
 </body>
 </html>
