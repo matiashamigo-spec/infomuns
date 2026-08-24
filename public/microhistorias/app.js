@@ -5,11 +5,10 @@
 // el módulo en silencio, dejando la página sin mostrar ninguna pantalla
 // (ni el formulario ni el aviso de girar el teléfono). Bumpear la versión
 // acá es tan importante como bumpearla en el <script> de index.html.
-import { INTERVIEW_STEPS, getStepByIndex, isLastStep } from './steps.js?v=34';
-import { buildWhatsAppLink } from './whatsapp.js?v=34';
-import { VIDEO_MIME_CANDIDATES, pickSupportedMimeType } from './media-support.js?v=34';
-import { watchOrientation } from './orientation.js?v=34';
-import { buildClipBatchFormData, submitBatchesWithProgress } from './upload.js?v=34';
+import { INTERVIEW_STEPS, getStepByIndex, isLastStep } from './steps.js?v=37';
+import { buildWhatsAppLink } from './whatsapp.js?v=37';
+import { watchOrientation } from './orientation.js?v=37';
+import { buildClipBatchFormData, submitBatchesWithProgress } from './upload.js?v=37';
 
 // Must match the path configured on the Webhook node once the n8n workflow exists
 // (see "Setup pendiente" in the design spec) — update if that path differs.
@@ -102,10 +101,11 @@ watchOrientation((portrait) => {
   el('mh-orientation-lock').classList.toggle('is-visible', !portrait);
 });
 
-// Browser support check
-const isSupported =
-  typeof window.MediaRecorder !== 'undefined' &&
-  !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+// Browser support check: ya no depende de MediaRecorder — la grabación real
+// la hace la app de cámara nativa del celular (ver openNativeCamera), no
+// código nuestro. Solo necesitamos poder mostrar la vista previa en vivo
+// antes de grabar.
+const isSupported = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
 
 if (!isSupported) {
   showScreen('unsupported');
@@ -115,12 +115,8 @@ if (!isSupported) {
 
 // App state
 let stream = null;
-let recordingStream = null;
-let track = null;
 let currentStepIndex = 0;
 const recordedClips = [];
-let mediaRecorder = null;
-let recordedChunks = [];
 let pendingClipBlob = null;
 let previewObjectUrl = null;
 // submissionId identifica esta entrega para que los 3 clips (cada uno un
@@ -132,58 +128,22 @@ let previewObjectUrl = null;
 // repetir desde cero.
 let submissionId = null;
 let nextBatchIndex = 0;
-// Ver el listener de 'mute' en startCamera: true cuando la cámara/pestaña
-// se interrumpió a mitad de la grabación actual, para que el handler de
-// 'stop' del MediaRecorder sepa que tiene que descartar el clip en vez de
-// entregarlo con un tramo roto.
-let cameraInterrupted = false;
-
-function handleCameraInterruption() {
-  // Fuera de una grabación activa (p.ej. en la pantalla de preview, o justo
-  // después de pedir permisos) un mute/visibilitychange no rompe nada — no
-  // hay clip en curso que descartar.
-  if (!mediaRecorder || mediaRecorder.state === 'inactive') return;
-  if (cameraInterrupted) return; // ya se está manejando, no duplicar el corte
-  cameraInterrupted = true;
-  console.error('microhistorias: cámara o pestaña interrumpida durante la grabación, se descarta el clip');
-  stopRecording();
-}
-
-document.addEventListener('visibilitychange', () => {
-  if (document.hidden) handleCameraInterruption();
-});
 
 async function startCamera() {
   try {
     stream = await navigator.mediaDevices.getUserMedia({
-      // Pedir width+height juntos define una relación de aspecto exacta —
-      // eso fue lo que disparó el zoom (confirmado en dispositivo real,
-      // con y sin resizeMode:'none', que no evitó el recorte). Pedir SOLO
-      // la altura no define una "forma" de dos dimensiones, así que el
-      // navegador no tiene una relación exacta que forzar recortando —
-      // en teoría alcanza resolución más alta sin ese recorte. 'ideal'
-      // (no 'exact') para no fallar duro si el dispositivo no lo soporta.
-      // Pendiente: el video puede salir de costado en algunos Android.
+      // Esto es SOLO para la vista previa en vivo (encuadrarse antes de
+      // grabar) — la grabación real la hace la cámara nativa del celular,
+      // no este stream, así que no hace falta pedir audio acá (la vista
+      // previa es muda). Pedir width+height juntos define una relación de
+      // aspecto exacta — eso fue lo que disparó el zoom en su momento
+      // (confirmado en dispositivo real). Pedir SOLO la altura no define
+      // una "forma" que el navegador tenga que forzar recortando.
       video: {
         facingMode: 'user',
         height: { ideal: 1920 },
-        // 'ideal' (no 'exact'): sin esto el navegador decide el frame rate
-        // libremente y tiende a variarlo agresivamente (menos frames cuando
-        // la imagen está quieta) — confirmado en un clip real con un freeze
-        // de más de 10s. No lo elimina del todo, pero lo acota.
-        frameRate: { ideal: 30 },
       },
-      audio: true,
     });
-    track = stream.getVideoTracks()[0];
-    // El SO puede pausar la cámara en medio de una grabación (pantalla que
-    // se bloquea, otra app pidiendo la cámara, ahorro de batería en
-    // background) sin que el MediaRecorder lo reporte como error: el video
-    // queda con un tramo de imagen congelada mientras el audio, al no estar
-    // sujeto a la misma restricción, sigue grabando sin cortarse. 'mute' es
-    // el evento que el track dispara en ese momento.
-    track.addEventListener('mute', handleCameraInterruption);
-    recordingStream = stream;
     const video = el('mh-camera-video');
     video.srcObject = stream;
     renderStep();
@@ -212,19 +172,19 @@ function formatSuggestedDuration(seconds) {
 
 function renderStep() {
   const step = getStepByIndex(currentStepIndex);
-  el('mh-interruption-warning').classList.add('mh-hidden');
   el('mh-step-progress').textContent = `Paso ${currentStepIndex + 1} de ${INTERVIEW_STEPS.length}`;
   el('mh-step-title').textContent = step.title;
   el('mh-step-prompt').textContent = step.prompt;
   const timerEl = el('mh-step-timer');
   if (step.suggestedMaxSeconds) {
-    timerEl.textContent = `Se corta sola a los ${formatSuggestedDuration(step.suggestedMaxSeconds)}.`;
+    // Ya no se corta sola (la graba la cámara nativa, fuera de nuestro
+    // control) — es una sugerencia, con el aviso de checkDurationWarning
+    // como red de contención si se pasa mucho.
+    timerEl.textContent = `Tratá de no pasarte de ${formatSuggestedDuration(step.suggestedMaxSeconds)}.`;
     timerEl.classList.remove('mh-hidden');
   } else {
     timerEl.classList.add('mh-hidden');
   }
-  el('mh-record-btn').classList.remove('mh-hidden');
-  el('mh-stop-btn').classList.add('mh-hidden');
   // Los tips generales (luz, ruido, encuadre) solo se muestran antes del
   // primer paso — repetirlos antes de cada paso resultaba redundante.
   if (currentStepIndex === 0) {
@@ -232,100 +192,55 @@ function renderStep() {
   }
 }
 
-let recordingTimerInterval = null;
-let recordingStartTime = null;
-
-function formatElapsed(totalSeconds) {
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+// La grabación la hace la app de cámara nativa del celular (input file con
+// capture), no MediaRecorder en la página. Motivo: con MediaRecorder acá
+// mismo, clips reales de este proyecto llegaban a solo ~2.5 frames reales
+// por segundo pese a pedir 30fps — un video ilegible, "se traba todo" — y
+// ni subir el bitrate ni forzar frameRate lo arreglaba, porque el problema
+// es cuántos frames reales entrega la cámara vía getUserMedia en este
+// dispositivo, no cómo se codifican después. La cámara nativa usa el
+// pipeline de hardware completo del teléfono, sin esa limitación.
+function openNativeCamera() {
+  el('mh-camera-capture-input').click();
 }
 
-// maxSeconds corta la grabación sola al llegar al límite del paso — no es
-// solo el texto de sugerencia, un video largo a esta resolución puede
-// tardar mucho en codificarse del lado del servidor (confirmado en
-// pruebas reales: sin este corte, el servidor se queda sin recursos).
-function startRecordingTimer(maxSeconds) {
-  recordingStartTime = Date.now();
-  el('mh-recording-timer').textContent = '0:00';
-  el('mh-recording-indicator').classList.remove('mh-hidden');
-  recordingTimerInterval = setInterval(() => {
-    const elapsed = Math.floor((Date.now() - recordingStartTime) / 1000);
-    el('mh-recording-timer').textContent = formatElapsed(elapsed);
-    if (maxSeconds && elapsed >= maxSeconds) {
-      stopRecording();
+// No hay forma de cortar la grabación sola al límite del paso (la maneja la
+// app de cámara nativa, fuera de nuestro control) — en cambio, avisamos
+// DESPUÉS si se pasó bastante del tiempo sugerido, leyendo la duración real
+// del archivo ya grabado. No bloquea nada, es solo informativo.
+function checkDurationWarning(file) {
+  const warningEl = el('mh-duration-warning');
+  warningEl.classList.add('mh-hidden');
+  const step = getStepByIndex(currentStepIndex);
+  if (!step.suggestedMaxSeconds) return;
+  const probe = document.createElement('video');
+  probe.preload = 'metadata';
+  const probeUrl = URL.createObjectURL(file);
+  probe.src = probeUrl;
+  probe.addEventListener('loadedmetadata', () => {
+    URL.revokeObjectURL(probeUrl);
+    if (probe.duration > step.suggestedMaxSeconds + 10) {
+      warningEl.textContent = `Este paso sugería ${formatSuggestedDuration(step.suggestedMaxSeconds)} y grabaste más — no pasa nada, pero va a tardar más en subir. Si preferís, repetilo más corto.`;
+      warningEl.classList.remove('mh-hidden');
     }
-  }, 1000);
+  });
 }
 
-function stopRecordingTimer() {
-  if (recordingTimerInterval) {
-    clearInterval(recordingTimerInterval);
-    recordingTimerInterval = null;
+function handleCapturedFile(file) {
+  pendingClipBlob = file;
+  checkDurationWarning(file);
+  if (previewObjectUrl) {
+    URL.revokeObjectURL(previewObjectUrl);
   }
-  el('mh-recording-indicator').classList.add('mh-hidden');
-}
-
-function startRecording() {
-  cameraInterrupted = false;
-  const mimeType = pickSupportedMimeType(VIDEO_MIME_CANDIDATES, (t) => MediaRecorder.isTypeSupported(t));
-  recordedChunks = [];
-  // Antes esto estaba limitado a 4Mbps porque el video se mandaba directo
-  // por Telegram (techo de 49MB). Desde que el envío pasó a ser siempre por
-  // link de descarga (sin límite de tamaño más que MAX_UPLOAD_BYTES/nginx),
-  // esa restricción no aplica más — se sube el bitrate a lo máximo que tiene
-  // sentido para esta resolución sin arriesgar que un celular viejo no
-  // pueda codificar en tiempo real.
-  const recorderOptions = { videoBitsPerSecond: 16_000_000, audioBitsPerSecond: 192_000 };
-  if (mimeType) recorderOptions.mimeType = mimeType;
-  mediaRecorder = new MediaRecorder(recordingStream, recorderOptions);
-  mediaRecorder.addEventListener('dataavailable', (e) => {
-    if (e.data.size > 0) recordedChunks.push(e.data);
-  });
-  mediaRecorder.addEventListener('stop', () => {
-    stopRecordingTimer();
-    if (cameraInterrupted) {
-      // El clip quedaría con un tramo de imagen congelada sin que la
-      // persona se entere — mejor pedirle que repita el paso a que reciba
-      // un video roto sin saberlo (ver handleCameraInterruption).
-      recordedChunks = [];
-      renderStep();
-      el('mh-interruption-warning').classList.remove('mh-hidden');
-      showScreen('record');
-      return;
-    }
-    pendingClipBlob = new Blob(recordedChunks, { type: mediaRecorder.mimeType });
-    if (previewObjectUrl) {
-      URL.revokeObjectURL(previewObjectUrl);
-    }
-    previewObjectUrl = URL.createObjectURL(pendingClipBlob);
-    const previewVideo = el('mh-preview-video');
-    previewVideo.src = previewObjectUrl;
-    showScreen('preview');
-  });
-  mediaRecorder.addEventListener('error', (e) => {
-    console.error('microhistorias: mediaRecorder error', e.error || e);
-    stopRecordingTimer();
-    // 'stop' never fires after a recorder error, so without this the person
-    // is stuck on the record screen with "Cortar" showing and no way out but
-    // a reload. Reset to the initial record-screen state so they can retry.
-    el('mh-record-btn').classList.remove('mh-hidden');
-    el('mh-stop-btn').classList.add('mh-hidden');
-  });
-  mediaRecorder.start();
-  startRecordingTimer(getStepByIndex(currentStepIndex).suggestedMaxSeconds);
-  el('mh-record-btn').classList.add('mh-hidden');
-  el('mh-stop-btn').classList.remove('mh-hidden');
-}
-
-function stopRecording() {
-  if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-    mediaRecorder.stop();
-  }
+  previewObjectUrl = URL.createObjectURL(pendingClipBlob);
+  const previewVideo = el('mh-preview-video');
+  previewVideo.src = previewObjectUrl;
+  showScreen('preview');
 }
 
 function repeatClip() {
   pendingClipBlob = null;
+  el('mh-duration-warning').classList.add('mh-hidden');
   showScreen('record');
   renderStep();
 }
@@ -535,8 +450,16 @@ el('mh-tips-overlay').addEventListener('click', () => {
   el('mh-tips-overlay').classList.remove('is-visible');
   resetScrollDeferred();
 });
-el('mh-record-btn').addEventListener('click', startRecording);
-el('mh-stop-btn').addEventListener('click', stopRecording);
+el('mh-record-btn').addEventListener('click', openNativeCamera);
+el('mh-camera-capture-input').addEventListener('change', (e) => {
+  const file = e.target.files && e.target.files[0];
+  // Reset inmediato: si no, elegir el MISMO archivo (o volver a grabar y
+  // cancelar) una segunda vez no dispara 'change' de nuevo, porque el
+  // browser considera que el value no cambió.
+  e.target.value = '';
+  if (!file) return; // canceló la cámara nativa sin grabar nada
+  handleCapturedFile(file);
+});
 el('mh-repeat-btn').addEventListener('click', repeatClip);
 el('mh-continue-btn').addEventListener('click', useClipAndContinue);
 el('mh-send-btn').addEventListener('click', sendRecording);

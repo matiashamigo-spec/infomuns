@@ -1,9 +1,11 @@
-// Maps a Blob's `type` (e.g. "video/webm;codecs=vp9,opus" or "video/mp4") to a
-// file extension. Falls back to 'webm' when the type is empty/unrecognized,
-// matching the default candidate order in media-support.js.
+// Maps a Blob's/File's `type` to a file extension. 'quicktime' (.mov) is the
+// container the native camera app on iOS actually produces — sin esto,
+// cualquier clip grabado con la cámara nativa de un iPhone caía en el
+// fallback 'webm', un contenedor que ese archivo ni siquiera es.
 export function getExtensionForMimeType(mimeType) {
   const subtype = (mimeType || '').split(';')[0].split('/')[1] || '';
   if (subtype === 'mp4') return 'mp4';
+  if (subtype === 'quicktime') return 'mov';
   return 'webm';
 }
 

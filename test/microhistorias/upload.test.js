@@ -47,7 +47,11 @@ describe('getExtensionForMimeType', () => {
   });
 
   it('falls back to webm for an unrecognized type', () => {
-    expect(getExtensionForMimeType('video/quicktime')).toBe('webm');
+    expect(getExtensionForMimeType('video/x-msvideo')).toBe('webm');
+  });
+
+  it('extracts mov from the quicktime type the native iOS camera produces', () => {
+    expect(getExtensionForMimeType('video/quicktime')).toBe('mov');
   });
 });
 

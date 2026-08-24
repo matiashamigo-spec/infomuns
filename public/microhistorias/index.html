@@ -53,17 +53,16 @@
     <h2 id="mh-step-title"></h2>
     <p id="mh-step-prompt" class="mh-prompt-big"></p>
     <p id="mh-step-timer" class="mh-tip mh-hidden"></p>
-    <p id="mh-interruption-warning" class="mh-tip mh-hidden">Se interrumpió la cámara justo durante la grabación (pantalla bloqueada, cambiaste de app, etc). Grabá este paso de nuevo.</p>
     <div class="mh-camera-wrap">
       <video id="mh-camera-video" autoplay playsinline muted></video>
       <div class="mh-frame-guide"></div>
-      <div id="mh-recording-indicator" class="mh-recording-indicator mh-hidden">
-        <span class="mh-recording-dot"></span>
-        <span id="mh-recording-timer">0:00</span>
-      </div>
     </div>
     <button id="mh-record-btn" class="mh-btn mh-btn--primary" type="button">Grabar</button>
-    <button id="mh-stop-btn" class="mh-btn mh-hidden" type="button">Cortar</button>
+    <!-- La grabación real la hace la cámara nativa del celular (mejor calidad y
+         frame rate estable que MediaRecorder en el navegador) — este input queda
+         oculto, "Grabar" lo dispara por código. accept+capture abren directo la
+         cámara frontal en vez del selector de archivos genérico. -->
+    <input id="mh-camera-capture-input" type="file" accept="video/*" capture="user" class="mh-hidden" />
   </section>
 
   <!-- Tips popup: solo consejos generales, se muestra antes de cada paso -->
@@ -80,6 +79,7 @@
     <div class="mh-camera-wrap">
       <video id="mh-preview-video" controls playsinline></video>
     </div>
+    <p id="mh-duration-warning" class="mh-tip mh-hidden"></p>
     <button id="mh-repeat-btn" class="mh-btn" type="button">Repetir</button>
     <button id="mh-continue-btn" class="mh-btn mh-btn--primary" type="button">Usar este y seguir</button>
   </section>
@@ -120,6 +120,6 @@
     <span class="mh-whatsapp-text">¿Tenés dudas?<br />Escribinos</span>
   </a>
 
-  <script type="module" src="./app.js?v=36"></script>
+  <script type="module" src="./app.js?v=37"></script>
 </body>
 </html>
