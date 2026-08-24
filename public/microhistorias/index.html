@@ -7,20 +7,39 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" />
-  <link rel="stylesheet" href="./styles.css?v=21" />
+  <link rel="stylesheet" href="./styles.css?v=22" />
 </head>
 <body>
-  <!-- Mismo mecanismo que GTranslate en info.muns.club (WordPress) por
-       debajo: el widget publico de Google Translate. Fijo, en su propia
-       esquina, fuera del flujo de pantallas -- asi queda disponible sin
-       importar en que paso este la persona. -->
-  <div id="google_translate_element" class="mh-translate-widget"></div>
+  <!-- Motor de traduccion: el mismo que usa GTranslate en info.muns.club
+       por debajo (Google Translate), pero con SU interfaz oculta del todo
+       -- dibujamos la nuestra propia (mh-lang-switcher, mas abajo) para
+       que se vea como la pill blanca con bandera de info.muns.club, no
+       como el widget crudo de Google. -->
+  <div id="google_translate_element" class="mh-hidden"></div>
   <script type="text/javascript">
     function googleTranslateElementInit() {
       new google.translate.TranslateElement({ pageLanguage: 'es', layout: google.translate.TranslateElement.InlineLayout.SIMPLE }, 'google_translate_element');
     }
   </script>
   <script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+
+  <!-- Interfaz propia, estilo GTranslate: setea la cookie googtrans (el
+       mismo mecanismo que usa Google Translate para recordar el idioma
+       elegido) y recarga -- confirmado que funciona con una prueba real. -->
+  <div id="mh-lang-switcher" class="mh-lang-switcher">
+    <button id="mh-lang-current" class="mh-lang-current" type="button">
+      <span id="mh-lang-flag">🇪🇸</span>
+      <span id="mh-lang-code">ES</span>
+      <span class="mh-lang-arrow">▾</span>
+    </button>
+    <div id="mh-lang-menu" class="mh-lang-menu mh-hidden">
+      <button class="mh-lang-option" type="button" data-lang="es" data-flag="🇪🇸">🇪🇸 Español</button>
+      <button class="mh-lang-option" type="button" data-lang="en" data-flag="🇬🇧">🇬🇧 English</button>
+      <button class="mh-lang-option" type="button" data-lang="pt" data-flag="🇧🇷">🇧🇷 Português</button>
+      <button class="mh-lang-option" type="button" data-lang="fr" data-flag="🇫🇷">🇫🇷 Français</button>
+      <button class="mh-lang-option" type="button" data-lang="it" data-flag="🇮🇹">🇮🇹 Italiano</button>
+    </div>
+  </div>
 
   <img id="mh-logo" class="mh-logo" src="https://info.muns.club/wp-content/uploads/2026/07/Logo-Muns-scaled.png" alt="Muns" />
 
@@ -125,6 +144,6 @@
     <span class="mh-whatsapp-text">¿Tenés dudas?<br />Escribinos</span>
   </a>
 
-  <script type="module" src="./app.js?v=49"></script>
+  <script type="module" src="./app.js?v=50"></script>
 </body>
 </html>

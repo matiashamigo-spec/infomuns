@@ -5,10 +5,10 @@
 // el módulo en silencio, dejando la página sin mostrar ninguna pantalla
 // (ni el formulario ni el aviso de girar el teléfono). Bumpear la versión
 // acá es tan importante como bumpearla en el <script> de index.html.
-import { INTERVIEW_STEPS, getStepByIndex, isLastStep } from './steps.js?v=49';
-import { buildWhatsAppLink } from './whatsapp.js?v=49';
-import { watchOrientation } from './orientation.js?v=49';
-import { buildClipUploadUrl, submitBatchesWithProgress } from './upload.js?v=49';
+import { INTERVIEW_STEPS, getStepByIndex, isLastStep } from './steps.js?v=50';
+import { buildWhatsAppLink } from './whatsapp.js?v=50';
+import { watchOrientation } from './orientation.js?v=50';
+import { buildClipUploadUrl, submitBatchesWithProgress } from './upload.js?v=50';
 
 // Historial de por qué esta app NO graba nada dentro de la página (ni con
 // getUserMedia+MediaRecorder, ni con la cámara nativa vía <input capture>,
@@ -135,6 +135,53 @@ if (IS_IOS) {
   el('mh-record-instruction').textContent = 'Tocá el botón para grabar este paso.';
   el('mh-tips-quality-tip').textContent = 'En cada paso vas a poder grabar directo desde acá, con la cámara frontal.';
 }
+
+// Selector de idioma con interfaz propia (estilo GTranslate en
+// info.muns.club) sobre el motor de Google Translate. Google Translate lee
+// la cookie 'googtrans' para saber en qué idioma mostrar la página -- es
+// el mismo mecanismo que usa el widget nativo, solo que acá el trigger es
+// nuestro botón en vez del suyo. path=/ y sin dominio explícito: si se
+// pone el dominio a mano y no coincide EXACTO (con o sin www) Google no
+// la lee, mejor dejar que el navegador la asocie sola.
+const LANG_NAMES = { es: 'ES', en: 'EN', pt: 'PT', fr: 'FR', it: 'IT' };
+const LANG_FLAGS = { es: '🇪🇸', en: '🇬🇧', pt: '🇧🇷', fr: '🇫🇷', it: '🇮🇹' };
+
+function getCurrentLang() {
+  const match = document.cookie.match(/googtrans=\/es\/(\w+)/);
+  return match ? match[1] : 'es';
+}
+
+function setLang(lang) {
+  if (lang === 'es') {
+    // Volver al original: basta con borrar la cookie, no hace falta el
+    // par /es/es (Google a veces no la limpia bien con ese valor).
+    document.cookie = 'googtrans=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+  } else {
+    document.cookie = `googtrans=/es/${lang}; path=/`;
+  }
+  window.location.reload();
+}
+
+function initLangSwitcher() {
+  const current = getCurrentLang();
+  el('mh-lang-flag').textContent = LANG_FLAGS[current] || '🇪🇸';
+  el('mh-lang-code').textContent = LANG_NAMES[current] || 'ES';
+
+  el('mh-lang-current').addEventListener('click', () => {
+    el('mh-lang-menu').classList.toggle('mh-hidden');
+  });
+  document.querySelectorAll('.mh-lang-option').forEach((btn) => {
+    btn.addEventListener('click', () => setLang(btn.dataset.lang));
+  });
+  // Cerrar el menú si se toca afuera -- si no, queda abierto tapando
+  // controles de la pantalla que sea.
+  document.addEventListener('click', (e) => {
+    if (!el('mh-lang-switcher').contains(e.target)) {
+      el('mh-lang-menu').classList.add('mh-hidden');
+    }
+  });
+}
+initLangSwitcher();
 
 showScreen('start');
 
