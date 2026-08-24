@@ -5,10 +5,10 @@
 // el módulo en silencio, dejando la página sin mostrar ninguna pantalla
 // (ni el formulario ni el aviso de girar el teléfono). Bumpear la versión
 // acá es tan importante como bumpearla en el <script> de index.html.
-import { INTERVIEW_STEPS, getStepByIndex, isLastStep } from './steps.js?v=43';
-import { buildWhatsAppLink } from './whatsapp.js?v=43';
-import { watchOrientation } from './orientation.js?v=43';
-import { buildClipBatchFormData, submitBatchesWithProgress } from './upload.js?v=43';
+import { INTERVIEW_STEPS, getStepByIndex, isLastStep } from './steps.js?v=44';
+import { buildWhatsAppLink } from './whatsapp.js?v=44';
+import { watchOrientation } from './orientation.js?v=44';
+import { buildClipBatchFormData, submitBatchesWithProgress } from './upload.js?v=44';
 
 // Historial de por qué esta app NO graba nada dentro de la página (ni con
 // getUserMedia+MediaRecorder, ni con la cámara nativa vía <input capture>,
@@ -167,31 +167,43 @@ function openFilePicker() {
   el('mh-camera-capture-input').click();
 }
 
-// No hay forma de saber la duración mientras la persona graba (pasa fuera
-// de esta página) — en cambio, avisamos DESPUÉS si se pasó bastante del
-// tiempo sugerido, leyendo la duración real del archivo elegido. No
-// bloquea nada, es solo informativo.
-function checkDurationWarning(file) {
-  const warningEl = el('mh-duration-warning');
-  warningEl.classList.add('mh-hidden');
+// No hay forma de saber duración/calidad mientras la persona graba (pasa
+// fuera de esta página) — se leen del archivo YA elegido, con un solo probe
+// para las dos cosas. La duración es solo informativa (no bloquea). La
+// resolución SÍ bloquea "Usar este y seguir": el techo conocido de iOS al
+// grabar en vivo (en vez de elegir de Fototeca) es 360x480 — si el video
+// viene por debajo de eso, seguro pasó por ese camino, y en vez de confiar
+// en que la persona haya leído la explicación del menú, el sistema lo
+// agarra solo y pide repetirlo.
+const MIN_ACCEPTABLE_DIMENSION = 640;
+
+function checkClipMetadata(file) {
+  const durationWarningEl = el('mh-duration-warning');
+  const qualityErrorEl = el('mh-clip-quality-error');
+  durationWarningEl.classList.add('mh-hidden');
+  qualityErrorEl.classList.add('mh-hidden');
   const step = getStepByIndex(currentStepIndex);
-  if (!step.suggestedMaxSeconds) return;
   const probe = document.createElement('video');
   probe.preload = 'metadata';
   const probeUrl = URL.createObjectURL(file);
   probe.src = probeUrl;
   probe.addEventListener('loadedmetadata', () => {
     URL.revokeObjectURL(probeUrl);
-    if (probe.duration > step.suggestedMaxSeconds + 10) {
-      warningEl.textContent = `Este paso sugería ${formatSuggestedDuration(step.suggestedMaxSeconds)} y grabaste más — no pasa nada, pero va a tardar más en subir. Si preferís, repetilo más corto.`;
-      warningEl.classList.remove('mh-hidden');
+    if (step.suggestedMaxSeconds && probe.duration > step.suggestedMaxSeconds + 10) {
+      durationWarningEl.textContent = `Este paso sugería ${formatSuggestedDuration(step.suggestedMaxSeconds)} y grabaste más — no pasa nada, pero va a tardar más en subir. Si preferís, repetilo más corto.`;
+      durationWarningEl.classList.remove('mh-hidden');
+    }
+    if (Math.max(probe.videoWidth, probe.videoHeight) < MIN_ACCEPTABLE_DIMENSION) {
+      qualityErrorEl.textContent = `Este video salió en baja calidad (${probe.videoWidth}x${probe.videoHeight}) — parece que se grabó con "Tomar foto o video" en vez de elegirlo de Fototeca. Repetí el paso: grabá primero con la Cámara, después tocá el botón acá y elegí Fototeca.`;
+      qualityErrorEl.classList.remove('mh-hidden');
+      el('mh-continue-btn').classList.add('mh-hidden');
     }
   });
 }
 
 function handleCapturedFile(file) {
   pendingClipBlob = file;
-  checkDurationWarning(file);
+  checkClipMetadata(file);
   if (previewObjectUrl) {
     URL.revokeObjectURL(previewObjectUrl);
   }
@@ -220,6 +232,7 @@ function repeatClip() {
   pendingClipBlob = null;
   el('mh-duration-warning').classList.add('mh-hidden');
   el('mh-clip-size-error').classList.add('mh-hidden');
+  el('mh-clip-quality-error').classList.add('mh-hidden');
   el('mh-continue-btn').classList.remove('mh-hidden');
   showScreen('record');
   renderStep();
