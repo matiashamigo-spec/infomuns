@@ -3,7 +3,7 @@ import {
   submitRecording,
   submitRecordingWithProgress,
   getExtensionForMimeType,
-  buildClipBatchFormData,
+  buildClipUploadUrl,
   submitBatchesWithProgress,
 } from '../../public/microhistorias/upload.js';
 
@@ -12,6 +12,7 @@ function createFakeXhr({ status = 200, simulateNetworkError = false, responseTex
   const xhrListeners = {};
   return {
     open: () => {},
+    setRequestHeader: () => {},
     status,
     responseText,
     upload: {
@@ -55,18 +56,39 @@ describe('getExtensionForMimeType', () => {
   });
 });
 
+describe('buildClipUploadUrl', () => {
+  it('puts clip metadata in the query string, not a request body', () => {
+    const url = new URL(buildClipUploadUrl('https://example.com/webhook', 2, '291 6419599', 'submission-abc', false, 12345));
+    expect(url.searchParams.get('clipIndex')).toBe('2');
+    expect(url.searchParams.get('submissionId')).toBe('submission-abc');
+    expect(url.searchParams.get('isLastClip')).toBe('false');
+    expect(url.searchParams.get('sizeBytes')).toBe('12345');
+    expect(url.searchParams.get('telefono')).toBe('291 6419599');
+  });
+
+  it('marks the last clip with isLastClip=true', () => {
+    const url = new URL(buildClipUploadUrl('https://example.com/webhook', 3, '291 6419599', 'submission-abc', true, 999));
+    expect(url.searchParams.get('isLastClip')).toBe('true');
+  });
+
+  it('omits the telefono param when no phone is provided', () => {
+    const url = new URL(buildClipUploadUrl('https://example.com/webhook', 1, '', 'submission-abc', false, 999));
+    expect(url.searchParams.has('telefono')).toBe(false);
+  });
+});
+
 describe('submitRecording', () => {
   it('resolves when the response is ok', async () => {
     const fakeFetch = async () => ({ ok: true, status: 200 });
     await expect(
-      submitRecording('https://example.com/webhook', new FormData(), fakeFetch)
+      submitRecording('https://example.com/webhook', new Blob(['a'], { type: 'video/mp4' }), fakeFetch)
     ).resolves.toBeDefined();
   });
 
   it('throws when the response is not ok', async () => {
     const fakeFetch = async () => ({ ok: false, status: 500 });
     await expect(
-      submitRecording('https://example.com/webhook', new FormData(), fakeFetch)
+      submitRecording('https://example.com/webhook', new Blob(['a'], { type: 'video/mp4' }), fakeFetch)
     ).rejects.toThrow('Upload failed with status 500');
   });
 });
@@ -78,7 +100,7 @@ describe('submitRecordingWithProgress', () => {
     await expect(
       submitRecordingWithProgress(
         'https://example.com/webhook',
-        new FormData(),
+        new Blob(['a'], { type: 'video/mp4' }),
         (percent) => progressUpdates.push(percent),
         () => fakeXhr
       )
@@ -89,40 +111,15 @@ describe('submitRecordingWithProgress', () => {
   it('rejects when the response status is not 2xx', async () => {
     const fakeXhr = createFakeXhr({ status: 500 });
     await expect(
-      submitRecordingWithProgress('https://example.com/webhook', new FormData(), () => {}, () => fakeXhr)
+      submitRecordingWithProgress('https://example.com/webhook', new Blob(['a']), () => {}, () => fakeXhr)
     ).rejects.toThrow('Upload failed with status 500');
   });
 
   it('rejects on network error', async () => {
     const fakeXhr = createFakeXhr({ simulateNetworkError: true });
     await expect(
-      submitRecordingWithProgress('https://example.com/webhook', new FormData(), () => {}, () => fakeXhr)
+      submitRecordingWithProgress('https://example.com/webhook', new Blob(['a']), () => {}, () => fakeXhr)
     ).rejects.toThrow('Upload failed: network error');
-  });
-});
-
-describe('buildClipBatchFormData', () => {
-  it('tags a clip batch with its index, submissionId and isLastClip', () => {
-    const clip = new Blob(['a'], { type: 'video/webm' });
-    const fd = buildClipBatchFormData(clip, 2, '291 6419599', 'submission-abc', false);
-    expect(fd.get('clipIndex')).toBe('2');
-    expect(fd.get('submissionId')).toBe('submission-abc');
-    expect(fd.get('isLastClip')).toBe('false');
-    expect(fd.get('telefono')).toBe('291 6419599');
-    expect(fd.get('clip')).toBeInstanceOf(Blob);
-  });
-
-  it('marks the last clip with isLastClip=true', () => {
-    const clip = new Blob(['a'], { type: 'video/mp4' });
-    const fd = buildClipBatchFormData(clip, 3, '291 6419599', 'submission-abc', true);
-    expect(fd.get('isLastClip')).toBe('true');
-    expect(fd.get('clip').name).toBe('clip3.mp4');
-  });
-
-  it('omits the phone field when not provided', () => {
-    const clip = new Blob(['a'], { type: 'video/webm' });
-    const fd = buildClipBatchFormData(clip, 1, '', 'submission-abc', false);
-    expect(fd.get('telefono')).toBeNull();
   });
 });
 
@@ -133,8 +130,8 @@ describe('submitBatchesWithProgress', () => {
     let call = 0;
     const xhrFactory = () => xhrs[call++];
     const batches = [
-      { buildFormData: () => 'batch-0', sizeBytes: 50 },
-      { buildFormData: () => 'batch-1', sizeBytes: 50 },
+      { url: 'https://example.com/webhook?clipIndex=1', file: 'batch-0', sizeBytes: 50 },
+      { url: 'https://example.com/webhook?clipIndex=2', file: 'batch-1', sizeBytes: 50 },
     ];
     xhrs.forEach((x) => {
       const originalSend = x.send;
@@ -143,7 +140,7 @@ describe('submitBatchesWithProgress', () => {
         originalSend.call(this);
       };
     });
-    await submitBatchesWithProgress('https://example.com/webhook', batches, () => {}, 0, xhrFactory);
+    await submitBatchesWithProgress(batches, () => {}, 0, xhrFactory);
     expect(sentBodies).toEqual(['batch-0', 'batch-1']);
   });
 
@@ -153,11 +150,10 @@ describe('submitBatchesWithProgress', () => {
     let call = 0;
     const xhrFactory = () => xhrs[call++];
     const batches = [
-      { buildFormData: () => ({}), sizeBytes: 50 },
-      { buildFormData: () => ({}), sizeBytes: 50 },
+      { url: 'https://example.com/webhook?clipIndex=1', file: new Blob(['a']), sizeBytes: 50 },
+      { url: 'https://example.com/webhook?clipIndex=2', file: new Blob(['a']), sizeBytes: 50 },
     ];
     await submitBatchesWithProgress(
-      'https://example.com/webhook',
       batches,
       (percent) => progressUpdates.push(percent),
       0,
@@ -176,12 +172,12 @@ describe('submitBatchesWithProgress', () => {
     let call = 0;
     const xhrFactory = () => xhrs[call++];
     const batches = [
-      { buildFormData: () => ({}), sizeBytes: 50 },
-      { buildFormData: () => ({}), sizeBytes: 50 },
+      { url: 'https://example.com/webhook?clipIndex=1', file: new Blob(['a']), sizeBytes: 50 },
+      { url: 'https://example.com/webhook?clipIndex=2', file: new Blob(['a']), sizeBytes: 50 },
     ];
     let caught;
     try {
-      await submitBatchesWithProgress('https://example.com/webhook', batches, () => {}, 0, xhrFactory);
+      await submitBatchesWithProgress(batches, () => {}, 0, xhrFactory);
     } catch (err) {
       caught = err;
     }
@@ -198,10 +194,10 @@ describe('submitBatchesWithProgress', () => {
       originalSend.call(this);
     };
     const batches = [
-      { buildFormData: () => 'batch-0', sizeBytes: 50 },
-      { buildFormData: () => 'batch-1', sizeBytes: 50 },
+      { url: 'https://example.com/webhook?clipIndex=1', file: 'batch-0', sizeBytes: 50 },
+      { url: 'https://example.com/webhook?clipIndex=2', file: 'batch-1', sizeBytes: 50 },
     ];
-    await submitBatchesWithProgress('https://example.com/webhook', batches, () => {}, 1, () => fakeXhr);
+    await submitBatchesWithProgress(batches, () => {}, 1, () => fakeXhr);
     expect(sentBodies).toEqual(['batch-1']);
   });
 });

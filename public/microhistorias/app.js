@@ -5,10 +5,10 @@
 // el módulo en silencio, dejando la página sin mostrar ninguna pantalla
 // (ni el formulario ni el aviso de girar el teléfono). Bumpear la versión
 // acá es tan importante como bumpearla en el <script> de index.html.
-import { INTERVIEW_STEPS, getStepByIndex, isLastStep } from './steps.js?v=44';
-import { buildWhatsAppLink } from './whatsapp.js?v=44';
-import { watchOrientation } from './orientation.js?v=44';
-import { buildClipBatchFormData, submitBatchesWithProgress } from './upload.js?v=44';
+import { INTERVIEW_STEPS, getStepByIndex, isLastStep } from './steps.js?v=45';
+import { buildWhatsAppLink } from './whatsapp.js?v=45';
+import { watchOrientation } from './orientation.js?v=45';
+import { buildClipUploadUrl, submitBatchesWithProgress } from './upload.js?v=45';
 
 // Historial de por qué esta app NO graba nada dentro de la página (ni con
 // getUserMedia+MediaRecorder, ni con la cámara nativa vía <input capture>,
@@ -266,7 +266,8 @@ function buildBatches(phone) {
     const clipIndex = index + 1;
     const isLastClip = clipIndex === recordedClips.length;
     return {
-      buildFormData: () => buildClipBatchFormData(blob, clipIndex, phone, submissionId, isLastClip),
+      url: buildClipUploadUrl(N8N_WEBHOOK_URL, clipIndex, phone, submissionId, isLastClip, blob.size),
+      file: blob,
       sizeBytes: blob ? blob.size : 0,
     };
   });
@@ -302,7 +303,6 @@ async function sendRecording() {
     const phone = el('mh-phone-input').value.trim();
     const batches = buildBatches(phone);
     await submitBatchesWithProgress(
-      N8N_WEBHOOK_URL,
       batches,
       (percent) => {
         progressFill.style.width = `${percent}%`;

@@ -10,30 +10,36 @@ export function getExtensionForMimeType(mimeType) {
 }
 
 // Cada clip va en SU PROPIO pedido, no los 3 juntos: un solo paso largo
-// puede pesar bastante más de 100MB él solo a buena calidad, y disparar un
-// bug de carrera en el nodo Webhook de n8n con payloads grandes. submissionId
-// se genera una sola vez del lado del cliente (no lo devuelve el servidor)
-// y viaja en los 3 pedidos, para que n8n sepa que son la misma entrega
-// aunque lleguen en 3 ejecuciones separadas. El teléfono va en todos los
-// pedidos: cada uno es una ejecución de n8n aislada.
-export function buildClipBatchFormData(clipBlob, clipIndex, phone, submissionId, isLastClip) {
-  const fd = new FormData();
-  const ext = getExtensionForMimeType(clipBlob.type);
-  fd.append('clip', clipBlob, `clip${clipIndex}.${ext}`);
-  fd.append('clipIndex', String(clipIndex));
-  fd.append('submissionId', submissionId);
-  fd.append('isLastClip', isLastClip ? 'true' : 'false');
-  // El servidor manda cada clip a Telegram apenas llega (ya no hay fusión
-  // server-side con ffmpeg — esa era la única pieza que podía fallar sola).
-  // Le mandamos el tamaño ya calculado acá para que n8n decida si entra en
-  // el límite de 50MB de Telegram sin tener que leer el archivo del disco.
-  fd.append('sizeBytes', String(clipBlob.size));
-  if (phone) fd.append('telefono', phone);
-  return fd;
+// puede pesar bastante más de 100MB él solo a buena calidad.
+//
+// El binario va como body CRUDO de la request, sin envolver en
+// multipart/form-data — los metadatos (clipIndex, submissionId, etc.) van
+// en la URL como query params en vez de como campos del multipart.
+// Motivo: un clip real de ~412MB enviado como multipart (binario + 4
+// campos de texto) disparó el bug de carrera documentado en el nodo
+// Webhook de n8n al parsear los límites del multipart — confirmado real
+// (ejecución 646670: el body llegó vacío, sin ninguno de los campos que sí
+// mandó el cliente). Sacar el multipart del todo, no solo reducir campos,
+// es la forma más segura de evitar ese parseo frágil con archivos grandes.
+export function buildClipUploadUrl(baseUrl, clipIndex, phone, submissionId, isLastClip, sizeBytes) {
+  const url = new URL(baseUrl);
+  url.searchParams.set('clipIndex', String(clipIndex));
+  url.searchParams.set('submissionId', submissionId);
+  url.searchParams.set('isLastClip', isLastClip ? 'true' : 'false');
+  // El servidor manda cada clip a Telegram apenas llega. Le mandamos el
+  // tamaño ya calculado acá para que n8n decida el destino sin tener que
+  // leer el archivo del disco.
+  url.searchParams.set('sizeBytes', String(sizeBytes));
+  if (phone) url.searchParams.set('telefono', phone);
+  return url.toString();
 }
 
-export async function submitRecording(webhookUrl, formData, fetchFn = fetch) {
-  const res = await fetchFn(webhookUrl, { method: 'POST', body: formData });
+export async function submitRecording(uploadUrl, file, fetchFn = fetch) {
+  const res = await fetchFn(uploadUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': file.type || 'application/octet-stream' },
+    body: file,
+  });
   if (!res.ok) {
     throw new Error(`Upload failed with status ${res.status}`);
   }
@@ -43,10 +49,11 @@ export async function submitRecording(webhookUrl, formData, fetchFn = fetch) {
 // fetch() has no native upload-progress event, so the final send screen (which
 // needs a live percentage) goes through XMLHttpRequest instead. xhrFactory is
 // injectable so tests can supply a fake XHR without touching the network.
-export function submitRecordingWithProgress(webhookUrl, formData, onProgress, xhrFactory = () => new XMLHttpRequest()) {
+export function submitRecordingWithProgress(uploadUrl, file, onProgress, xhrFactory = () => new XMLHttpRequest()) {
   return new Promise((resolve, reject) => {
     const xhr = xhrFactory();
-    xhr.open('POST', webhookUrl);
+    xhr.open('POST', uploadUrl);
+    xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
     xhr.upload.addEventListener('progress', (e) => {
       if (e.lengthComputable && onProgress) {
         onProgress(Math.round((e.loaded / e.total) * 100));
@@ -60,14 +67,15 @@ export function submitRecordingWithProgress(webhookUrl, formData, onProgress, xh
       }
     });
     xhr.addEventListener('error', () => reject(new Error('Upload failed: network error')));
-    xhr.send(formData);
+    xhr.send(file);
   });
 }
 
-function sendOneBatch(webhookUrl, formData, xhrFactory, onBatchProgress) {
+function sendOneBatch(uploadUrl, file, xhrFactory, onBatchProgress) {
   return new Promise((resolve, reject) => {
     const xhr = xhrFactory();
-    xhr.open('POST', webhookUrl);
+    xhr.open('POST', uploadUrl);
+    xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
     xhr.upload.addEventListener('progress', (e) => {
       if (e.lengthComputable) onBatchProgress(e.loaded);
     });
@@ -76,23 +84,22 @@ function sendOneBatch(webhookUrl, formData, xhrFactory, onBatchProgress) {
       else reject(new Error(`Upload failed with status ${xhr.status}`));
     });
     xhr.addEventListener('error', () => reject(new Error('Upload failed: network error')));
-    xhr.send(formData);
+    xhr.send(file);
   });
 }
 
 // Manda los clips uno por uno, en orden. Cada elemento de `batches` es
-// `{ buildFormData(), sizeBytes }`.
+// `{ url, file, sizeBytes }` — la URL ya trae los query params de ese clip.
 //
 // Si un clip falla, el error lleva `failedAtIndex` para que un reintento
 // pueda arrancar justo ahí, en vez de repetir desde cero.
-export async function submitBatchesWithProgress(webhookUrl, batches, onProgress, startIndex = 0, xhrFactory = () => new XMLHttpRequest()) {
+export async function submitBatchesWithProgress(batches, onProgress, startIndex = 0, xhrFactory = () => new XMLHttpRequest()) {
   const totalBytes = batches.reduce((sum, b) => sum + b.sizeBytes, 0) || 1;
   let bytesDoneBefore = batches.slice(0, startIndex).reduce((sum, b) => sum + b.sizeBytes, 0);
   for (let i = startIndex; i < batches.length; i++) {
     const batch = batches[i];
-    const formData = batch.buildFormData();
     try {
-      await sendOneBatch(webhookUrl, formData, xhrFactory, (loaded) => {
+      await sendOneBatch(batch.url, batch.file, xhrFactory, (loaded) => {
         if (onProgress) onProgress(Math.round(((bytesDoneBefore + loaded) / totalBytes) * 100));
       });
     } catch (err) {
