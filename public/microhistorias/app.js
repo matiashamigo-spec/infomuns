@@ -5,22 +5,20 @@
 // el módulo en silencio, dejando la página sin mostrar ninguna pantalla
 // (ni el formulario ni el aviso de girar el teléfono). Bumpear la versión
 // acá es tan importante como bumpearla en el <script> de index.html.
-import { INTERVIEW_STEPS, getStepByIndex, isLastStep } from './steps.js?v=37';
-import { buildWhatsAppLink } from './whatsapp.js?v=37';
-import { watchOrientation } from './orientation.js?v=37';
-import { buildClipBatchFormData, submitBatchesWithProgress } from './upload.js?v=37';
+import { INTERVIEW_STEPS, getStepByIndex, isLastStep } from './steps.js?v=38';
+import { buildWhatsAppLink } from './whatsapp.js?v=38';
+import { watchOrientation } from './orientation.js?v=38';
+import { buildClipBatchFormData, submitBatchesWithProgress } from './upload.js?v=38';
 
 // Must match the path configured on the Webhook node once the n8n workflow exists
 // (see "Setup pendiente" in the design spec) — update if that path differs.
 const N8N_WEBHOOK_URL = 'https://n8n.wips.digital/webhook/microhistorias';
 const WHATSAPP_NUMBER = '+54 9 291 6419599';
-// Cada clip se manda en su propio pedido (ver upload.js) justamente para
-// evitar el techo real, que es un bug de carrera adentro del nodo Webhook
-// de n8n con payloads grandes — no un tamaño fijo. Con cada pedido bien
-// chico, lo único que queda como techo es el client_max_body_size de nginx
-// (500M, configurado aparte), muy por encima de lo que un clip pesa. Esto
-// es solo un freno de sanidad para un caso realmente descontrolado.
-const MAX_UPLOAD_BYTES = 500 * 1024 * 1024;
+// Cada clip se manda en su propio pedido (ver upload.js) — cada uno pega
+// contra el client_max_body_size de nginx (500M) de forma INDEPENDIENTE,
+// así que el chequeo tiene que ser por clip, no sobre la suma de los 3.
+// A 16Mbps un clip largo solo puede acercarse a esto (ver handleCapturedFile).
+const MAX_CLIP_BYTES = 500 * 1024 * 1024;
 
 const el = (id) => document.getElementById(id);
 
@@ -179,8 +177,10 @@ function renderStep() {
   if (step.suggestedMaxSeconds) {
     // Ya no se corta sola (la graba la cámara nativa, fuera de nuestro
     // control) — es una sugerencia, con el aviso de checkDurationWarning
-    // como red de contención si se pasa mucho.
-    timerEl.textContent = `Tratá de no pasarte de ${formatSuggestedDuration(step.suggestedMaxSeconds)}.`;
+    // como red de contención si se pasa mucho. Se explica el motivo (no solo
+    // "tratá de no pasarte") porque un clip MUY largo puede quedar
+    // demasiado pesado para subir — ver MAX_CLIP_BYTES.
+    timerEl.textContent = `No te recomendamos pasarte de ${formatSuggestedDuration(step.suggestedMaxSeconds)}: un video muy largo puede quedar demasiado pesado para subirlo.`;
     timerEl.classList.remove('mh-hidden');
   } else {
     timerEl.classList.add('mh-hidden');
@@ -235,12 +235,29 @@ function handleCapturedFile(file) {
   previewObjectUrl = URL.createObjectURL(pendingClipBlob);
   const previewVideo = el('mh-preview-video');
   previewVideo.src = previewObjectUrl;
+
+  // Chequeo por clip (no por el total de los 3): así se manda cada uno,
+  // así lo limita nginx. Si este clip solo ya pasa el techo, ni tiene
+  // sentido dejar avanzar — no hay forma de que ese pedido llegue a n8n.
+  const sizeErrorEl = el('mh-clip-size-error');
+  if (file.size > MAX_CLIP_BYTES) {
+    const sizeMB = Math.round(file.size / (1024 * 1024));
+    sizeErrorEl.textContent = `Este clip pesa ${sizeMB}MB, demasiado para enviarlo (máx. 500MB). Repetí el paso más corto.`;
+    sizeErrorEl.classList.remove('mh-hidden');
+    el('mh-continue-btn').classList.add('mh-hidden');
+  } else {
+    sizeErrorEl.classList.add('mh-hidden');
+    el('mh-continue-btn').classList.remove('mh-hidden');
+  }
+
   showScreen('preview');
 }
 
 function repeatClip() {
   pendingClipBlob = null;
   el('mh-duration-warning').classList.add('mh-hidden');
+  el('mh-clip-size-error').classList.add('mh-hidden');
+  el('mh-continue-btn').classList.remove('mh-hidden');
   showScreen('record');
   renderStep();
 }
@@ -268,10 +285,6 @@ function goToFinalScreen() {
   showScreen('final');
 }
 
-function getTotalUploadBytes() {
-  return recordedClips.reduce((sum, blob) => sum + (blob ? blob.size : 0), 0);
-}
-
 // Arma la lista de tandas a mandar: cada clip en su propio pedido — nunca
 // los 3 juntos, un solo paso largo grabado a buena calidad puede pesar
 // bastante más de 100MB él solo. Se reconstruye igual en cada intento —
@@ -291,7 +304,6 @@ function buildBatches(phone) {
 async function sendRecording() {
   const sendBtn = el('mh-send-btn');
   const retryBtn = el('mh-retry-upload-btn');
-  const sizeMessage = el('mh-error-size-message');
   const errorDetail = el('mh-error-detail');
   errorDetail.classList.add('mh-hidden');
   const progressWrap = el('mh-progress-bar-wrap');
@@ -301,15 +313,9 @@ async function sendRecording() {
   sendBtn.disabled = true;
   retryBtn.disabled = true;
 
-  if (getTotalUploadBytes() > MAX_UPLOAD_BYTES) {
-    console.error('microhistorias: upload skipped, payload exceeds size guard', getTotalUploadBytes());
-    sizeMessage.classList.remove('mh-hidden');
-    showScreen('error');
-    sendBtn.disabled = false;
-    retryBtn.disabled = false;
-    return;
-  }
-  sizeMessage.classList.add('mh-hidden');
+  // El chequeo de tamaño ya se hizo por clip, apenas se grabó cada uno (ver
+  // handleCapturedFile) — a esta altura ningún clip en recordedClips puede
+  // superar MAX_CLIP_BYTES, así que no hace falta revalidar acá.
 
   // Reintentar desde la pantalla de error vuelve acá para que la barra de
   // progreso (que vive en la pantalla final) sea visible durante la subida.
