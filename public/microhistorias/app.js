@@ -5,10 +5,10 @@
 // el módulo en silencio, dejando la página sin mostrar ninguna pantalla
 // (ni el formulario ni el aviso de girar el teléfono). Bumpear la versión
 // acá es tan importante como bumpearla en el <script> de index.html.
-import { INTERVIEW_STEPS, getStepByIndex, isLastStep } from './steps.js?v=47';
-import { buildWhatsAppLink } from './whatsapp.js?v=47';
-import { watchOrientation } from './orientation.js?v=47';
-import { buildClipUploadUrl, submitBatchesWithProgress } from './upload.js?v=47';
+import { INTERVIEW_STEPS, getStepByIndex, isLastStep } from './steps.js?v=48';
+import { buildWhatsAppLink } from './whatsapp.js?v=48';
+import { watchOrientation } from './orientation.js?v=48';
+import { buildClipUploadUrl, submitBatchesWithProgress } from './upload.js?v=48';
 
 // Historial de por qué esta app NO graba nada dentro de la página (ni con
 // getUserMedia+MediaRecorder, ni con la cámara nativa vía <input capture>,
@@ -125,7 +125,7 @@ watchOrientation((portrait) => {
 // arriba). Corre una sola vez, no cambia durante la sesión.
 if (IS_IOS) {
   el('mh-camera-capture-input').removeAttribute('capture');
-  el('mh-record-btn').textContent = 'Grabar o elegir video';
+  el('mh-record-btn').textContent = 'Elegí el video de tu galería';
   el('mh-record-instruction').textContent = 'Grabá con tu Cámara y elegí Fototeca acá.';
   el('mh-tips-quality-tip').innerHTML =
     'Grabá cada paso con la Cámara de tu celular y, en cada pantalla, elegí <strong>Fototeca</strong> para usar ese video — así sale en mejor calidad.';
