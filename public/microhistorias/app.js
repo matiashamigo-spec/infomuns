@@ -132,6 +132,26 @@ let previewObjectUrl = null;
 // repetir desde cero.
 let submissionId = null;
 let nextBatchIndex = 0;
+// Ver el listener de 'mute' en startCamera: true cuando la cámara/pestaña
+// se interrumpió a mitad de la grabación actual, para que el handler de
+// 'stop' del MediaRecorder sepa que tiene que descartar el clip en vez de
+// entregarlo con un tramo roto.
+let cameraInterrupted = false;
+
+function handleCameraInterruption() {
+  // Fuera de una grabación activa (p.ej. en la pantalla de preview, o justo
+  // después de pedir permisos) un mute/visibilitychange no rompe nada — no
+  // hay clip en curso que descartar.
+  if (!mediaRecorder || mediaRecorder.state === 'inactive') return;
+  if (cameraInterrupted) return; // ya se está manejando, no duplicar el corte
+  cameraInterrupted = true;
+  console.error('microhistorias: cámara o pestaña interrumpida durante la grabación, se descarta el clip');
+  stopRecording();
+}
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) handleCameraInterruption();
+});
 
 async function startCamera() {
   try {
@@ -147,10 +167,22 @@ async function startCamera() {
       video: {
         facingMode: 'user',
         height: { ideal: 1920 },
+        // 'ideal' (no 'exact'): sin esto el navegador decide el frame rate
+        // libremente y tiende a variarlo agresivamente (menos frames cuando
+        // la imagen está quieta) — confirmado en un clip real con un freeze
+        // de más de 10s. No lo elimina del todo, pero lo acota.
+        frameRate: { ideal: 30 },
       },
       audio: true,
     });
     track = stream.getVideoTracks()[0];
+    // El SO puede pausar la cámara en medio de una grabación (pantalla que
+    // se bloquea, otra app pidiendo la cámara, ahorro de batería en
+    // background) sin que el MediaRecorder lo reporte como error: el video
+    // queda con un tramo de imagen congelada mientras el audio, al no estar
+    // sujeto a la misma restricción, sigue grabando sin cortarse. 'mute' es
+    // el evento que el track dispara en ese momento.
+    track.addEventListener('mute', handleCameraInterruption);
     recordingStream = stream;
     const video = el('mh-camera-video');
     video.srcObject = stream;
@@ -180,6 +212,7 @@ function formatSuggestedDuration(seconds) {
 
 function renderStep() {
   const step = getStepByIndex(currentStepIndex);
+  el('mh-interruption-warning').classList.add('mh-hidden');
   el('mh-step-progress').textContent = `Paso ${currentStepIndex + 1} de ${INTERVIEW_STEPS.length}`;
   el('mh-step-title').textContent = step.title;
   el('mh-step-prompt').textContent = step.prompt;
@@ -234,6 +267,7 @@ function stopRecordingTimer() {
 }
 
 function startRecording() {
+  cameraInterrupted = false;
   const mimeType = pickSupportedMimeType(VIDEO_MIME_CANDIDATES, (t) => MediaRecorder.isTypeSupported(t));
   recordedChunks = [];
   // El video final se manda por Telegram, que tiene un techo de 50MB — los
@@ -247,6 +281,16 @@ function startRecording() {
   });
   mediaRecorder.addEventListener('stop', () => {
     stopRecordingTimer();
+    if (cameraInterrupted) {
+      // El clip quedaría con un tramo de imagen congelada sin que la
+      // persona se entere — mejor pedirle que repita el paso a que reciba
+      // un video roto sin saberlo (ver handleCameraInterruption).
+      recordedChunks = [];
+      renderStep();
+      el('mh-interruption-warning').classList.remove('mh-hidden');
+      showScreen('record');
+      return;
+    }
     pendingClipBlob = new Blob(recordedChunks, { type: mediaRecorder.mimeType });
     if (previewObjectUrl) {
       URL.revokeObjectURL(previewObjectUrl);
