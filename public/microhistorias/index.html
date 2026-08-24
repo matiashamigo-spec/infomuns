@@ -50,12 +50,12 @@
          techo de calidad que Safari fuerza en iOS para grabación en vivo —
          confirmado real: un clip llegó a 360x480). No hay forma de ocultar
          la opción de grabar en vivo del menú sin perder también Fototeca. -->
-    <!-- accept mas especifico (en vez de video/*): test puntual sugerido por
-         Gemini para descartar si acotar los tipos aceptados cambia la
-         calidad de "Tomar foto o video" en iOS. Sin evidencia propia de que
-         esto cambie algo (ver conversacion) -- si el proximo test real en
-         iOS sigue dando 360x480, revertir a video/* y no tocar mas esto. -->
-    <input id="mh-camera-capture-input" type="file" accept="video/mp4,video/quicktime" class="mh-hidden" />
+    <!-- Se probó accept="video/mp4,video/quicktime" (sugerencia de Gemini,
+         sin sustento técnico) para ver si acotar los tipos cambiaba la
+         calidad de "Tomar foto o video" en iOS -- probado real, no cambió
+         nada (seguía en baja calidad). Confirmado: el límite es del sistema
+         operativo, no del accept. No volver a tocar esto sin evidencia nueva. -->
+    <input id="mh-camera-capture-input" type="file" accept="video/*" class="mh-hidden" />
   </section>
 
   <!-- Tips popup: se muestra una sola vez, antes del primer paso -->
