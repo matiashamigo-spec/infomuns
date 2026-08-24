@@ -5,10 +5,10 @@
 // el módulo en silencio, dejando la página sin mostrar ninguna pantalla
 // (ni el formulario ni el aviso de girar el teléfono). Bumpear la versión
 // acá es tan importante como bumpearla en el <script> de index.html.
-import { INTERVIEW_STEPS, getStepByIndex, isLastStep } from './steps.js?v=45';
-import { buildWhatsAppLink } from './whatsapp.js?v=45';
-import { watchOrientation } from './orientation.js?v=45';
-import { buildClipUploadUrl, submitBatchesWithProgress } from './upload.js?v=45';
+import { INTERVIEW_STEPS, getStepByIndex, isLastStep } from './steps.js?v=46';
+import { buildWhatsAppLink } from './whatsapp.js?v=46';
+import { watchOrientation } from './orientation.js?v=46';
+import { buildClipUploadUrl, submitBatchesWithProgress } from './upload.js?v=46';
 
 // Historial de por qué esta app NO graba nada dentro de la página (ni con
 // getUserMedia+MediaRecorder, ni con la cámara nativa vía <input capture>,
@@ -27,10 +27,20 @@ import { buildClipUploadUrl, submitBatchesWithProgress } from './upload.js?v=45'
 //      "se rompió todo" al tocar Grabar en un iPhone.
 // La salida: la persona graba con la Cámara nativa de su celular (fuera de
 // esta página, a la calidad real del teléfono) y vuelve acá para ELEGIR ese
-// video con un <input type="file"> SIN el atributo capture — un selector de
-// archivos común, no el modo de captura en vivo que es el que tiene los
-// límites de arriba. La guía (título, consigna, tips, ejemplo de encuadre)
-// se muestra ANTES de que la persona vaya a grabar, no durante.
+// video con un <input type="file">. La guía (título, consigna, tips,
+// ejemplo de encuadre) se muestra ANTES de que la persona vaya a grabar,
+// no durante.
+//
+// El límite #2 de arriba (360x480 en vivo) está confirmado real SOLO en
+// iOS — en Android, grabar directo desde el input dio 1080x1920 sin
+// problema (confirmado real también). Por eso el input se configura
+// distinto según la plataforma: en Android se agrega `capture="user"`
+// (un toque abre la cámara directo, sin el menú de opciones — no hace
+// falta el rodeo de "grabá aparte y elegí Fototeca" porque ahí no hay
+// nada que evitar); en iOS se deja SIN `capture`, así aparece el menú que
+// permite llegar a Fototeca (el único camino de buena calidad ahí).
+const IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
 const N8N_WEBHOOK_URL = 'https://n8n.wips.digital/webhook/microhistorias';
 const WHATSAPP_NUMBER = '+54 9 291 6419599';
 // Cada clip se manda en su propio pedido (ver upload.js) — cada uno pega
@@ -110,6 +120,21 @@ el('mh-whatsapp-error').href = buildWhatsAppLink(WHATSAPP_NUMBER, 'Tuve un error
 watchOrientation((portrait) => {
   el('mh-orientation-lock').classList.toggle('is-visible', !portrait);
 });
+
+// Configuración por plataforma (ver el comentario largo sobre IS_IOS más
+// arriba). Corre una sola vez, no cambia durante la sesión.
+if (IS_IOS) {
+  el('mh-camera-capture-input').removeAttribute('capture');
+  el('mh-record-btn').textContent = 'Grabar o elegir video';
+  el('mh-record-instruction').textContent = 'Grabá con tu Cámara y elegí Fototeca acá.';
+  el('mh-tips-quality-tip').innerHTML =
+    'Grabá cada paso con la Cámara de tu celular y, en cada pantalla, elegí <strong>Fototeca</strong> para usar ese video — así sale en mejor calidad.';
+} else {
+  el('mh-camera-capture-input').setAttribute('capture', 'user');
+  el('mh-record-btn').textContent = 'Grabar';
+  el('mh-record-instruction').textContent = 'Tocá el botón para grabar este paso.';
+  el('mh-tips-quality-tip').textContent = 'En cada paso vas a poder grabar directo desde acá, con la cámara frontal.';
+}
 
 showScreen('start');
 
