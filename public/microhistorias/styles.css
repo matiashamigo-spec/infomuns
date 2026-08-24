@@ -199,7 +199,11 @@ p {
   margin: 2px 0;
 }
 
-#mh-record-instruction {
+/* #mh-record-screen .mh-tip { margin: 2px 0 } le gana en especificidad a
+   un simple "#mh-record-instruction" (ambos tienen un ID pero esa regla
+   suma también una clase) -- por eso el margen de antes nunca se aplicó
+   de verdad. Este selector, con el ID del padre adelante, sí le gana. */
+#mh-record-screen #mh-record-instruction {
   margin-bottom: 40px;
 }
 
