@@ -204,6 +204,11 @@ p {
   background: var(--mh-bg-alt, #f0f0f0);
 }
 
+.mh-framing-label {
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
 .mh-tips-overlay .mh-framing-example {
   max-width: 220px;
   height: auto;
