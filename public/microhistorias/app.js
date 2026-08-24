@@ -5,10 +5,10 @@
 // el módulo en silencio, dejando la página sin mostrar ninguna pantalla
 // (ni el formulario ni el aviso de girar el teléfono). Bumpear la versión
 // acá es tan importante como bumpearla en el <script> de index.html.
-import { INTERVIEW_STEPS, getStepByIndex, isLastStep } from './steps.js?v=48';
-import { buildWhatsAppLink } from './whatsapp.js?v=48';
-import { watchOrientation } from './orientation.js?v=48';
-import { buildClipUploadUrl, submitBatchesWithProgress } from './upload.js?v=48';
+import { INTERVIEW_STEPS, getStepByIndex, isLastStep } from './steps.js?v=49';
+import { buildWhatsAppLink } from './whatsapp.js?v=49';
+import { watchOrientation } from './orientation.js?v=49';
+import { buildClipUploadUrl, submitBatchesWithProgress } from './upload.js?v=49';
 
 // Historial de por qué esta app NO graba nada dentro de la página (ni con
 // getUserMedia+MediaRecorder, ni con la cámara nativa vía <input capture>,
@@ -126,9 +126,9 @@ watchOrientation((portrait) => {
 if (IS_IOS) {
   el('mh-camera-capture-input').removeAttribute('capture');
   el('mh-record-btn').textContent = 'Elegí el video de tu galería';
-  el('mh-record-instruction').textContent = 'Grabá con tu Cámara y elegí Fototeca acá.';
+  el('mh-record-instruction').textContent = 'Grabá con tu Cámara, elegí Galería y seleccioná el video correspondiente.';
   el('mh-tips-quality-tip').innerHTML =
-    'Grabá cada paso con la Cámara de tu celular y, en cada pantalla, elegí <strong>Fototeca</strong> para usar ese video — así sale en mejor calidad.';
+    'Grabá cada paso con la Cámara de tu celular, elegí <strong>Galería</strong> y seleccioná el video correspondiente.';
 } else {
   el('mh-camera-capture-input').setAttribute('capture', 'user');
   el('mh-record-btn').textContent = 'Grabar';
@@ -219,7 +219,7 @@ function checkClipMetadata(file) {
       durationWarningEl.classList.remove('mh-hidden');
     }
     if (Math.max(probe.videoWidth, probe.videoHeight) < MIN_ACCEPTABLE_DIMENSION) {
-      qualityErrorEl.textContent = `Este video salió en baja calidad (${probe.videoWidth}x${probe.videoHeight}) — parece que se grabó con "Tomar foto o video" en vez de elegirlo de Fototeca. Repetí el paso: grabá primero con la Cámara, después tocá el botón acá y elegí Fototeca.`;
+      qualityErrorEl.textContent = `Este video salió en baja calidad (${probe.videoWidth}x${probe.videoHeight}) — parece que se grabó con "Tomar foto o video" en vez de elegirlo de Galería. Repetí el paso: grabá primero con la Cámara, después tocá el botón acá y elegí Galería.`;
       qualityErrorEl.classList.remove('mh-hidden');
       el('mh-continue-btn').classList.add('mh-hidden');
     }
