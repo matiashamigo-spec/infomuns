@@ -159,6 +159,7 @@ En cambio, escribí una pieza totalmente aparte sobre el PATRÓN o el SENTIMIENT
 
 REGLAS DURAS PARA ESTA PIEZA:
 - Nombres inventados, nunca los reales de la noticia.
+- El nombre inventado tiene que variar entre cuentos — NUNCA repitas el mismo nombre por defecto (ej. "Clara") en todas las piezas de este modo. Antes de elegir, pensá en al menos 2-3 opciones distintas y rotá conscientemente.
 - Nunca literalices el mecanismo del daño: sin engaño, sin secuestro, sin arma, sin encontrar un cuerpo, sin el momento del hecho.
 - El foco nunca es "qué podría haber hecho distinto la víctima" — eso responsabiliza a quien sufrió el daño en vez de a quien lo causó. El foco es el amor, la ausencia, o la comunidad que cuida.
 - Ningún lugar, fecha o dato que identifique la noticia puntual — es sobre el patrón, no sobre este caso.
